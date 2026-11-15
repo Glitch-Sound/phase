@@ -1,0 +1,33 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+MAP CHROME: 48 checks / 18 failures
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+FAIL: map surroundings have no title/mode/coordinates/objective: stage 0
+FAIL: no central operation prompt: stage 0
+FAIL: map surroundings have no title/mode/coordinates/objective: stage 1
+FAIL: no central operation prompt: stage 1
+FAIL: map surroundings have no title/mode/coordinates/objective: stage 2
+FAIL: no central operation prompt: stage 2
+FAIL: map surroundings have no title/mode/coordinates/objective: stage 3
+FAIL: no central operation prompt: stage 3
+FAIL: map surroundings have no title/mode/coordinates/objective: CHOICE
+FAIL: no central operation prompt: CHOICE
+FAIL: map surroundings have no title/mode/coordinates/objective: DAMAGE
+FAIL: no central operation prompt: DAMAGE
+FAIL: map surroundings have no title/mode/coordinates/objective: HEAL
+FAIL: no central operation prompt: HEAL
+FAIL: map surroundings have no title/mode/coordinates/objective: TRAPPED
+FAIL: no central operation prompt: TRAPPED
+FAIL: map surroundings have no title/mode/coordinates/objective: RESULT
+FAIL: no central operation prompt: RESULT

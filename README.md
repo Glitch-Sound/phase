@@ -179,3 +179,6 @@ F2は勝利と0件、F3は敗北と2件の表示fixture、F4は回復対象、F5
 
 直前の情報削減は取り消し、8d7575dを基準とする画面へ復元した。
 復元範囲と比較画像は[復元の検証](artifacts/restored-interface-verification.md)に記録する。
+
+中央バトルマップ周辺の指定文字だけを削除した。
+対象、比較画像、検証は[マップ周辺の文字削除](artifacts/map-labels-verification.md)に記録する。

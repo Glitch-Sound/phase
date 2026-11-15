@@ -162,12 +162,6 @@ func _draw_left() -> void:
 
 func _draw_board() -> void:
 	var effect_chips=[]
-	_text(battle.stage.name,Vector2(560,77),18,WHITE,mono)
-	_text(battle.stage.type,Vector2(1090,77),14,CYAN,mono)
-	for x in range(10):
-		_text(str(x),BOARD+Vector2(x*70+32,-7),12,MUTED,mono)
-	for y in range(10):
-		_text(str(y),BOARD+Vector2(-19,y*70+40),12,MUTED,mono)
 	for y in range(10):
 		for x in range(10):
 			var cell=Vector2i(x,y)
@@ -233,7 +227,6 @@ func _draw_board() -> void:
 		draw_rect(rect,BG)
 		draw_rect(rect,chip.color,false,1)
 		_center(chip.text,rect.position+Vector2(rect.size.x/2,16),16,chip.color,mono)
-	_text(battle.stage.brief,Vector2(560,828),15,MAGENTA,mono)
 
 func _effect_chip_rect(cell: Vector2i) -> Rect2:
 	return Rect2(BOARD+Vector2(cell)*70+Vector2(25,2),Vector2(43,22))
@@ -385,16 +378,10 @@ func _hud() -> void:
 	add_child(hud)
 	for row in [["HELP",1218,_help],["SETTINGS",1346,_settings],["RESTART",1492,_restart],["QUIT",1640,_quit]]:
 		_button(hud,row[0],Rect2(row[1],1025,118,40),row[2])
-	var hint="Click adjacent cells • Double-click endpoint to confirm • Esc clears route"
 	if battle.mode=="TARGET":
-		hint="SELECT TARGET / "+C.SKILLS[battle.selected_skill].label
 		_button(hud,"BACK",Rect2(1024,802,236,37),func():battle.back();_action_dialog())
 	elif battle.mode=="MOVE" and battle.trapped():
-		hint="NO LEGAL MOVEMENT / WAIT AVAILABLE"
 		_button(hud,"WAIT",Rect2(1024,802,236,37),func():battle.wait_turn();_after_action())
-	_label(hud,hint,Rect2(560,55,700,27),14,MUTED).visible=false
-	if not build_open:
-		_label(hud,hint,Rect2(560,14,720,30),14,CYAN)
 
 func _action_dialog() -> void:
 	_clear_overlay()

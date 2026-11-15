@@ -1,0 +1,107 @@
+extends SceneTree
+const TEXT_BANDS=[Rect2(540,50,720,50),Rect2(530,100,25,700),Rect2(540,805,720,35)]
+var checks=0
+var failures=0
+func _initialize() -> void:
+	_run.call_deferred()
+## REQ-029-S01
+func _run() -> void:
+	var game=load("res://tests/map_chrome_audit.gd").new()
+	game.settings_path="res://artifacts/runtime/map-chrome-no-settings.json"
+	root.add_child(game)
+	await process_frame
+	for stage in range(4):
+		game.collection.stage_index=stage
+		game._start_battle()
+		await _test_case(game,"stage "+str(stage))
+	game.collection.stage_index=0
+	for state in ["CHOICE","DAMAGE","HEAL","TRAPPED","RESULT"]:
+		game._start_battle()
+		if state=="TRAPPED":
+			game.battle.units[0].pos=Vector2i(0,0)
+			game.battle.units[1].pos=Vector2i(1,0)
+			game.battle.units[2].pos=Vector2i(0,1)
+			game._hud()
+		elif state=="RESULT":
+			game.battle.mode="RESULT"
+			game.battle.result="VICTORY"
+			game.result_awarded=true
+			game.drops=[]
+			game._result()
+		elif state=="HEAL":
+			game.battle.units[0].pos=Vector2i(5,5)
+			game.battle.units[1].pos=Vector2i(6,5)
+			game.battle.units[1].hp=90
+			game.battle.mode="CHOICE"
+			game.battle.choose_skill(game.C.HEAL)
+			game._clear_overlay()
+			game._hud()
+		else:
+			game._cell_input(Vector2i(4,4))
+			game._cell_input(Vector2i(5,4))
+			game._cell_input(Vector2i(5,4),true)
+			if state=="DAMAGE":
+				await process_frame
+				game.battle.choose_skill(game.C.DAMAGE)
+				game._clear_overlay()
+				game._hud()
+		await _test_case(game,state,"TARGET" if state in ["DAMAGE","HEAL"] else ("MOVE" if state=="TRAPPED" else state))
+		if state in ["DAMAGE","HEAL","TRAPPED"]:
+			var names=[]
+			var action_button: Button
+			for button in game.hud.find_children("*","Button",true,false):
+				names.append(button.text)
+				if button.text==("WAIT" if state=="TRAPPED" else "BACK"):
+					action_button=button
+			_check(names.has("WAIT" if state=="TRAPPED" else "BACK"),"keep required action button: "+state)
+			var units=game.battle.units.duplicate(true)
+			var actor=game.battle.actor
+			if is_instance_valid(action_button):
+				action_button.pressed.emit()
+			await process_frame
+			_check(game.battle.actor!=actor if state=="TRAPPED" else game.battle.mode=="CHOICE" and game.battle.units==units,"required action remains functional: "+state)
+	await _test_help_and_build(game)
+	print("MAP CHROME: %d checks / %d failures" % [checks,failures])
+	quit(0 if failures==0 else 1)
+func _test_case(game,title: String,expected_mode: String="MOVE") -> void:
+	_check(game.battle.mode==expected_mode,"fixture reaches requested state: "+title)
+	game.message_time=0
+	var before=game.battle.units.duplicate(true)
+	await create_timer(0.07).timeout
+	var forbidden=[]
+	for item in game.drawn_text:
+		for band in TEXT_BANDS:
+			if band.has_point(item.position):
+				forbidden.append(item.text)
+	_check(forbidden.is_empty(),"map surroundings have no title/mode/coordinates/objective: "+title)
+	var hints=[]
+	for label in game.hud.find_children("*","Label",true,false):
+		if label.is_visible_in_tree() and Rect2(540,0,750,50).has_point(label.global_position):
+			hints.append(label.text)
+	_check(hints.is_empty(),"no central operation prompt: "+title)
+	_check(game.battle.units==before,"display preserves units: "+title)
+## REQ-018-S01
+func _test_help_and_build(game) -> void:
+	game._start_battle()
+	game._cell_input(Vector2i(4,4))
+	game._help()
+	await process_frame
+	var content=[]
+	for label in game.auxiliary.find_children("*","Label",true,false):
+		content.append(label.text)
+	_check(content.any(func(s):return s.contains("終点をダブルクリックして確定。")),"HELP retains endpoint operation")
+	game._close_aux()
+	_check(game.battle.path==[Vector2i(4,4)],"HELP keeps pending route")
+	for stage in range(4):
+		game.collection.stage_index=stage
+		game._build()
+		await process_frame
+		var texts=[]
+		for label in game.overlay.find_children("*","Label",true,false):
+			texts.append(label.text)
+		_check(texts.has(game.C.stages()[stage].brief),"BUILD retains stage objective: "+str(stage))
+func _check(ok: bool,message: String) -> void:
+	checks+=1
+	if not ok:
+		failures+=1
+		printerr("FAIL: ",message)
