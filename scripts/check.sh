@@ -33,7 +33,7 @@ if rg 'SCRIPT ERROR|FAIL:|Failed to load script' artifacts/runtime/ui-output.txt
 fi
 rg 'UI CONNECTIONS: [0-9]+ checks / 0 failures' artifacts/runtime/ui-output.txt
 
-for suite in review_regressions contested_play display_flow design_flow restored_interface map_chrome unit_glyphs arc_strokes ring_palette; do
+for suite in review_regressions contested_play display_flow design_flow restored_interface map_chrome unit_glyphs arc_strokes ring_palette phase_preview; do
   godot --headless --path . --script "tests/$suite.gd" --log-file "$PWD/artifacts/runtime/$suite.log" > "artifacts/runtime/$suite-output.txt" 2>&1
   cat "artifacts/runtime/$suite-output.txt"
   if rg 'SCRIPT ERROR|FAIL:|Failed to load script' "artifacts/runtime/$suite-output.txt"; then
@@ -50,9 +50,10 @@ rg 'MAP CHROME: [0-9]+ checks / 0 failures' artifacts/runtime/map_chrome-output.
 rg 'UNIT GLYPHS: [0-9]+ checks / 0 failures' artifacts/runtime/unit_glyphs-output.txt
 rg 'ARC STROKES: [0-9]+ checks / 0 failures' artifacts/runtime/arc_strokes-output.txt
 rg 'RING PALETTE: [0-9]+ checks / 0 failures' artifacts/runtime/ring_palette-output.txt
+rg 'PHASE PREVIEW: [0-9]+ checks / 0 failures' artifacts/runtime/phase_preview-output.txt
 
 # macOS sandboxの証明書初期化警告を除き、エンジンの描画エラー等も失敗にする。
-for log in test-output smoke-output replay-output ui-output review_regressions-output contested_play-output display_flow-output design_flow-output restored_interface-output map_chrome-output unit_glyphs-output arc_strokes-output ring_palette-output; do
+for log in test-output smoke-output replay-output ui-output review_regressions-output contested_play-output display_flow-output design_flow-output restored_interface-output map_chrome-output unit_glyphs-output arc_strokes-output ring_palette-output phase_preview-output; do
   if rg '^ERROR:' "artifacts/runtime/$log.txt" | rg -v '^ERROR: Condition "ret != noErr" is true. Returning: ""$'; then
     exit 1
   fi

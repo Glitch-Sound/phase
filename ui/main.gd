@@ -37,7 +37,9 @@ var MAGENTA: Color=palette_colors[0]
 var palette_pickers: Array=[]
 var palette_error: Label
 var settings_path="res://artifacts/runtime/ui-settings.json"
-const BOARD = Vector2(560,100)
+const BOARD = T.BATTLE_BOARD_ORIGIN
+const CELL = T.BATTLE_CELL
+const BOARD_SCALE = CELL/70.0
 const SAVE_PATH = "res://artifacts/runtime/phase-save.json"
 var battle=B.new()
 var collection=L.new()
@@ -64,6 +66,9 @@ var effect_hover := -1
 var hover_cell := Vector2i(-1,-1)
 var loot_rng := RandomNumberGenerator.new()
 var notice: Label
+var preview_contours: Array=[]
+var preview_signature: Array=[]
+var preview_generation := 0
 var result_awarded := false
 var equipment_views: Dictionary={}
 var window_focused := true
@@ -117,13 +122,12 @@ func _draw() -> void:
 	_draw_board()
 	_draw_info()
 	_draw_preview()
-	_text("ROUTE → PHASE → EFFECT",Vector2(150,1053),13,MUTED,mono)
 	if message_time>0 and not build_open:
 		_text(message,Vector2(150,1028),18,CYAN)
 	for t in toasts:
 		var color: Color=t.color
 		color.a=clampf((2.4-t.age)/0.7,0,1)
-		var p: Vector2=BOARD+Vector2(t.cell)*70+Vector2(35,3-(t.age*24 if not reduced_motion else 0))
+		var p: Vector2=_board_point(t.cell,Vector2(35,3-(t.age*24 if not reduced_motion else 0)))
 		_center(t.text,p,24,color,mono)
 
 func _draw_left() -> void:
@@ -164,8 +168,8 @@ func _draw_board() -> void:
 	for y in range(10):
 		for x in range(10):
 			var cell=Vector2i(x,y)
-			var pos=BOARD+Vector2(cell)*70
-			var rect=Rect2(pos+Vector2.ONE,Vector2(68,68))
+			var pos=_board_point(cell)
+			var rect=Rect2(pos+Vector2.ONE*BOARD_SCALE,Vector2(68,68)*BOARD_SCALE)
 			var panel=battle.panels.get(cell,"NORMAL")
 			var color=Color("0d1013") if (x+y)%2==0 else Color("090c0f")
 			if panel!="NORMAL":
@@ -178,13 +182,13 @@ func _draw_board() -> void:
 			draw_rect(rect,EDGE,false,1)
 			if panel!="NORMAL":
 				var pc=MAGENTA if panel=="REVERSE" else (status_colors[3] if panel=="LOCK" else CYAN)
-				_text({"SHIFT":"S+","LOCK":"L=","REVERSE":"R-"}[panel],pos+Vector2(5,14),11,Color(pc,0.8),mono)
+				_text({"SHIFT":"S+","LOCK":"L=","REVERSE":"R-"}[panel],pos+Vector2(5,14)*BOARD_SCALE,11,Color(pc,0.8),mono)
 			if cell==battle.stage.goal:
 				draw_rect(rect.grow(-4),Color(MAGENTA,0.6),false,1)
-				_text("GOAL",pos+Vector2(6,62),11,MAGENTA,mono)
+				_text("GOAL",pos+Vector2(6,62)*BOARD_SCALE,11,MAGENTA,mono)
 			if cell==battle.stage.enemy_goal:
 				draw_rect(rect.grow(-4),status_colors[1],false,2)
-				_text("LOSS",pos+Vector2(6,62),11,status_colors[1],mono)
+				_text("LOSS",pos+Vector2(6,62)*BOARD_SCALE,11,status_colors[1],mono)
 			if battle.mode=="TARGET" and _distance(cell,battle.units[battle.actor].pos)==1:
 				var tc=status_colors[1] if battle.selected_skill==C.DAMAGE else status_colors[2]
 				draw_rect(rect,Color(tc,0.12))
@@ -192,10 +196,10 @@ func _draw_board() -> void:
 			var i=battle.at(cell)
 			if i>=0:
 				var u: Dictionary=battle.units[i]
-				var center=pos+T.UNIT_BOARD_CENTER
-				_ring(self,center,T.UNIT_BOARD_RADIUS,u,i==battle.actor)
+				var center=pos+T.UNIT_BOARD_CENTER*BOARD_SCALE
+				_ring(self,center,T.UNIT_BOARD_RADIUS*BOARD_SCALE,u,i==battle.actor)
 				if i==selected:
-					_brackets(Rect2(pos+Vector2(5,5),Vector2(60,60)),MAGENTA)
+					_brackets(Rect2(pos+Vector2(5,5)*BOARD_SCALE,Vector2(60,60)*BOARD_SCALE),MAGENTA)
 				if battle.mode=="TARGET" and battle.valid_target(battle.actor,i,battle.selected_skill):
 					var tc=status_colors[1] if battle.selected_skill==C.DAMAGE else status_colors[2]
 					draw_rect(rect.grow(-1),tc,false,2)
@@ -204,27 +208,30 @@ func _draw_board() -> void:
 						amount=mini(amount,ceili(u.max_hp-u.hp))
 					effect_chips.append({"cell":cell,"text":("-" if battle.selected_skill==C.DAMAGE else "+")+str(amount),"color":tc})
 	if battle.mode=="MOVE":
-		var prev: Vector2=BOARD+Vector2(battle.units[battle.actor].pos)*70+Vector2(35,35)
+		var prev: Vector2=_board_point(battle.units[battle.actor].pos,Vector2(35,35))
 		for cell in battle.path:
-			var now=BOARD+Vector2(cell)*70+Vector2(35,35)
+			var now=_board_point(cell,Vector2(35,35))
 			var direction=(now-prev).normalized()
-			draw_line(prev+direction*15,now-direction*15,CYAN,2,true)
+			draw_line(prev+direction*15*BOARD_SCALE,now-direction*15*BOARD_SCALE,CYAN,2*BOARD_SCALE,true)
 			prev=now
 		for i in range(battle.path.size()):
-			var center=BOARD+Vector2(battle.path[i])*70+Vector2(35,35)
-			draw_circle(center,14,WHITE)
-			_center(str(i+1),center+Vector2(0,6),17,BG,mono)
+			var center=_board_point(battle.path[i],Vector2(35,35))
+			draw_circle(center,14*BOARD_SCALE,WHITE)
+			_center(str(i+1),center+Vector2(0,6)*BOARD_SCALE,roundi(17*BOARD_SCALE),BG,mono)
 		if not battle.path.is_empty():
-			_brackets(Rect2(BOARD+Vector2(battle.path.back())*70+Vector2(3,3),Vector2(64,64)),CYAN)
+			_brackets(Rect2(_board_point(battle.path.back(),Vector2(3,3)),Vector2(64,64)*BOARD_SCALE),CYAN)
 	# 全セルの描画後に重ね、次の行の背景で数字を隠さない。
 	for chip in effect_chips:
 		var rect=_effect_chip_rect(chip.cell)
 		draw_rect(rect,BG)
 		draw_rect(rect,chip.color,false,1)
-		_center(chip.text,rect.position+Vector2(rect.size.x/2,16),16,chip.color,mono)
+		_center(chip.text,rect.position+Vector2(rect.size.x/2,16*BOARD_SCALE),roundi(16*BOARD_SCALE),chip.color,mono)
 
 func _effect_chip_rect(cell: Vector2i) -> Rect2:
-	return Rect2(BOARD+Vector2(cell)*70+Vector2(25,2),Vector2(43,22))
+	return Rect2(_board_point(cell,Vector2(25,2)),Vector2(43,22)*BOARD_SCALE)
+
+func _board_point(cell: Vector2i, offset: Vector2=Vector2.ZERO) -> Vector2:
+	return BOARD+Vector2(cell)*CELL+offset*BOARD_SCALE
 
 func _draw_info() -> void:
 	var index=selected if selected>=0 else battle.actor
@@ -259,26 +266,21 @@ func _draw_info() -> void:
 
 func _draw_preview() -> void:
 	var u=battle.preview()
-	_panel(Rect2(150,850,1620,163))
-	_text("PHASE PREVIEW",Vector2(174,879),14,MUTED,mono)
+	_panel(T.PREVIEW_PANEL)
+	_text("PHASE PREVIEW",Vector2(174,849),14,MUTED,mono)
 	var length=battle.path.size() if battle.mode=="MOVE" else u.moved
-	_text("PATH %d / DESTINATION (%d, %d)" % [length,u.pos.x,u.pos.y],Vector2(415,879),15,CYAN,mono)
-	_ring(self,Vector2(225,947),48,u)
-	_text("G %05.1f" % u.gear_angle,Vector2(293,933),14,MUTED,mono)
-	_text("A %05.1f" % u.arms_angle,Vector2(293,958),14,MUTED,mono)
-	V.wave(self,Rect2(415,895,932,98),u,clock,status_colors)
-	_text("0°",Vector2(415,1005),10,MUTED,mono)
-	_text("180°",Vector2(860,1005),10,MUTED,mono)
-	_text("360°",Vector2(1316,1005),10,MUTED,mono)
-	_text("RESONANCE",Vector2(1380,879),14,MUTED,mono)
-	_bar(Rect2(1380,923,350,2),M.sync(u,1).factor/2,status_colors[1])
-	_text("INF SYNC",Vector2(1380,916),14,status_colors[1],mono)
-	_text("%5.1f%%" % (M.sync(u,1).factor*100),Vector2(1618,916),22,status_colors[1],mono)
-	_bar(Rect2(1380,955,350,2),M.sync(u,2).factor/2,status_colors[2])
-	_text("RES SYNC",Vector2(1380,948),14,status_colors[2],mono)
-	_text("%5.1f%%" % (M.sync(u,2).factor*100),Vector2(1618,948),22,status_colors[2],mono)
-	_text("SINGULARITY ×5",Vector2(1380,984),14,MUTED,mono)
-	_text("READY" if M.singularity(u) else "—",Vector2(1618,984),17,MAGENTA if M.singularity(u) else MUTED,mono)
+	_text("PATH %d / DESTINATION (%d, %d)" % [length,u.pos.x,u.pos.y],Vector2(530,902),15,CYAN,mono)
+	var signature=[u.core,u.gear,u.arms,u.class_name,u.gear_mutation,u.arms_mutation,u.gear_angle,u.arms_angle,status_colors]
+	if signature!=preview_signature:
+		preview_signature=signature.duplicate(true)
+		preview_contours=V.phase_contours(u,status_colors)
+		preview_generation+=1
+	V.phase_orbit(self,T.PREVIEW_CENTER,preview_contours)
+	_ring(self,T.PREVIEW_CENTER,T.PREVIEW_RADIUS,u)
+	_text("INF %.1f%%" % (M.sync(u,1).factor*100),Vector2(174,T.PREVIEW_SYNC_BASELINE),15,status_colors[1],mono)
+	_text("RES %.1f%%" % (M.sync(u,2).factor*100),Vector2(320,T.PREVIEW_SYNC_BASELINE),15,status_colors[2],mono)
+	if M.singularity(u):
+		_text("×5",Vector2(474,T.PREVIEW_SYNC_BASELINE),15,MAGENTA,mono)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not window_focused:
@@ -299,12 +301,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseMotion:
 		var p=event.position-BOARD
-		hover_cell=Vector2i(floori(p.x/70),floori(p.y/70)) if Rect2(BOARD,Vector2(700,700)).has_point(event.position) else Vector2i(-1,-1)
+		hover_cell=Vector2i(floori(p.x/CELL),floori(p.y/CELL)) if Rect2(BOARD,Vector2.ONE*CELL*10).has_point(event.position) else Vector2i(-1,-1)
 	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT:
 		# Godotが拡縮と余白を変換済みの、そのイベントの論理座標を使う。
 		var p=event.position
-		if Rect2(560,100,700,700).has_point(p):
-			_cell_input(Vector2i(floori((p.x-560)/70),floori((p.y-100)/70)),event.double_click)
+		if Rect2(BOARD,Vector2.ONE*CELL*10).has_point(p):
+			_cell_input(Vector2i(floori((p.x-BOARD.x)/CELL),floori((p.y-BOARD.y)/CELL)),event.double_click)
 		else:
 			for k in range(6):
 				if Rect2(164,345+k*64,342,58).has_point(p):
@@ -371,9 +373,9 @@ func _hud() -> void:
 	for row in [["HELP",1218,_help],["SETTINGS",1346,_settings],["RESTART",1492,_restart],["QUIT",1640,_quit]]:
 		_button(hud,row[0],Rect2(row[1],1025,118,40),row[2])
 	if battle.mode=="TARGET":
-		_button(hud,"BACK",Rect2(1024,802,236,37),func():battle.back();_action_dialog())
+		_button(hud,"BACK",Rect2(1024,878,236,37),func():battle.back();_action_dialog())
 	elif battle.mode=="MOVE" and battle.trapped():
-		_button(hud,"WAIT",Rect2(1024,802,236,37),func():battle.wait_turn();_after_action())
+		_button(hud,"WAIT",Rect2(1024,878,236,37),func():battle.wait_turn();_after_action())
 
 func _action_dialog() -> void:
 	_clear_overlay()
@@ -588,7 +590,7 @@ func _help() -> void:
 	_label(panel,"両陣営を手動で操作する。敵CPUはない。",Rect2(36,85,1048,30),19,MUTED)
 	var steps=[
 		["move","01 / ROUTE","隣接する空きマスを順番にクリック。\n経路上をクリックすると後続を取消。"],
-		["target","02 / ALIGN","下のリングと4波形で位相を比較。\nINF / RESは最終補正。最大200%。"],
+		["target","02 / ALIGN","細線は内からCORE、GEAR、ARMS。\n外側は生領域の重なり。"],
 		["check","03 / ACT","終点をダブルクリックして確定。\nWAITかスキルを選び、対象をクリック。"]
 	]
 	for i in range(3):
@@ -600,7 +602,7 @@ func _help() -> void:
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
 	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\nユニットか手番一覧をクリックして詳細を調べる。",Rect2(36,377,500,152),18,WHITE)
 	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
-	_label(panel,"NORMAL   GEAR ↶ / ARMS ↷\nSHIFT S+  ARMSの回転2倍\nLOCK L=   GEARを固定\nREVERSE R-  ARMSを逆回転\nSINGULARITY ×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
+	_label(panel,"鮮明な所ほど同じステータスが一致。\nINF / RESはLUK補助後の最終補正(最大200%)。\nS+ ARMSの回転2倍 / L= GEAR固定\nR- ARMS逆回転 / 通常はGEAR ↶、ARMS ↷\n×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
 	_separator(panel,Rect2(36,560,1048,1))
 	_label(panel,"BUILD / ARCHIVE",Rect2(36,589,490,28),16,CYAN)
 	_label(panel,"1と2を編集し、装備の5値と差分を比較する。\nスキルは最大3。NONEも可。取得品と変異は共有。",Rect2(36,631,500,66),18,WHITE)

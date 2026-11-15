@@ -1,4 +1,5 @@
 extends SceneTree
+const T=preload("res://game/tuning.gd")
 var checks=0
 var failures=0
 
@@ -40,10 +41,10 @@ func _test_gui_mouse(game: Control, factor: float, offset: Vector2) -> void:
 	_push_click(offset+Vector2(1404,870)*factor)
 	await process_frame
 	_check(not game.build_open,"scaled GUI button receives click")
-	_push_click(offset+Vector2(875,415)*factor)
+	_push_click(offset+_point(Vector2i(4,4))*factor)
 	await process_frame
 	_check(game.battle.path==[Vector2i(4,4)],"scaled click selects visible board cell")
-	_push_click(offset+Vector2(875,415)*factor,true)
+	_push_click(offset+_point(Vector2i(4,4))*factor,true)
 	await process_frame
 	_check(game.battle.mode=="CHOICE" and is_instance_valid(game.overlay),"scaled double click opens action overlay")
 	game._start_battle()
@@ -57,17 +58,17 @@ func _test_gui_mouse(game: Control, factor: float, offset: Vector2) -> void:
 func _test_resize_route(game: Control) -> void:
 	game._start_battle()
 	await process_frame
-	_push_click(root.get_final_transform()*Vector2(875,415))
+	_push_click(root.get_final_transform()*_point(Vector2i(4,4)))
 	_check(game.battle.path==[Vector2i(4,4)],"route starts before resize")
 	root.size=Vector2i(2560,1080)
 	await process_frame
 	_check(game.battle.path==[Vector2i(4,4)] and game.battle.mode=="MOVE","resize preserves pending route")
-	_push_click(root.get_final_transform()*Vector2(945,415))
+	_push_click(root.get_final_transform()*_point(Vector2i(5,4)))
 	_check(game.battle.path==[Vector2i(4,4),Vector2i(5,4)],"route can extend after resize")
 	root.size=Vector2i(1280,720)
 	await process_frame
 	_check(game.battle.path==[Vector2i(4,4),Vector2i(5,4)],"resize return preserves the route")
-	_push_click(root.get_final_transform()*Vector2(945,415),true)
+	_push_click(root.get_final_transform()*_point(Vector2i(5,4)),true)
 	await process_frame
 	_check(game.battle.mode=="CHOICE" and game.battle.units[0].pos==Vector2i(5,4),"route can commit after resize return")
 
@@ -77,7 +78,7 @@ func _test_event_position(game: Control) -> void:
 	var event=InputEventMouseButton.new()
 	event.button_index=MOUSE_BUTTON_LEFT
 	event.pressed=true
-	event.position=Vector2(875,415)
+	event.position=_point(Vector2i(4,4))
 	game._unhandled_input(event)
 	_check(game.battle.path==[Vector2i(4,4)],"event coordinates select the cell independently of cursor polling")
 
@@ -91,7 +92,7 @@ func _test_focus(game: Control) -> void:
 	var event=InputEventMouseButton.new()
 	event.button_index=MOUSE_BUTTON_LEFT
 	event.pressed=true
-	event.position=Vector2(945,415)
+	event.position=_point(Vector2i(5,4))
 	game._unhandled_input(event)
 	_check(game.battle.path==[Vector2i(4,4)],"unfocused input does not change the route")
 	root.focus_entered.emit()
@@ -117,3 +118,6 @@ func _check(ok: bool, message: String) -> void:
 	if not ok:
 		failures+=1
 		printerr("FAIL: ",message)
+
+func _point(cell: Vector2i) -> Vector2:
+	return T.BATTLE_BOARD_ORIGIN+(Vector2(cell)+Vector2.ONE/2)*T.BATTLE_CELL

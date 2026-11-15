@@ -33,3 +33,22 @@ const UNIT_COLOR_PIXEL_MIN := 1.1
 const UNIT_ARC_ERROR_PIXELS := 0.03
 # 色相とVを維持し、既存プリセットの判読性を保つリング用の彩度強調。
 const UNIT_RING_SATURATION_POWER := 2.0
+
+# 左右パネルを維持し、正方形の盤面と入力に同じ寸法を使う。
+const BATTLE_BOARD_ORIGIN := Vector2(530,100)
+const BATTLE_CELL := 76.0
+const PREVIEW_PANEL := Rect2(150,820,370,220)
+const PREVIEW_CENTER := Vector2(335,925)
+const PREVIEW_RADIUS := 48.0
+const PREVIEW_SYNC_BASELINE := 1026.0
+# 各領域の中央と境界を、離れた細い閉曲線の山と谷へ写す。
+const PREVIEW_SAMPLES := 360
+const PREVIEW_RADII := [51.0,57.0,63.0,70.0]
+const PREVIEW_AMPLITUDES := [5.0,5.0,5.0,8.0]
+const PREVIEW_LINE := 0.9
+const PREVIEW_RESULT_LINE := 1.4
+const PREVIEW_PIXEL_MIN := 0.9
+const PREVIEW_BASE_ALPHA := 0.42
+const PREVIEW_CLEAR_ALPHA := 0.92
+const PREVIEW_RESULT_BASE_ALPHA := 0.12
+const PREVIEW_RESULT_CLEAR_ALPHA := 1.0

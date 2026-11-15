@@ -204,9 +204,9 @@ func _test_chips(game: Control) -> void:
 		return
 	for cell in [Vector2i(6,4),Vector2i(2,9),Vector2i(0,0)]:
 		var rect: Rect2=game._effect_chip_rect(cell)
-		var containing=Rect2(game.BOARD+Vector2(cell)*70,Vector2(70,70))
+		var containing=Rect2(game.BOARD+Vector2(cell)*game.CELL,Vector2.ONE*game.CELL)
 		_check(containing.encloses(rect),"effect chip stays in its cell")
-		var measured=game.mono.get_string_size("-420",HORIZONTAL_ALIGNMENT_LEFT,-1,16)
+		var measured=game.mono.get_string_size("-420",HORIZONTAL_ALIGNMENT_LEFT,-1,roundi(16*game.BOARD_SCALE))
 		_check(measured.x<=rect.size.x and measured.y<=rect.size.y,"full signed value fits the chip")
 
 func _paths(b: RefCounted, cell: Vector2i, path: Array, result: Array) -> void:

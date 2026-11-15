@@ -82,7 +82,7 @@ func _test_screens() -> void:
 	game.message_time=0
 	await create_timer(0.08).timeout
 	var contexts=game.rings.map(func(r):return r.center)
-	_check(contexts.has(Vector2(223,374)) and contexts.has(Vector2(805,415)) and contexts.has(Vector2(1535,245)) and contexts.has(Vector2(225,947)),"timeline, board, details, preview share the glyph")
+	_check(contexts.has(Vector2(223,374)) and contexts.has(T.BATTLE_BOARD_ORIGIN+Vector2(3.5,4.5)*T.BATTLE_CELL) and contexts.has(Vector2(1535,245)) and contexts.has(T.PREVIEW_CENTER),"timeline, board, details, preview share the glyph")
 	await _test_board_fit(game)
 	game._cell_input(Vector2i(4,4))
 	game._cell_input(Vector2i(5,4))
@@ -98,21 +98,21 @@ func _test_board_fit(game) -> void:
 	for i in range(4):
 		game.battle.units[i].pos=cells[i]
 	await create_timer(0.08).timeout
-	var records=game.rings.filter(func(r):return Rect2(560,100,700,700).has_point(r.center))
+	var records=game.rings.filter(func(r):return Rect2(T.BATTLE_BOARD_ORIGIN,Vector2.ONE*T.BATTLE_CELL*10).has_point(r.center))
 	_check(records.size()==4,"all boundary and adjacent units are drawn")
 	for i in range(4):
 		var record=records.filter(func(r):return r.id==before[i].id)[0]
-		var cell_origin=Vector2(560,100)+Vector2(cells[i])*70
-		_check(record.center==cell_origin+Vector2(35,35),"independent geometric cell center: "+record.id)
+		var cell_origin=T.BATTLE_BOARD_ORIGIN+Vector2(cells[i])*T.BATTLE_CELL
+		_check(record.center==cell_origin+Vector2.ONE*T.BATTLE_CELL/2,"independent geometric cell center: "+record.id)
 		var g=V.glyph(record.radius,game.battle.units[i],record.active,P.PRESETS.DEFAULT.slice(1),P.PRESETS.DEFAULT[0])
 		for arc in g.arcs:
 			var extent=arc.radius+arc.width/2
-			_check(Rect2(cell_origin,Vector2(70,70)).encloses(Rect2(record.center-Vector2.ONE*extent,Vector2.ONE*extent*2)),"arc stays inside its own cell: "+record.id+"/"+arc.role)
+			_check(Rect2(cell_origin,Vector2.ONE*T.BATTLE_CELL).encloses(Rect2(record.center-Vector2.ONE*extent,Vector2.ONE*extent*2)),"arc stays inside its own cell: "+record.id+"/"+arc.role)
 		var tick_from=record.center+g.tick.from
 		var tick_to=record.center+g.tick.to
-		_check(Rect2(cell_origin,Vector2(70,70)).grow(-g.tick.width/2).has_point(tick_from) and Rect2(cell_origin,Vector2(70,70)).grow(-g.tick.width/2).has_point(tick_to),"marker stays inside cell: "+record.id)
+		_check(Rect2(cell_origin,Vector2.ONE*T.BATTLE_CELL).grow(-g.tick.width/2).has_point(tick_from) and Rect2(cell_origin,Vector2.ONE*T.BATTLE_CELL).grow(-g.tick.width/2).has_point(tick_to),"marker stays inside cell: "+record.id)
 		var size=game.mono.get_string_size(g.name,HORIZONTAL_ALIGNMENT_LEFT,-1,g.font_size)
-		_check(size.x<70 and size.y<70,"centered name stays inside cell: "+record.id)
+		_check(size.x<T.BATTLE_CELL and size.y<T.BATTLE_CELL,"centered name stays inside cell: "+record.id)
 	game.battle.units=before
 func _check(ok: bool,message: String) -> void:
 	checks+=1

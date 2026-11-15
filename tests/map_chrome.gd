@@ -1,5 +1,6 @@
 extends SceneTree
-const TEXT_BANDS=[Rect2(540,50,720,50),Rect2(530,100,25,700),Rect2(540,805,720,35)]
+const T=preload("res://game/tuning.gd")
+const TEXT_BANDS=[Rect2(T.BATTLE_BOARD_ORIGIN.x,50,T.BATTLE_CELL*10,50),Rect2(520,100,T.BATTLE_BOARD_ORIGIN.x-520,T.BATTLE_CELL*10),Rect2(T.BATTLE_BOARD_ORIGIN+Vector2(0,T.BATTLE_CELL*10+5),Vector2(T.BATTLE_CELL*10,35))]
 var checks=0
 var failures=0
 func _initialize() -> void:
