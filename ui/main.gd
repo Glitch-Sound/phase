@@ -153,8 +153,6 @@ func _draw_left() -> void:
 		draw_rect(rect,CYAN if k==0 else EDGE,false,1)
 		_text("%02d" % (k+1),Vector2(174,y+34),15,CYAN if k==0 else MUTED,mono)
 		_ring(self,Vector2(223,y+29),22,u,k==0)
-		_text(u.id,Vector2(257,y+22),21,WHITE,mono)
-		_bar(Rect2(257,y+31,59,3),u.hp/u.max_hp,CYAN if u.camp=="PLAYER" else status_colors[1])
 		_text("I %3.0f%%" % (M.sync(u,1).factor*100),Vector2(331,y+23),13,status_colors[1],mono)
 		_text("R %3.0f%%" % (M.sync(u,2).factor*100),Vector2(331,y+43),13,status_colors[2],mono)
 	_text("TURN %03d" % battle.turn,Vector2(174,762),15,CYAN,mono)
@@ -194,11 +192,7 @@ func _draw_board() -> void:
 			if i>=0:
 				var u: Dictionary=battle.units[i]
 				var center=pos+Vector2(35,27)
-				if i==battle.actor:
-					draw_arc(center,29,0,TAU,48,CYAN,1.5,true)
 				_ring(self,center,24,u,i==battle.actor)
-				_center(u.id,pos+Vector2(35,33),14,WHITE,mono)
-				_bar(Rect2(pos+Vector2(15,64),Vector2(40,2)),u.hp/u.max_hp,CYAN if u.camp=="PLAYER" else status_colors[1])
 				if i==selected:
 					_brackets(Rect2(pos+Vector2(5,5),Vector2(60,60)),MAGENTA)
 				if battle.mode=="TARGET" and battle.valid_target(battle.actor,i,battle.selected_skill):
@@ -236,14 +230,12 @@ func _draw_info() -> void:
 	var u: Dictionary=battle.units[index]
 	var camp_color=CYAN if u.camp=="PLAYER" else status_colors[1]
 	_text("INSPECT",Vector2(1324,94),14,MUTED,mono)
-	_text(u.id,Vector2(1324,147),44,WHITE,mono)
 	_text(u.camp+" / "+u.class_name,Vector2(1420,140),17,camp_color,mono)
 	_ring(self,Vector2(1535,245),81,u,index==battle.actor)
 	_text("INNER / MIDDLE / OUTER",Vector2(1438,348),13,MUTED,mono)
 	_text("HP",Vector2(1324,385),15,MUTED,mono)
 	_text("%s / %s" % [_hp(u.hp),_hp(u.max_hp)],Vector2(1390,385),21,WHITE,mono)
 	_text("MOVE %d / %d" % [u.moved,battle.movement(u)],Vector2(1588,385),16,CYAN,mono)
-	_bar(Rect2(1324,397,422,4),u.hp/u.max_hp,camp_color)
 	for k in range(5):
 		_text(["VIT","INF","RES","SPD","LUK"][k],Vector2(1410+k*68,432),14,status_colors[k],mono)
 	for r in range(3):
@@ -271,7 +263,6 @@ func _draw_preview() -> void:
 	var length=battle.path.size() if battle.mode=="MOVE" else u.moved
 	_text("PATH %d / DESTINATION (%d, %d)" % [length,u.pos.x,u.pos.y],Vector2(415,879),15,CYAN,mono)
 	_ring(self,Vector2(225,947),48,u)
-	_center(u.id,Vector2(225,953),19,WHITE,mono)
 	_text("G %05.1f" % u.gear_angle,Vector2(293,933),14,MUTED,mono)
 	_text("A %05.1f" % u.arms_angle,Vector2(293,958),14,MUTED,mono)
 	V.wave(self,Rect2(415,895,932,98),u,clock,status_colors)
@@ -392,7 +383,7 @@ func _action_dialog() -> void:
 			active.append(skill)
 	var height=122+active.size()*63
 	var panel=_modal(Rect2(700,330,420,height),false,true)
-	_label(panel,"UNIT "+battle.units[battle.actor].id+" / ACTION",Rect2(25,16,370,32),22,CYAN)
+	_label(panel,"UNIT "+V.unit_name(battle.units[battle.actor])+" / ACTION",Rect2(25,16,370,32),22,CYAN)
 	_button(panel,"WAIT",Rect2(25,63,370,48),func():battle.wait_turn();_after_action())
 	for i in range(active.size()):
 		var skill: String=active[i]
@@ -411,9 +402,9 @@ func _build() -> void:
 	_clear_overlay()
 	var panel=_modal(Rect2(300,115,1320,810),false)
 	_label(panel,"BUILD",Rect2(36,25,920,45),32,WHITE)
-	_label(panel,"01 / 02     SHARED ARCHIVE     BOTH SIDES: HUMAN",Rect2(36,78,1100,29),19,MUTED)
+	_label(panel,"1 / 2     SHARED ARCHIVE     BOTH SIDES: HUMAN",Rect2(36,78,1100,29),19,MUTED)
 	for i in range(2):
-		_button(panel,"UNIT %02d" % (i+1),Rect2(36+i*200,126,185,43),func():edit_unit=i;_build(),"",i==edit_unit)
+		_button(panel,"UNIT %d" % (i+1),Rect2(36+i*200,126,185,43),func():edit_unit=i;_build(),"",i==edit_unit)
 	_label(panel,"ARCHIVE   %d ARMS / %d GEAR / %d MUTATIONS" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size()],Rect2(36,187,1150,22),14,CYAN)
 	var b: Dictionary=collection.builds[edit_unit]
 	_label(panel,"CLASS",Rect2(36,237,160,30),16,MUTED)
@@ -477,8 +468,8 @@ func _build() -> void:
 	for s in C.stages():
 		stages.append(s.name)
 	_option(panel,stages,C.stages()[collection.stage_index].name,Rect2(688,573,588,42),func(value):collection.stage_index=stages.find(value);_build())
-	_label(panel,C.stages()[collection.stage_index].brief,Rect2(688,626,588,27),17,MAGENTA)
-	_label(panel,C.stages()[collection.stage_index].hint,Rect2(688,660,588,48),16,MUTED)
+	_label(panel,_unit_references(C.stages()[collection.stage_index].brief),Rect2(688,626,588,27),17,MAGENTA)
+	_label(panel,_unit_references(C.stages()[collection.stage_index].hint),Rect2(688,660,588,48),16,MUTED)
 	build_preview=Control.new()
 	build_preview.position=Vector2(688,115)
 	build_preview.size=Vector2(588,196)
@@ -558,7 +549,7 @@ func _start_battle() -> void:
 	battle.start(collection.stage_index,collection.builds)
 	_clear_overlay()
 	_hud()
-	_notify("UNIT %s / %s — Click adjacent empty cells, then double-click the endpoint." % [battle.units[battle.actor].id,battle.units[battle.actor].camp])
+	_notify("UNIT %s / %s — Click adjacent empty cells, then double-click the endpoint." % [V.unit_name(battle.units[battle.actor]),battle.units[battle.actor].camp])
 
 func _result() -> void:
 	if battle.mode!="RESULT" or battle.result.is_empty():
@@ -611,7 +602,7 @@ func _help() -> void:
 	_label(panel,"NORMAL   GEAR ↶ / ARMS ↷\nSHIFT S+  ARMSの回転2倍\nLOCK L=   GEARを固定\nREVERSE R-  ARMSを逆回転\nSINGULARITY ×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
 	_separator(panel,Rect2(36,560,1048,1))
 	_label(panel,"BUILD / ARCHIVE",Rect2(36,589,490,28),16,CYAN)
-	_label(panel,"01と02を編集し、装備の5値と差分を比較する。\nスキルは最大3。NONEも可。取得品と変異は共有。",Rect2(36,631,500,66),18,WHITE)
+	_label(panel,"1と2を編集し、装備の5値と差分を比較する。\nスキルは最大3。NONEも可。取得品と変異は共有。",Rect2(36,631,500,66),18,WHITE)
 	_label(panel,"READING THE SIGNAL",Rect2(580,589,500,28),16,CYAN)
 	_label(panel,"−はダメージ、＋は回復。\nINFは攻撃と回復、RESは抵抗。\nSAVE / LOADは明示操作。以前の保存は退避する。",Rect2(580,631,510,66),18,WHITE)
 	_button(panel,"CLOSE / ESC",Rect2(36,736,1048,44),_close_aux)
@@ -726,8 +717,11 @@ func _set_theme() -> void:
 	skin.set_font_size("font_size","TooltipLabel",18)
 	self.theme=skin
 
+func _unit_references(text: String) -> String:
+	return RegEx.create_from_string("\\b0([12])\\b").sub(text,"$1",true)
+
 func _ring(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,active: bool=false) -> void:
-	V.ring(canvas,center,radius,u,active,status_colors,CYAN)
+	V.ring(canvas,center,radius,u,active,status_colors,CYAN,mono)
 
 func _restart() -> void:
 	_close_aux()

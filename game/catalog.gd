@@ -38,7 +38,7 @@ static func player_builds() -> Array:
 	interceptor.arms=STARTER_STATS[1].duplicate()
 	return [runner,interceptor]
 
-## 戦闘ユニットを作る。idは表示名、campは陣営、posは座標、buildは構成。戻り値はHPと角度を初期化した辞書。
+## 戦闘ユニットを作る。idは内部識別子、campは陣営、posは座標、buildは構成。戻り値はHPと角度を初期化した辞書。
 static func unit(id: String, camp: String, pos: Vector2i, build: Dictionary) -> Dictionary:
 	var u=build.duplicate(true)
 	u.merge({"id":id,"camp":camp,"pos":pos,"gear_angle":0.0,"arms_angle":0.0,"moved":0},true)

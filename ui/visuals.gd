@@ -3,21 +3,37 @@ extends RefCounted
 const M = preload("res://game/phase_math.gd")
 const P = preload("res://ui/palette.gd")
 const TEXT = P.TEXT
+const T = preload("res://game/tuning.gd")
 
-## リングを描く。canvasは描画先、centerは中心、radiusは外半径、uは現在配置、selectedは選択枠、colorsは5色、accentは選択色。戻り値なし。副作用は描画。
-static func ring(canvas: CanvasItem, center: Vector2, radius: float, u: Dictionary, selected: bool, colors: Array, accent: Color) -> void:
-	canvas.draw_circle(center,radius+2,Color("040506"))
+## 表示名を返す。uは内部IDと陣営を持つユニット。戻り値は表示専用の名前。副作用なし。
+static func unit_name(u: Dictionary) -> String:
+	return str(int(u.id)) if u.camp=="PLAYER" and u.id in ["01","02"] else u.id
+
+## ユニット記号を記述する。radiusは外半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色。戻り値は円弧と目盛りと中央名の描画データ。副作用なし。
+static func glyph(radius: float, u: Dictionary, selected: bool, colors: Array, accent: Color) -> Dictionary:
+	var arcs=[]
 	for r in range(3):
-		var rad=radius*(0.48+0.23*r)
-		var width=radius*0.16
+		var rad=radius*T.UNIT_RING_RADII[r]
 		for status in range(5):
 			var sector=M.sector(u,r,status)
 			var start=deg_to_rad(sector.x-90)
 			var end=deg_to_rad(sector.x+sector.y-90)
-			canvas.draw_arc(center,rad,start+0.012,end-0.012,maxi(3,ceili(sector.y/3)),colors[status],width,true)
-	canvas.draw_line(center+Vector2(0,-radius-3),center+Vector2(0,-radius+5),TEXT,1.3,true)
-	if selected:
-		canvas.draw_arc(center,radius+2,0,TAU,80,Color(accent,0.8),1.5,true)
+			var gap=minf(maxf(T.UNIT_SECTOR_GAP,radius*T.UNIT_SECTOR_GAP_RATIO)/rad,(end-start)*T.UNIT_GAP_MAX_FRACTION)
+			arcs.append({"role":["CORE","GEAR","ARMS"][r],"radius":rad,"start":start+gap/2,"end":end-gap/2,"color":colors[status],"width":maxf(T.UNIT_MIN_LINE,radius*T.UNIT_RING_WIDTH)})
+	var health=clampf(u.hp/maxf(1.0,u.max_hp),0.0,1.0)
+	if health>0:
+		arcs.append({"role":"HP","radius":radius*T.UNIT_HP_RADIUS,"start":-PI/2,"end":-PI/2+TAU*health,"color":TEXT,"width":maxf(T.UNIT_MIN_LINE,radius*T.UNIT_HP_WIDTH)})
+	return {"arcs":arcs,"tick":{"from":Vector2(0,-radius*T.UNIT_TICK_RADII.x),"to":Vector2(0,-radius*T.UNIT_TICK_RADII.y),"color":accent if selected else TEXT,"width":maxf(T.UNIT_MIN_LINE,radius*T.UNIT_TICK_WIDTH)},"name":unit_name(u),"font_size":maxi(T.UNIT_NAME_MIN,roundi(radius*T.UNIT_NAME_SIZE))}
+
+## 記号を描く。canvasは描画先、centerは中心、radiusは外半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色、typefaceは名前のフォント。戻り値なし。副作用は描画。
+static func ring(canvas: CanvasItem, center: Vector2, radius: float, u: Dictionary, selected: bool, colors: Array, accent: Color, typeface: Font) -> void:
+	var g=glyph(radius,u,selected,colors,accent)
+	for arc in g.arcs:
+		canvas.draw_arc(center,arc.radius,arc.start,arc.end,maxi(3,ceili(rad_to_deg(arc.end-arc.start)/3)),arc.color,arc.width,true)
+	canvas.draw_line(center+g.tick.from,center+g.tick.to,g.tick.color,g.tick.width,true)
+	var size=typeface.get_string_size(g.name,HORIZONTAL_ALIGNMENT_LEFT,-1,g.font_size)
+	var baseline=(typeface.get_ascent(g.font_size)-typeface.get_descent(g.font_size))/2
+	canvas.draw_string(typeface,center+Vector2(-size.x/2,baseline),g.name,HORIZONTAL_ALIGNMENT_LEFT,-1,g.font_size,TEXT)
 
 ## 波形を描く。canvasは描画先、rectは共通角度領域、uは予測配置、_timeは互換用の秒数、colorsは5色。戻り値なし。副作用は描画。
 static func wave(canvas: CanvasItem, rect: Rect2, u: Dictionary, _time: float, colors: Array) -> void:
