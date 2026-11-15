@@ -42,8 +42,11 @@ var loot_rng := RandomNumberGenerator.new()
 var notice: Label
 var result_awarded := false
 var equipment_views: Dictionary={}
+var window_focused := true
 
 func _ready() -> void:
+	get_window().focus_exited.connect(_window_focus_exited)
+	get_window().focus_entered.connect(_window_focus_entered)
 	loot_rng.randomize()
 	font=SystemFont.new()
 	font.font_names=PackedStringArray(["Helvetica Neue","Hiragino Sans","Arial"])
@@ -285,6 +288,8 @@ func _draw_preview() -> void:
 	_text("READY ×5" if M.singularity(u) else "OFFLINE",Vector2(1618,984),17,MAGENTA if M.singularity(u) else MUTED,mono)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not window_focused:
+		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode==KEY_F1:
 			_help()
@@ -301,16 +306,26 @@ func _unhandled_input(event: InputEvent) -> void:
 	if is_instance_valid(auxiliary) or is_instance_valid(overlay):
 		return
 	if event is InputEventMouseMotion:
-		var p=get_global_mouse_position()-BOARD
-		hover_cell=Vector2i(floori(p.x/70),floori(p.y/70))
+		var p=event.position-BOARD
+		hover_cell=Vector2i(floori(p.x/70),floori(p.y/70)) if Rect2(BOARD,Vector2(700,700)).has_point(event.position) else Vector2i(-1,-1)
 	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT:
-		var p=get_global_mouse_position()
+		# Godotが拡縮と余白を変換済みの、そのイベントの論理座標を使う。
+		var p=event.position
 		if Rect2(560,100,700,700).has_point(p):
 			_cell_input(Vector2i(floori((p.x-560)/70),floori((p.y-100)/70)),event.double_click)
 		else:
 			for k in range(6):
 				if Rect2(164,345+k*64,342,58).has_point(p):
 					selected=battle.timeline(6)[k].index
+
+func _window_focus_exited() -> void:
+	window_focused=false
+	hover_cell=Vector2i(-1,-1)
+	get_viewport().gui_release_focus()
+	queue_redraw()
+
+func _window_focus_entered() -> void:
+	window_focused=true
 
 func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 	var index=battle.at(cell)

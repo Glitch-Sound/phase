@@ -91,7 +91,18 @@ LOADは明示操作で行い、破損や未知の版は現在データを変え�
 
 HELPに日本語の操作説明がある。
 SETTINGSでウィンドウ、フルスクリーン、波形の動きを抑えるREDUCED MOTIONを選べる。
-Godotの埋め込み実行では親のゲームビューがウィンドウを管理するため、フルスクリーンは独立実行でも確認する必要がある。
+1920x1080の内容全体を16:9のまま画面へ合わせ、異なる縦横比では上下または左右に余白を置く。
+RetinaでもOSの倍率を重ねず、文字と盤面とリングとオーバーレイを同じ比率で拡縮する。
+
+Godotから実行して全画面でも小さい場合は、ゲームビューの右上のメニューでFixed SizeからKeep Aspect Ratioへ変更する。
+この作業先はプロジェクト別の生成メタデータで変更済みだが、.godotを作り直した場合や新規インポート時は選び直す。
+ゲームバーの表示寸法がウィンドウの拡大に応じて増えることを確認する。
+今回の実画面では固定の1440x810から4442x2499へ増えた。
+
+埋め込み中は外側のゲームビューを拡大する。
+ゲーム内SETTINGSのFULLSCREENを使う場合は、Embed Game on Next Playを無効にして再実行するか、上記のgodot --pathコマンドで独立実行する。
+これは[Godotの埋め込み表示の制約](https://docs.godotengine.org/en/stable/tutorials/editor/game_embedding.html)である。
+表示と入力の検証結果は[表示追従の記録](artifacts/display-verification.md)を参照する。
 
 ## 検証
 
@@ -107,6 +118,7 @@ godot --headless --path . --script tests/run.gd
 godot --headless --path . --script tests/playthrough.gd
 godot --headless --path . --script tests/review_regressions.gd
 godot --headless --path . --script tests/contested_play.gd
+godot --headless --path . --script tests/display_flow.gd
 ~~~
 
 初版の検証は[初版検証記録](artifacts/verification.md)、レビュー後の修正と28手の実操作は[追加検証記録](artifacts/review-verification.md)に区別して記録する。

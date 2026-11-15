@@ -29,6 +29,9 @@ flowchart LR
 - OpenSpec設定とゲーム保存を作業先内に置く。
 Godot自身の標準設定はmacOSのApplication Supportを使用するため、制限されたシェルでは初期化警告が出る場合がある。
 - 調整定数はgame/tuning.gdに集約する。
+- 1920x1080の論理座標をcanvas_itemsとkeepで拡縮し、OSのDPI倍率やroot.scaleを追加で掛けない。
+- 盤面はマウスイベントの論理座標を使い、GUIの座標変換はGodotへ任せる。
+- フォーカス喪失でホバーとGUIフォーカスを解除し、未確定経路を保持して復帰後に続行する。
 
 ## コードのコメント
 

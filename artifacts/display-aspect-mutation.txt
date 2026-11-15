@@ -1,0 +1,34 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: uniform scale for (1600, 1200)
+FAIL: centered letterbox for (1600, 1200): actual (0.0, 0.0) / expected (0.0, 150.0)
+FAIL: scaled GUI button receives click
+FAIL: scaled click selects visible board cell
+FAIL: scaled double click opens action overlay
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: uniform scale for (2560, 1080)
+FAIL: centered letterbox for (2560, 1080): actual (0.0, 0.0) / expected (320.0, 0.0)
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: uniform scale for (1200, 1600)
+FAIL: centered letterbox for (1200, 1600): actual (0.0, 0.0) / expected (0.0, 463.0)
+FAIL: scaled GUI button receives click
+FAIL: scaled click selects visible board cell
+FAIL: scaled double click opens action overlay
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+DISPLAY FLOW: 61 checks / 12 failures

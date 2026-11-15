@@ -1,0 +1,48 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: scaled click selects visible board cell
+FAIL: scaled double click opens action overlay
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: scaled click selects visible board cell
+FAIL: scaled double click opens action overlay
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: scaled click selects visible board cell
+FAIL: scaled double click opens action overlay
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: scaled click selects visible board cell
+FAIL: scaled double click opens action overlay
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: scaled click selects visible board cell
+FAIL: scaled double click opens action overlay
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: scaled click selects visible board cell
+FAIL: scaled double click opens action overlay
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: scaled click selects visible board cell
+FAIL: scaled double click opens action overlay
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: scaled click selects visible board cell
+FAIL: scaled double click opens action overlay
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: route starts before resize
+FAIL: resize preserves pending route
+FAIL: route can extend after resize
+FAIL: resize return preserves the route
+FAIL: route can commit after resize return
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: event coordinates select the cell independently of cursor polling
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: focus loss clears hover
+FAIL: focus return resumes the preserved route
+DISPLAY FLOW: 61 checks / 24 failures
