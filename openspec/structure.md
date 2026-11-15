@@ -26,7 +26,3 @@
 
 GDScript標準のsnake_caseに従う。
 固定の全体ユニット順と陣営内の表示識別子を区別する。
-
-UIの編集と説明は目的別のページに分ける。
-BUILDはCORE、EQUIP、SKILLS、HELPはPLAY、PHASE、BUILD、SETTINGSはDISPLAY、COLORを持つ。
-ページは表示だけを切り替え、モデルの計算や保存を変更しない。

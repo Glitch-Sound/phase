@@ -37,8 +37,6 @@ var palette_pickers: Array=[]
 var palette_error: Label
 var settings_path="res://artifacts/runtime/ui-settings.json"
 const BOARD = Vector2(560,100)
-# 負幅は拡縮時も1物理ピクセルの線を保ち、セル境界を欠かさない。
-const GRID_LINE_WIDTH=-1.0
 const SAVE_PATH = "res://artifacts/runtime/phase-save.json"
 var battle=B.new()
 var collection=L.new()
@@ -68,9 +66,6 @@ var notice: Label
 var result_awarded := false
 var equipment_views: Dictionary={}
 var window_focused := true
-var info_open := false
-var phase_open := false
-var build_page := "CORE"
 
 func _ready() -> void:
 	get_window().focus_exited.connect(_window_focus_exited)
@@ -113,13 +108,17 @@ func _draw() -> void:
 	draw_rect(Rect2(0,0,1920,1080),BG)
 	if build_open:
 		return
+	_text("PHASE / TACTICAL STUDY",Vector2(150,38),14,MUTED,mono)
+	_text("BOTH SIDES / HUMAN",Vector2(1390,38),14,MUTED,mono)
+	_panel(Rect2(150,64,370,740))
+	_panel(Rect2(1300,64,470,740))
 	_draw_left()
 	_draw_board()
-	if info_open:
-		_draw_info()
+	_draw_info()
 	_draw_preview()
-	if message_time>0:
-		_text(message,Vector2(560,1042),16,CYAN)
+	_text("ROUTE → PHASE → EFFECT",Vector2(150,1053),13,MUTED,mono)
+	if message_time>0 and not build_open:
+		_text(message,Vector2(150,1028),18,CYAN)
 	for t in toasts:
 		var color: Color=t.color
 		color.a=clampf((2.4-t.age)/0.7,0,1)
@@ -127,31 +126,66 @@ func _draw() -> void:
 		_center(t.text,p,24,color,mono)
 
 func _draw_left() -> void:
-	var rows=battle.timeline(4)
+	_text("PHASE",Vector2(172,125),47,WHITE)
+	_text("ROUTE / PHASE / EFFECT",Vector2(174,153),13,CYAN,mono)
+	var y=191.0
+	for camp in ["PLAYER","ENEMY"]:
+		var hp=0.0
+		var max_hp=0.0
+		for u in battle.units:
+			if u.camp==camp:
+				hp+=u.hp
+				max_hp+=u.max_hp
+		var color=CYAN if camp=="PLAYER" else status_colors[1]
+		_text(camp,Vector2(174,y),17,color,mono)
+		_text("%s / %s" % [_hp(hp),_hp(max_hp)],Vector2(332,y),17,WHITE,mono)
+		_bar(Rect2(174,y+12,318,5),hp/maxf(1,max_hp),color)
+		y+=57
+	_text("TURN ORDER",Vector2(174,328),14,MUTED,mono)
+	_text("T / %.1f" % battle.units[battle.actor].next_time,Vector2(367,328),14,CYAN,mono)
+	var rows=battle.timeline(6)
 	for k in range(rows.size()):
-		var u: Dictionary=battle.units[rows[k].index]
-		var y=351+k*57
-		if k==0:
-			draw_circle(Vector2(461,y-7),3,CYAN)
-		_text(u.id,Vector2(480,y),22,CYAN if k==0 else MUTED,mono)
+		var row: Dictionary=rows[k]
+		var u: Dictionary=battle.units[row.index]
+		y=345+k*64
+		var rect=Rect2(164,y,342,58)
+		draw_rect(rect,Color(CYAN,0.09) if k==0 else PANEL)
+		draw_rect(rect,CYAN if k==0 else EDGE,false,1)
+		_text("%02d" % (k+1),Vector2(174,y+34),15,CYAN if k==0 else MUTED,mono)
+		_ring(self,Vector2(223,y+29),22,u,k==0)
+		_text(u.id,Vector2(257,y+22),21,WHITE,mono)
+		_bar(Rect2(257,y+31,59,3),u.hp/u.max_hp,CYAN if u.camp=="PLAYER" else status_colors[1])
+		_text("I %3.0f%%" % (M.sync(u,1).factor*100),Vector2(331,y+23),13,status_colors[1],mono)
+		_text("R %3.0f%%" % (M.sync(u,2).factor*100),Vector2(331,y+43),13,status_colors[2],mono)
+	_text("TURN %03d" % battle.turn,Vector2(174,762),15,CYAN,mono)
+
 
 func _draw_board() -> void:
 	var effect_chips=[]
+	_text(battle.stage.name,Vector2(560,77),18,WHITE,mono)
+	_text(battle.stage.type,Vector2(1090,77),14,CYAN,mono)
+	for x in range(10):
+		_text(str(x),BOARD+Vector2(x*70+32,-7),12,MUTED,mono)
+	for y in range(10):
+		_text(str(y),BOARD+Vector2(-19,y*70+40),12,MUTED,mono)
 	for y in range(10):
 		for x in range(10):
 			var cell=Vector2i(x,y)
 			var pos=BOARD+Vector2(cell)*70
 			var rect=Rect2(pos+Vector2.ONE,Vector2(68,68))
 			var panel=battle.panels.get(cell,"NORMAL")
-			# A faint connected grid supplies legal cell boundaries without 100 panels.
-			draw_line(pos,pos+Vector2(70,0),EDGE,GRID_LINE_WIDTH)
-			draw_line(pos,pos+Vector2(0,70),EDGE,GRID_LINE_WIDTH)
-			if battle.path.has(cell):
-				draw_rect(rect,Color(CYAN,0.035))
-			if cell==hover_cell and not is_instance_valid(overlay):
-				_brackets(rect.grow(-3),MUTED)
+			var color=Color("0d1013") if (x+y)%2==0 else Color("090c0f")
 			if panel!="NORMAL":
-				_text({"SHIFT":">>","LOCK":"=","REVERSE":"<"}[panel],pos+Vector2(7,17),12,MUTED,mono)
+				color=Color("13181d")
+			if battle.path.has(cell):
+				color=Color(CYAN,0.16)
+			if cell==hover_cell and not is_instance_valid(overlay):
+				color=color.lightened(0.055)
+			draw_rect(rect,color)
+			draw_rect(rect,EDGE,false,1)
+			if panel!="NORMAL":
+				var pc=MAGENTA if panel=="REVERSE" else (status_colors[3] if panel=="LOCK" else CYAN)
+				_text({"SHIFT":"S+","LOCK":"L=","REVERSE":"R-"}[panel],pos+Vector2(5,14),11,Color(pc,0.8),mono)
 			if cell==battle.stage.goal:
 				draw_rect(rect.grow(-4),Color(MAGENTA,0.6),false,1)
 				_text("GOAL",pos+Vector2(6,62),11,MAGENTA,mono)
@@ -168,11 +202,7 @@ func _draw_board() -> void:
 				var center=pos+Vector2(35,27)
 				if i==battle.actor:
 					draw_arc(center,29,0,TAU,48,CYAN,1.5,true)
-				if u.camp=="PLAYER":
-					draw_arc(center,20,0,TAU,40,CYAN if i==battle.actor else MUTED,1,true)
-				else:
-					var points=PackedVector2Array([center+Vector2(0,-22),center+Vector2(22,0),center+Vector2(0,22),center+Vector2(-22,0),center+Vector2(0,-22)])
-					draw_polyline(points,CYAN if i==battle.actor else MUTED,1,true)
+				_ring(self,center,24,u,i==battle.actor)
 				_center(u.id,pos+Vector2(35,33),14,WHITE,mono)
 				_bar(Rect2(pos+Vector2(15,64),Vector2(40,2)),u.hp/u.max_hp,CYAN if u.camp=="PLAYER" else status_colors[1])
 				if i==selected:
@@ -193,9 +223,8 @@ func _draw_board() -> void:
 			prev=now
 		for i in range(battle.path.size()):
 			var center=BOARD+Vector2(battle.path[i])*70+Vector2(35,35)
-			draw_circle(center,12,BG)
-			draw_arc(center,12,0,TAU,32,CYAN,1,true)
-			_center(str(i+1),center+Vector2(0,5),15,WHITE,mono)
+			draw_circle(center,14,WHITE)
+			_center(str(i+1),center+Vector2(0,6),17,BG,mono)
 		if not battle.path.is_empty():
 			_brackets(Rect2(BOARD+Vector2(battle.path.back())*70+Vector2(3,3),Vector2(64,64)),CYAN)
 	# 全セルの描画後に重ね、次の行の背景で数字を隠さない。
@@ -204,43 +233,67 @@ func _draw_board() -> void:
 		draw_rect(rect,BG)
 		draw_rect(rect,chip.color,false,1)
 		_center(chip.text,rect.position+Vector2(rect.size.x/2,16),16,chip.color,mono)
-	draw_line(BOARD+Vector2(700,0),BOARD+Vector2(700,700),EDGE,GRID_LINE_WIDTH)
-	draw_line(BOARD+Vector2(0,700),BOARD+Vector2(700,700),EDGE,GRID_LINE_WIDTH)
+	_text(battle.stage.brief,Vector2(560,828),15,MAGENTA,mono)
 
 func _effect_chip_rect(cell: Vector2i) -> Rect2:
 	return Rect2(BOARD+Vector2(cell)*70+Vector2(25,2),Vector2(43,22))
 
 func _draw_info() -> void:
-	var u: Dictionary=battle.units[selected if selected>=0 else battle.actor]
-	_text(u.id+" / "+u.camp,Vector2(1320,160),23,WHITE,mono)
-	_text("HP %s / %s" % [_hp(u.hp),_hp(u.max_hp)],Vector2(1320,205),20,WHITE,mono)
-	_text(u.class_name+" / MOVE "+str(battle.movement(u)),Vector2(1320,243),15,MUTED,mono)
+	var index=selected if selected>=0 else battle.actor
+	var u: Dictionary=battle.units[index]
+	var camp_color=CYAN if u.camp=="PLAYER" else status_colors[1]
+	_text("INSPECT",Vector2(1324,94),14,MUTED,mono)
+	_text(u.id,Vector2(1324,147),44,WHITE,mono)
+	_text(u.camp+" / "+u.class_name,Vector2(1420,140),17,camp_color,mono)
+	_ring(self,Vector2(1535,245),81,u,index==battle.actor)
+	_text("INNER / MIDDLE / OUTER",Vector2(1438,348),13,MUTED,mono)
+	_text("HP",Vector2(1324,385),15,MUTED,mono)
+	_text("%s / %s" % [_hp(u.hp),_hp(u.max_hp)],Vector2(1390,385),21,WHITE,mono)
+	_text("MOVE %d / %d" % [u.moved,battle.movement(u)],Vector2(1588,385),16,CYAN,mono)
+	_bar(Rect2(1324,397,422,4),u.hp/u.max_hp,camp_color)
 	for k in range(5):
-		_text(["VIT","INF","RES","SPD","LUK"][k],Vector2(1415+k*66,295),13,status_colors[k],mono)
+		_text(["VIT","INF","RES","SPD","LUK"][k],Vector2(1410+k*68,432),14,status_colors[k],mono)
 	for r in range(3):
-		_text(["CORE","GEAR","ARMS"][r],Vector2(1320,330+r*31),14,MUTED,mono)
+		var y=461+r*27
+		_text(["CORE","GEAR","ARMS"][r],Vector2(1324,y),14,MUTED,mono)
 		for k in range(5):
-			_text(str(u[M.KEYS[r]][k]),Vector2(1420+k*66,330+r*31),17,WHITE,mono)
-	for r in range(2):
-		var key="arms" if r==0 else "gear"
-		_text(C.serial(key.to_upper(),u[key]),Vector2(1320,450+r*64),15,MUTED,mono)
-		if u[key+"_mutation"]!="NORMAL":
-			_text(u[key+"_mutation"],Vector2(1320,475+r*64),14,CYAN,mono)
+			_text("%02d" % u[M.KEYS[r]][k],Vector2(1415+k*68,y),17,WHITE,mono)
+			_bar(Rect2(1410+k*68,y+5,42,2),u[M.KEYS[r]][k]/100.0,status_colors[k])
+	_text(C.serial("ARMS",u.arms),Vector2(1324,558),15,WHITE,mono)
+	_text("MUTATION / "+u.arms_mutation,Vector2(1324,580),12,MUTED,mono)
+	_text(C.serial("GEAR",u.gear),Vector2(1324,611),15,WHITE,mono)
+	_text("MUTATION / "+u.gear_mutation,Vector2(1324,633),12,MUTED,mono)
 	for k in range(u.skills.size()):
-		_text(C.SKILLS[u.skills[k]].label,Vector2(1320,615+k*36),17,WHITE,mono)
+		var skill: Dictionary=C.SKILLS[u.skills[k]]
+		var y=648+k*43
+		draw_rect(Rect2(1324,y,422,37),PANEL)
+		draw_rect(Rect2(1324,y,2,37),CYAN if skill.type=="ACTIVE" else MAGENTA)
+		_text(skill.type,Vector2(1335,y+24),12,MUTED,mono)
+		_text(skill.effect+" / "+skill.area,Vector2(1418,y+24),15,WHITE,mono)
 
 func _draw_preview() -> void:
 	var u=battle.preview()
-	_ring(self,Vector2(615,893),43,u)
-	_text("INF  %.1f%%" % (M.sync(u,1).factor*100),Vector2(700,882),20,status_colors[1],mono)
-	_text("RES  %.1f%%" % (M.sync(u,2).factor*100),Vector2(700,917),20,status_colors[2],mono)
+	_panel(Rect2(150,850,1620,163))
+	_text("PHASE PREVIEW",Vector2(174,879),14,MUTED,mono)
 	var length=battle.path.size() if battle.mode=="MOVE" else u.moved
-	_text("%d / %d" % [length,battle.movement(u)],Vector2(1000,891),17,MUTED,mono)
-	if M.singularity(u):
-		_text("×5",Vector2(1060,918),20,CYAN,mono)
-	if phase_open:
-		V.wave(self,Rect2(560,950,700,65),u,clock,status_colors)
-		_text("PATH %d → (%d,%d)   G %.1f° / A %.1f°" % [length,u.pos.x,u.pos.y,u.gear_angle,u.arms_angle],Vector2(560,1042),14,MUTED,mono)
+	_text("PATH %d / DESTINATION (%d, %d)" % [length,u.pos.x,u.pos.y],Vector2(415,879),15,CYAN,mono)
+	_ring(self,Vector2(225,947),48,u)
+	_center(u.id,Vector2(225,953),19,WHITE,mono)
+	_text("G %05.1f" % u.gear_angle,Vector2(293,933),14,MUTED,mono)
+	_text("A %05.1f" % u.arms_angle,Vector2(293,958),14,MUTED,mono)
+	V.wave(self,Rect2(415,895,932,98),u,clock,status_colors)
+	_text("0°",Vector2(415,1005),10,MUTED,mono)
+	_text("180°",Vector2(860,1005),10,MUTED,mono)
+	_text("360°",Vector2(1316,1005),10,MUTED,mono)
+	_text("RESONANCE",Vector2(1380,879),14,MUTED,mono)
+	_bar(Rect2(1380,923,350,2),M.sync(u,1).factor/2,status_colors[1])
+	_text("INF SYNC",Vector2(1380,916),14,status_colors[1],mono)
+	_text("%5.1f%%" % (M.sync(u,1).factor*100),Vector2(1618,916),22,status_colors[1],mono)
+	_bar(Rect2(1380,955,350,2),M.sync(u,2).factor/2,status_colors[2])
+	_text("RES SYNC",Vector2(1380,948),14,status_colors[2],mono)
+	_text("%5.1f%%" % (M.sync(u,2).factor*100),Vector2(1618,948),22,status_colors[2],mono)
+	_text("SINGULARITY ×5",Vector2(1380,984),14,MUTED,mono)
+	_text("READY" if M.singularity(u) else "—",Vector2(1618,984),17,MAGENTA if M.singularity(u) else MUTED,mono)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not window_focused:
@@ -248,12 +301,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode==KEY_F1:
 			_help()
-		elif not is_instance_valid(auxiliary) and event.keycode==KEY_M:
-			_menu()
-		elif not build_open and not is_instance_valid(auxiliary) and event.keycode==KEY_I:
-			_toggle_info()
-		elif not build_open and not is_instance_valid(auxiliary) and event.keycode==KEY_P:
-			_toggle_phase()
 		elif event.keycode==KEY_ESCAPE:
 			if is_instance_valid(auxiliary):
 				_close_aux()
@@ -268,17 +315,15 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		var p=event.position-BOARD
 		hover_cell=Vector2i(floori(p.x/70),floori(p.y/70)) if Rect2(BOARD,Vector2(700,700)).has_point(event.position) else Vector2i(-1,-1)
-		tooltip_text="Double-click to confirm" if not battle.path.is_empty() and hover_cell==battle.path.back() else ""
 	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT:
 		# Godotが拡縮と余白を変換済みの、そのイベントの論理座標を使う。
 		var p=event.position
 		if Rect2(560,100,700,700).has_point(p):
 			_cell_input(Vector2i(floori((p.x-560)/70),floori((p.y-100)/70)),event.double_click)
 		else:
-			for k in range(4):
-				if Rect2(455,320+k*57,70,48).has_point(p):
-					selected=battle.timeline(4)[k].index
-					info_open=true
+			for k in range(6):
+				if Rect2(164,345+k*64,342,58).has_point(p):
+					selected=battle.timeline(6)[k].index
 
 func _window_focus_exited() -> void:
 	window_focused=false
@@ -304,7 +349,6 @@ func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 	elif battle.mode=="MOVE":
 		if index>=0 and cell!=battle.units[battle.actor].pos:
 			selected=index
-			info_open=true
 		elif double_click and not battle.path.is_empty() and cell==battle.path.back():
 			battle.commit_path()
 			selected=-1
@@ -335,138 +379,133 @@ func _feedback() -> void:
 
 func _hud() -> void:
 	if is_instance_valid(hud):
-		remove_child(hud)
 		hud.queue_free()
 	hud=Control.new()
 	hud.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	add_child(hud)
-	if is_instance_valid(overlay):
-		move_child(hud,overlay.get_index())
-	if build_open:
-		return
-	_button(hud,"MENU",Rect2(1650,45,120,40),_menu,"settings").tooltip_text="Menu / M / F1 help"
-	_button(hud,battle.stage.name,Rect2(560,45,360,40),_objective).tooltip_text="Objective"
-	_button(hud,"ORDER",Rect2(435,250,100,40),_order).tooltip_text="Turn order and faction HP"
-	_button(hud,"INFO",Rect2(1310,95,115,40),_toggle_info,"",info_open).tooltip_text="Unit details / I"
-	_button(hud,"PHASE",Rect2(1130,866,130,40),_toggle_phase,"",phase_open).tooltip_text="Four waveforms and angles / P"
-	if info_open and battle.mode!="CHOICE":
-		_info_selectors(hud)
+	for row in [["HELP",1218,_help],["SETTINGS",1346,_settings],["RESTART",1492,_restart],["QUIT",1640,_quit]]:
+		_button(hud,row[0],Rect2(row[1],1025,118,40),row[2])
+	var hint="Click adjacent cells • Double-click endpoint to confirm • Esc clears route"
 	if battle.mode=="TARGET":
-		_label(hud,"ATTACK" if battle.selected_skill==C.DAMAGE else "HEAL",Rect2(560,810,300,32),16,WHITE)
-		_button(hud,"BACK",Rect2(1130,805,130,40),func():battle.back();_action_dialog())
+		hint="SELECT TARGET / "+C.SKILLS[battle.selected_skill].label
+		_button(hud,"BACK",Rect2(1024,802,236,37),func():battle.back();_action_dialog())
 	elif battle.mode=="MOVE" and battle.trapped():
-		_button(hud,"WAIT",Rect2(1130,805,130,40),func():battle.wait_turn();_after_action())
-	elif battle.mode=="MOVE" and not battle.path.is_empty():
-		hud.tooltip_text="Double-click the last step to confirm / Esc clears the path"
+		hint="NO LEGAL MOVEMENT / WAIT AVAILABLE"
+		_button(hud,"WAIT",Rect2(1024,802,236,37),func():battle.wait_turn();_after_action())
+	_label(hud,hint,Rect2(560,55,700,27),14,MUTED).visible=false
+	if not build_open:
+		_label(hud,hint,Rect2(560,14,720,30),14,CYAN)
 
 func _action_dialog() -> void:
 	_clear_overlay()
 	_hud()
-	var u: Dictionary=battle.units[battle.actor]
 	var active=[]
-	for skill in u.skills:
+	for skill in battle.units[battle.actor].skills:
 		if C.SKILLS[skill].type=="ACTIVE":
 			active.append(skill)
-	var panel=_modal(Rect2(1320,710 if info_open else 300,390,180+active.size()*58),false,true)
-	if info_open:
-		_info_selectors(overlay)
-	_label(panel,u.id,Rect2(24,18,90,36),25,WHITE)
-	_label(panel,"HP %s / %s" % [_hp(u.hp),_hp(u.max_hp)],Rect2(110,23,250,28),17,MUTED)
-	_button(panel,"WAIT",Rect2(24,77,342,45),func():battle.wait_turn();_after_action())
+	var height=122+active.size()*63
+	var panel=_modal(Rect2(700,330,420,height),false,true)
+	_label(panel,"UNIT "+battle.units[battle.actor].id+" / ACTION",Rect2(25,16,370,32),22,CYAN)
+	_button(panel,"WAIT",Rect2(25,63,370,48),func():battle.wait_turn();_after_action())
 	for i in range(active.size()):
 		var skill: String=active[i]
-		var button=_button(panel,"ATTACK" if skill==C.DAMAGE else "HEAL",Rect2(24,135+i*58,342,45),func():battle.choose_skill(skill);_clear_overlay();_hud(),"attack" if skill==C.DAMAGE else "heal")
+		var button=_button(panel,C.SKILLS[skill].label,Rect2(25,126+i*63,370,48),func():battle.choose_skill(skill);_clear_overlay();_hud())
 		var available=false
 		for target in range(battle.units.size()):
 			if battle.valid_target(battle.actor,target,skill):
 				available=true
 		button.disabled=not available
-		button.tooltip_text="No adjacent target" if not available else C.SKILLS[skill].label
+		button.tooltip_text="No valid adjacent target." if not available else ""
 
 func _build() -> void:
 	build_open=true
 	selected=-1
 	battle.start(collection.stage_index,collection.builds)
 	_clear_overlay()
-	var panel=_modal(Rect2(480,150,960,780),false)
-	_label(panel,"PHASE",Rect2(34,23,650,46),30,WHITE)
-	_button(panel,"MENU",Rect2(792,27,132,40),_menu,"settings")
+	var panel=_modal(Rect2(300,115,1320,810),false)
+	_label(panel,"BUILD",Rect2(36,25,920,45),32,WHITE)
+	_label(panel,"01 / 02     SHARED ARCHIVE     BOTH SIDES: HUMAN",Rect2(36,78,1100,29),19,MUTED)
 	for i in range(2):
-		_button(panel,"%02d" % (i+1),Rect2(34+i*96,96,80,42),func():edit_unit=i;_build(),"",i==edit_unit)
-	for i in range(3):
-		var page=["CORE","EQUIP","SKILLS"][i]
-		_button(panel,page,Rect2(34+i*169,173,152,42),func():build_page=page;_build(),"",page==build_page)
+		_button(panel,"UNIT %02d" % (i+1),Rect2(36+i*200,126,185,43),func():edit_unit=i;_build(),"",i==edit_unit)
+	_label(panel,"ARCHIVE   %d ARMS / %d GEAR / %d MUTATIONS" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size()],Rect2(36,187,1150,22),14,CYAN)
 	var b: Dictionary=collection.builds[edit_unit]
+	_label(panel,"CLASS",Rect2(36,237,160,30),16,MUTED)
+	_option(panel,["STANDARD","REVERSE"],b.class_name,Rect2(210,230,390,43),func(value):b.class_name=value;_refresh_build())
+	_label(panel,"CORE / TOTAL 100",Rect2(36,292,560,27),16,MUTED)
 	core_controls=[]
 	equipment_views={}
-	if build_page=="CORE":
-		_option(panel,["STANDARD","REVERSE"],b.class_name,Rect2(34,258,490,42),func(value):b.class_name=value;_refresh_build())
-		for k in range(5):
-			_label(panel,["VIT","INF","RES","SPD","LUK"][k],Rect2(34+k*100,340,90,25),15,status_colors[k])
-			var spin=SpinBox.new()
-			spin.position=Vector2(34+k*100,379)
-			spin.get_line_edit().add_theme_constant_override("minimum_character_width",2)
-			spin.size=Vector2(87,43)
-			spin.min_value=1
-			spin.max_value=96
-			spin.value=b.core[k]
-			panel.add_child(spin)
-			core_controls.append(spin)
-			spin.value_changed.connect(func(value):_core_change(k,int(value)))
-		_label(panel,"Σ 100",Rect2(34,451,490,30),17,MUTED)
-	elif build_page=="EQUIP":
-		for r in range(2):
-			var key="arms" if r==0 else "gear"
-			var y=252+r*164
-			_label(panel,key.to_upper(),Rect2(34,y,100,30),15,MUTED)
-			var choices: Array=collection.items[key.to_upper()].keys()
-			var view=Control.new()
-			view.position=Vector2(34,y+63)
-			view.size=Vector2(510,30)
-			view.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	for k in range(5):
+		_label(panel,["VIT","INF","RES","SPD","LUK"][k],Rect2(36+k*116,326,100,25),17,status_colors[k])
+		var spin=SpinBox.new()
+		spin.position=Vector2(36+k*116,359)
+		spin.size=Vector2(102,46)
+		spin.min_value=1
+		spin.max_value=96
+		spin.step=1
+		spin.value=b.core[k]
+		panel.add_child(spin)
+		core_controls.append(spin)
+		spin.value_changed.connect(func(value):_core_change(k,int(value)))
+	_label(panel,"Σ 100   /   MIN 1   /   AUTOMATIC REDISTRIBUTION",Rect2(36,414,570,27),14,MUTED)
+	for r in range(2):
+		var key="arms" if r==0 else "gear"
+		var y=454+r*128
+		_label(panel,key.to_upper(),Rect2(36,y,170,28),17,WHITE)
+		var choices: Array=collection.items[key.to_upper()].keys()
+		var view=Control.new()
+		view.position=Vector2(36,y+40)
+		view.size=Vector2(564,27)
+		view.mouse_filter=Control.MOUSE_FILTER_IGNORE
+		view.set_meta("before",b[key].duplicate())
+		panel.add_child(view)
+		equipment_views[key]=view
+		view.draw.connect(func():
+			for status in range(5):
+				var delta=int(b[key][status])-int(view.get_meta("before")[status])
+				view.draw_line(Vector2(status*112,24),Vector2(status*112+minf(b[key][status],100)*0.85,24),status_colors[status],2)
+				var text="%s %d" % [["VIT","INF","RES","SPD","LUK"][status],b[key][status]]
+				if delta!=0:
+					text+=" (%+d)" % delta
+				view.draw_string(font,Vector2(status*112,20),text,HORIZONTAL_ALIGNMENT_LEFT,-1,14,status_colors[status]))
+		var option=_option(panel,choices,C.serial(key.to_upper(),b[key]),Rect2(210,y-5,390,40),func(value):
 			view.set_meta("before",b[key].duplicate())
-			panel.add_child(view)
-			equipment_views[key]=view
-			view.draw.connect(func():
-				for status in range(5):
-					var delta=int(b[key][status])-int(view.get_meta("before")[status])
-					var text="%s %d" % [["VIT","INF","RES","SPD","LUK"][status],b[key][status]]
-					if delta!=0:
-						text+=" (%+d)" % delta
-					view.draw_string(font,Vector2(status*102,20),text,HORIZONTAL_ALIGNMENT_LEFT,-1,14,status_colors[status]))
-			var option=_option(panel,choices,C.serial(key.to_upper(),b[key]),Rect2(145,y-3,379,40),func(value):
-				view.set_meta("before",b[key].duplicate())
-				b[key]=collection.items[key.to_upper()][value].duplicate()
-				_refresh_build())
+			b[key]=collection.items[key.to_upper()][value].duplicate()
+			_refresh_build())
+		for index in range(choices.size()):
+			option.get_popup().set_item_tooltip(index,_equipment_comparison(collection.items[key.to_upper()][choices[index]],b[key]))
+		option.item_selected.connect(func(_index):
 			for index in range(choices.size()):
-				option.get_popup().set_item_tooltip(index,_equipment_comparison(collection.items[key.to_upper()][choices[index]],b[key]))
-			option.item_selected.connect(func(_index):
-				for index in range(choices.size()):
-					option.get_popup().set_item_tooltip(index,_equipment_comparison(collection.items[key.to_upper()][choices[index]],b[key])))
-			if collection.mutations.size()>1:
-				_option(panel,collection.mutations,b[key+"_mutation"],Rect2(145,y+104,379,34),func(value):b[key+"_mutation"]=value;_refresh_build())
-	else:
-		for i in range(3):
-			var choices=["NONE"]
-			choices.append_array(collection.skills)
-			var current: String=b.skills[i] if i<b.skills.size() else "NONE"
-			_option(panel,choices,current,Rect2(34,267+i*70,490,44),func(value):_skill_change(i,value))
+				option.get_popup().set_item_tooltip(index,_equipment_comparison(collection.items[key.to_upper()][choices[index]],b[key])))
+		_label(panel,"MUTATION",Rect2(36,y+77,170,24),14,MUTED)
+		_option(panel,collection.mutations,b[key+"_mutation"],Rect2(210,y+70,390,34),func(value):b[key+"_mutation"]=value;_refresh_build())
+	_label(panel,"MODEL: hover to compare   /   Δ: previous equipment",Rect2(36,695,600,24),12,MUTED)
+	_label(panel,"SKILLS / 3 SLOTS",Rect2(688,328,580,30),15,MUTED)
+	for i in range(3):
+		var choices=["NONE"]
+		choices.append_array(collection.skills)
+		var current: String=b.skills[i] if i<b.skills.size() else "NONE"
+		_option(panel,choices,current,Rect2(688,368+i*49,588,41),func(value):_skill_change(i,value))
+	_label(panel,"OPERATION",Rect2(688,536,570,26),16,MUTED)
+	var stages=[]
+	for s in C.stages():
+		stages.append(s.name)
+	_option(panel,stages,C.stages()[collection.stage_index].name,Rect2(688,573,588,42),func(value):collection.stage_index=stages.find(value);_build())
+	_label(panel,C.stages()[collection.stage_index].brief,Rect2(688,626,588,27),17,MAGENTA)
+	_label(panel,C.stages()[collection.stage_index].hint,Rect2(688,660,588,48),16,MUTED)
 	build_preview=Control.new()
-	build_preview.position=Vector2(600,240)
-	build_preview.size=Vector2(300,285)
+	build_preview.position=Vector2(688,115)
+	build_preview.size=Vector2(588,196)
 	build_preview.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	panel.add_child(build_preview)
 	var preview=build_preview
 	preview.draw.connect(func():
 		var u=C.unit("%02d" % (edit_unit+1),"PLAYER",Vector2i.ZERO,collection.builds[edit_unit])
-		_ring(preview,Vector2(150,95),70,u)
-		preview.draw_string(mono,Vector2(58,220),"HP %s / MOVE %d" % [_hp(u.max_hp),battle.movement(u)],HORIZONTAL_ALIGNMENT_LEFT,-1,17,WHITE))
-	var stages=[]
-	for stage in C.stages():
-		stages.append(stage.name)
-	_option(panel,stages,C.stages()[collection.stage_index].name,Rect2(34,601,490,43),func(value):collection.stage_index=stages.find(value);_build())
-	_label(panel,C.stages()[collection.stage_index].brief,Rect2(34,656,860,30),15,MUTED)
-	_button(panel,"START",Rect2(660,708,264,44),_start_battle)
+		_ring(preview,Vector2(100,103),79,u,true)
+		preview.draw_string(mono,Vector2(220,84),"HP %s / MOVE %d" % [_hp(u.max_hp),battle.movement(u)],HORIZONTAL_ALIGNMENT_LEFT,-1,20,WHITE)
+		preview.draw_string(mono,Vector2(220,119),"DELAY %.1f / INF %.1f%%" % [M.delay(u),M.sync(u,1).factor*100],HORIZONTAL_ALIGNMENT_LEFT,-1,16,CYAN))
+	for row in [["SAVE",36,_save],["LOAD",151,_load],["HELP",266,_help],["SETTINGS",381,_settings],["QUIT",526,_quit]]:
+		_button(panel,row[0],Rect2(row[1],730,106 if row[0]!="SETTINGS" else 136,44),row[2])
+	_button(panel,"START",Rect2(934,730,342,48),_start_battle)
 	_refresh_build()
 
 func _core_change(index: int, value: int) -> void:
@@ -487,7 +526,7 @@ func _core_change(index: int, value: int) -> void:
 			if difference==0:
 				break
 	core_refreshing=true
-	for k in range(core_controls.size()):
+	for k in range(5):
 		core_controls[k].value=core[k]
 	core_refreshing=false
 	_refresh_build()
@@ -532,9 +571,7 @@ func _start_battle() -> void:
 	battle.start(collection.stage_index,collection.builds)
 	_clear_overlay()
 	_hud()
-	info_open=false
-	phase_open=false
-	message_time=0
+	_notify("UNIT %s / %s — Click adjacent empty cells, then double-click the endpoint." % [battle.units[battle.actor].id,battle.units[battle.actor].camp])
 
 func _result() -> void:
 	if battle.mode!="RESULT" or battle.result.is_empty():
@@ -543,82 +580,96 @@ func _result() -> void:
 	if not result_awarded:
 		drops=collection.roll_loot(loot_rng)
 		result_awarded=true
-	var panel=_modal(Rect2(630,300,660,480),false)
-	_icon(panel,"check" if battle.result=="VICTORY" else "close",Rect2(32,32,30,30),CYAN if battle.result=="VICTORY" else status_colors[1])
-	_label(panel,battle.result,Rect2(82,23,540,48),32,WHITE)
+	var panel=_modal(Rect2(530,240,860,540),false)
+	_icon(panel,"check" if battle.result=="VICTORY" else "close",Rect2(40,42,48,48),CYAN if battle.result=="VICTORY" else status_colors[1])
+	_label(panel,battle.result,Rect2(110,35,710,66),48,CYAN if battle.result=="VICTORY" else status_colors[1])
+	_label(panel,"%s / %d TURNS" % [battle.stage.name,battle.turn],Rect2(40,120,780,34),19,MUTED)
+	_label(panel,"ARCHIVE / NEW SIGNALS",Rect2(40,187,780,27),16,MUTED)
+	var y=235
 	if drops.is_empty():
-		_label(panel,"NO DROP",Rect2(34,148,592,35),18,MUTED)
-	for i in range(drops.size()):
-		var drop=drops[i]
-		var title=C.SKILLS[drop.skill].label if drop.has("skill") else drop.kind+(" / "+drop.mutation if drop.new_mutation else "")
-		_button(panel,title,Rect2(34,140+i*72,592,48),func():_drop_detail(drop))
-	_button(panel,"RETURN TO BUILD",Rect2(34,390,592,48),_build)
+		_label(panel,"0 / NO NEW SIGNALS",Rect2(40,y,780,40),23,WHITE)
+	for drop in drops:
+		if drop.has("skill"):
+			_label(panel,C.SKILLS[drop.skill].label,Rect2(40,y,780,33),22,CYAN)
+			_label(panel,drop.skill,Rect2(40,y+36,780,30),14,MUTED)
+		else:
+			var title=C.serial(drop.kind,drop.stats,drop.mutation) if drop.new_item else "MUTATION / "+drop.mutation
+			_label(panel,title,Rect2(40,y,780,33),20,CYAN)
+			var values=[]
+			for i in range(5):
+				values.append("%s %d" % [["VIT","INF","RES","SPD","LUK"][i],drop.stats[i]])
+			_label(panel," / ".join(values)+(" / "+drop.mutation if drop.new_mutation else ""),Rect2(40,y+36,780,35),16,MUTED)
+		y+=91
+	_button(panel,"RETURN TO BUILD",Rect2(40,440,780,54),_build)
 
-func _help(page: String="PLAY") -> void:
+func _help() -> void:
 	_close_aux()
-	var panel=_modal(Rect2(560,220,800,640),true)
-	_label(panel,"HELP",Rect2(32,22,736,40),26,WHITE)
+	var panel=_modal(Rect2(400,135,1120,810),true)
+	_label(panel,"HELP",Rect2(36,25,1048,48),32,WHITE)
+	_label(panel,"両陣営を手動で操作する。敵CPUはない。",Rect2(36,85,1048,30),19,MUTED)
+	var steps=[
+		["move","01 / ROUTE","隣接する空きマスを順番にクリック。\n経路上をクリックすると後続を取消。"],
+		["target","02 / ALIGN","下のリングと4波形で位相を比較。\nINF / RESは最終補正。最大200%。"],
+		["check","03 / ACT","終点をダブルクリックして確定。\nWAITかスキルを選び、対象をクリック。"]
+	]
 	for i in range(3):
-		var name=["PLAY","PHASE","BUILD"][i]
-		_button(panel,name,Rect2(32+i*246,90,228,42),func():_help(name),"",page==name)
-	if page=="PLAY":
-		_label(panel,"隣接する空きマスをクリックして経路を作る。\n終点をダブルクリックして確定する。\nWAITかスキルを選び、対象をクリックする。",Rect2(32,180,736,120),22,WHITE)
-		_label(panel,"両陣営を手動操作。上下左右のみ。再進入不可。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで経路取消。BACKで行動を選び直す。\nユニット/手番IDかINFOで詳細を開く。",Rect2(32,325,736,106),18,MUTED)
-		_label(panel,"I 詳細    P 位相    M メニュー    F1 HELP",Rect2(32,477,736,36),18,MUTED)
-	elif page=="PHASE":
-		_label(panel,"内側 CORE / 中央 GEAR / 外側 ARMS",Rect2(32,180,736,35),21,WHITE)
-		_label(panel,"通常 GEAR ↶ / ARMS ↷\n>> ARMS回転2倍    = GEAR固定    < ARMS逆回転",Rect2(32,250,736,77),20,WHITE)
-		_label(panel,"−はダメージ、＋は回復。\nINFは攻撃と回復、RESは抵抗。",Rect2(32,360,736,70),21,WHITE)
-		_label(panel,"最終補正は最大200%。\n特異点 ×5: 生INF完全一致 + CORE INF ≤10",Rect2(32,465,736,66),18,MUTED)
-	else:
-		_label(panel,"COREは合計100、各値1以上。\n装備は5値と差分を比較して選ぶ。\nスキルは最大3。取得品と変異は共有。",Rect2(32,180,736,134),22,WHITE)
-		_label(panel,"SAVE / LOADは明示操作。以前の保存は退避する。",Rect2(32,370,736,40),18,MUTED)
-	_button(panel,"CLOSE / ESC",Rect2(32,562,736,44),_close_aux)
+		var x=36+i*354
+		_icon(panel,steps[i][0],Rect2(x,153,28,28),CYAN)
+		_label(panel,steps[i][1],Rect2(x+42,149,298,32),20,WHITE)
+		_label(panel,steps[i][2],Rect2(x,201,340,76),18,MUTED)
+	_separator(panel,Rect2(36,300,1048,1))
+	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
+	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\nユニットか手番一覧をクリックして詳細を調べる。",Rect2(36,377,500,152),18,WHITE)
+	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
+	_label(panel,"NORMAL   GEAR ↶ / ARMS ↷\nSHIFT S+  ARMSの回転2倍\nLOCK L=   GEARを固定\nREVERSE R-  ARMSを逆回転\nSINGULARITY ×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
+	_separator(panel,Rect2(36,560,1048,1))
+	_label(panel,"BUILD / ARCHIVE",Rect2(36,589,490,28),16,CYAN)
+	_label(panel,"01と02を編集し、装備の5値と差分を比較する。\nスキルは最大3。NONEも可。取得品と変異は共有。",Rect2(36,631,500,66),18,WHITE)
+	_label(panel,"READING THE SIGNAL",Rect2(580,589,500,28),16,CYAN)
+	_label(panel,"−はダメージ、＋は回復。\nINFは攻撃と回復、RESは抵抗。\nSAVE / LOADは明示操作。以前の保存は退避する。",Rect2(580,631,510,66),18,WHITE)
+	_button(panel,"CLOSE / ESC",Rect2(36,736,1048,44),_close_aux)
 
-func _settings(page: String="DISPLAY") -> void:
+func _settings() -> void:
 	_close_aux()
-	var panel=_modal(Rect2(590,240,740,600),true)
-	_label(panel,"SETTINGS",Rect2(32,22,676,40),26,WHITE)
-	for i in range(2):
-		var name=["DISPLAY","COLOR"][i]
-		_button(panel,name,Rect2(32+i*346,90,330,42),func():_settings(name),"",page==name)
+	var panel=_modal(Rect2(430,135,1060,810),true)
+	_label(panel,"SETTINGS",Rect2(36,25,960,48),32,WHITE)
+	_label(panel,"DISPLAY",Rect2(36,98,400,28),14,MUTED)
+	_button(panel,"WINDOWED",Rect2(36,138,470,48),func():DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED))
+	_button(panel,"FULLSCREEN",Rect2(524,138,500,48),func():DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN))
+	var check=CheckButton.new()
+	check.text="REDUCED MOTION"
+	check.position=Vector2(36,205)
+	check.size=Vector2(988,46)
+	check.button_pressed=reduced_motion
+	check.toggled.connect(func(value):reduced_motion=value)
+	panel.add_child(check)
+	_label(panel,"COLOR / ACCENT + FIVE SIGNALS",Rect2(36,286,988,28),16,MUTED)
+	var presets=P.PRESETS.keys()
+	for i in range(presets.size()):
+		var preset: String=presets[i]
+		_button(panel,preset,Rect2(36+i*332,335,316,44),func():
+			for k in range(6):
+				palette_pickers[k].color=P.PRESETS[preset][k])
 	palette_pickers=[]
-	if page=="DISPLAY":
-		_button(panel,"WINDOWED",Rect2(32,210,330,46),func():DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED))
-		_button(panel,"FULLSCREEN",Rect2(378,210,330,46),func():DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN))
-		var check=CheckButton.new()
-		check.text="REDUCED MOTION"
-		check.position=Vector2(32,310)
-		check.size=Vector2(676,46)
-		check.button_pressed=reduced_motion
-		check.toggled.connect(func(value):reduced_motion=value)
-		panel.add_child(check)
-	else:
-		var presets=P.PRESETS.keys()
-		for i in range(presets.size()):
-			var preset: String=presets[i]
-			_button(panel,preset,Rect2(32+i*230,185,215,42),func():
-				for k in range(6):
-					palette_pickers[k].color=P.PRESETS[preset][k])
-		for i in range(6):
-			var x=32+i*115
-			_label(panel,["ACCENT","VIT","INF","RES","SPD","LUK"][i],Rect2(x,270,108,28),15,WHITE)
-			var picker=ColorPickerButton.new()
-			picker.position=Vector2(x,315)
-			picker.size=Vector2(36,36)
-			picker.color=palette_colors[i]
-			picker.edit_alpha=false
-			picker.tooltip_text=["ACCENT","VIT","INF","RES","SPD","LUK"][i]
-			panel.add_child(picker)
-			var editor=picker.get_picker()
-			editor.sampler_visible=false
-			editor.color_modes_visible=false
-			editor.sliders_visible=false
-			editor.presets_visible=false
-			palette_pickers.append(picker)
-		palette_error=_label(panel,"",Rect2(32,393,676,50),17,status_colors[1])
-		_button(panel,"APPLY COLORS",Rect2(32,465,676,44),_apply_colors,"check")
-	_button(panel,"CLOSE / ESC",Rect2(32,530,676,44),_close_aux)
+	for i in range(6):
+		_label(panel,["ACCENT","VIT","INF","RES","SPD","LUK"][i],Rect2(36+i*166,422,150,28),16,WHITE)
+		var picker=ColorPickerButton.new()
+		picker.position=Vector2(36+i*166,464)
+		picker.size=Vector2(150,64)
+		picker.color=palette_colors[i]
+		picker.edit_alpha=false
+		picker.tooltip_text="Choose color / "+["ACCENT","VIT","INF","RES","SPD","LUK"][i]
+		panel.add_child(picker)
+		var editor=picker.get_picker()
+		editor.sampler_visible=false
+		editor.color_modes_visible=false
+		editor.sliders_visible=false
+		editor.presets_visible=false
+		palette_pickers.append(picker)
+	_label(panel,"LIGHT COLORS / DISTINCT SIGNALS / BLACK FOUNDATION",Rect2(36,558,988,30),15,MUTED)
+	palette_error=_label(panel,"",Rect2(36,600,988,52),17,status_colors[1])
+	_button(panel,"APPLY COLORS",Rect2(36,676,988,48),_apply_colors,"check")
+	_button(panel,"CLOSE / ESC",Rect2(36,742,988,42),_close_aux,"close")
 
 func _apply_colors() -> void:
 	var colors=[]
@@ -644,8 +695,8 @@ func _apply_colors() -> void:
 	elif battle.mode=="RESULT":
 		_result()
 	_hud()
-	_settings("COLOR")
-	palette_error.text="APPLIED"
+	_settings()
+	palette_error.text="APPLIED / Saved separately from your build."
 	palette_error.add_theme_color_override("font_color",CYAN)
 	queue_redraw()
 
@@ -668,7 +719,7 @@ func _set_theme() -> void:
 			var style=StyleBoxFlat.new()
 			style.bg_color=PANEL if state in ["normal","panel","disabled"] else P.INTERACTIVE
 			style.border_color=CYAN if state in ["pressed","focus"] else EDGE
-			style.set_border_width_all(2 if state=="focus" else 0)
+			style.set_border_width_all(2 if state=="focus" else 1)
 			style.content_margin_left=12
 			style.content_margin_right=12
 			style.content_margin_top=4
@@ -713,14 +764,12 @@ func _close_aux() -> void:
 	var previous=null
 	if is_instance_valid(auxiliary):
 		previous=auxiliary.get_meta("previous_focus") if auxiliary.has_meta("previous_focus") else null
-		remove_child(auxiliary)
 		auxiliary.queue_free()
 	auxiliary=null
 	_restore_focus.call_deferred(previous)
 
 func _clear_overlay() -> void:
 	if is_instance_valid(overlay):
-		remove_child(overlay)
 		overlay.queue_free()
 	overlay=null
 	build_preview=null
@@ -778,8 +827,8 @@ func _button(parent: Control, text: String, rect: Rect2, callback: Callable, ico
 		var selected_style=StyleBoxFlat.new()
 		selected_style.bg_color=P.INTERACTIVE
 		selected_style.border_color=CYAN
-		selected_style.set_border_width_all(0)
-		selected_style.border_width_bottom=2
+		selected_style.set_border_width_all(1)
+		selected_style.border_width_bottom=3
 		button.add_theme_stylebox_override("normal",selected_style)
 	button.position=rect.position
 	button.size=rect.size
@@ -832,7 +881,7 @@ func _center(text: String, position_px: Vector2, font_size: int, color: Color=WH
 	draw_string(f,position_px-Vector2(width/2,0),text,HORIZONTAL_ALIGNMENT_LEFT,-1,font_size,color)
 
 func _bar(rect: Rect2, ratio: float, color: Color) -> void:
-	draw_rect(rect,EDGE)
+	draw_rect(rect,Color("232a30"))
 	draw_rect(Rect2(rect.position,Vector2(rect.size.x*clampf(ratio,0,1),rect.size.y)),color)
 
 func _brackets(rect: Rect2, color: Color) -> void:
@@ -890,78 +939,3 @@ func _restore_focus(previous) -> void:
 		control.grab_focus()
 	elif is_instance_valid(overlay):
 		_focus_modal(overlay)
-
-func _toggle_info() -> void:
-	info_open=not info_open
-	if battle.mode=="CHOICE":
-		_action_dialog()
-	else:
-		_hud()
-	queue_redraw()
-
-func _toggle_phase() -> void:
-	phase_open=not phase_open
-	_hud()
-	queue_redraw()
-
-func _menu() -> void:
-	_close_aux()
-	var rows=[["HELP",_help],["SETTINGS",_settings]]
-	if build_open:
-		rows.append_array([["SAVE",_save],["LOAD",_load]])
-	else:
-		rows.append(["RESTART",_restart])
-	rows.append(["QUIT",_quit])
-	var panel=_modal(Rect2(765,250,390,150+rows.size()*58),true)
-	_label(panel,"MENU",Rect2(24,18,342,35),25,WHITE)
-	for i in range(rows.size()):
-		var callback: Callable=rows[i][1]
-		_button(panel,rows[i][0],Rect2(24,77+i*58,342,44),func():_close_aux();callback.call())
-	_button(panel,"CLOSE / ESC",Rect2(24,90+rows.size()*58,342,40),_close_aux)
-
-func _objective() -> void:
-	_close_aux()
-	var panel=_modal(Rect2(590,340,740,400),true)
-	_label(panel,battle.stage.name,Rect2(32,25,676,40),25,WHITE)
-	_label(panel,battle.stage.brief,Rect2(32,110,676,45),20,WHITE)
-	_label(panel,battle.stage.hint,Rect2(32,185,676,100),18,MUTED)
-	_button(panel,"CLOSE / ESC",Rect2(32,320,676,44),_close_aux)
-
-func _order() -> void:
-	_close_aux()
-	var panel=_modal(Rect2(710,220,500,640),true)
-	_label(panel,"ORDER",Rect2(32,23,436,40),25,WHITE)
-	var totals={"PLAYER":0.0,"ENEMY":0.0}
-	for u in battle.units:
-		totals[u.camp]+=u.hp
-	_label(panel,"HP  PLAYER %s / ENEMY %s" % [_hp(totals.PLAYER),_hp(totals.ENEMY)],Rect2(32,91,436,35),17,MUTED)
-	var rows=battle.timeline(6)
-	for i in range(rows.size()):
-		var row=rows[i]
-		_label(panel,"%s     T %.1f" % [battle.units[row.index].id,row.time],Rect2(32,159+i*55,436,38),22,WHITE)
-	_button(panel,"CLOSE / ESC",Rect2(32,560,436,44),_close_aux)
-
-func _drop_detail(drop: Dictionary) -> void:
-	_close_aux()
-	var panel=_modal(Rect2(610,310,700,460),true)
-	if drop.has("skill"):
-		_label(panel,C.SKILLS[drop.skill].label,Rect2(32,30,636,45),25,WHITE)
-		_label(panel,drop.skill,Rect2(32,115,636,50),17,MUTED)
-	else:
-		_label(panel,C.serial(drop.kind,drop.stats,drop.mutation),Rect2(32,30,636,45),23,WHITE)
-		var values=[]
-		for i in range(5):
-			values.append("%s %d" % [["VIT","INF","RES","SPD","LUK"][i],drop.stats[i]])
-		_label(panel,"\n".join(values),Rect2(32,110,636,190),20,WHITE)
-		_label(panel,drop.mutation,Rect2(32,315,636,35),17,MUTED)
-	_button(panel,"CLOSE / ESC",Rect2(32,380,636,44),_close_aux)
-
-func _info_selectors(parent: Control) -> void:
-	for i in range(battle.units.size()):
-		_button(parent,battle.units[i].id,Rect2(1440+i*75,95,65,40),func():
-			selected=i
-			if battle.mode=="CHOICE":
-				_action_dialog()
-			else:
-				_hud()
-			queue_redraw(),"",i==(selected if selected>=0 else battle.actor))
