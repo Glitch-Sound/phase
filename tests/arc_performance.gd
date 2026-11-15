@@ -20,7 +20,7 @@ class MeasuredGame extends "res://ui/main.gd":
 		ring_us+=Time.get_ticks_usec()-start
 	# e77c381のringの本体。glyphの半径、角度、配色は修正前後で同一である。
 	func _baseline_ring(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,active: bool) -> void:
-		var g=V.glyph(radius,u,active,status_colors,CYAN)
+		var g=V.glyph(radius,u,active,ring_colors,CYAN)
 		for arc in g.arcs:
 			canvas.draw_arc(center,arc.radius,arc.start,arc.end,maxi(3,ceili(rad_to_deg(arc.end-arc.start)/3)),arc.color,arc.width,true)
 		canvas.draw_line(center+g.tick.from,center+g.tick.to,g.tick.color,g.tick.width,true)

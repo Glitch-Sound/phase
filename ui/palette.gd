@@ -1,5 +1,6 @@
 ## 黒い計測面の配色、判読性検証、独立した表示設定を扱う。
 extends RefCounted
+const T=preload("res://game/tuning.gd")
 const BG=Color("040506")
 const SURFACE=Color("090b0e")
 const INTERACTIVE=Color("151c21")
@@ -15,6 +16,16 @@ const PRESETS={
 	"AMBER":[Color("e6c78f"),Color("c4c8d0"),Color("f2a9a2"),Color("b8d8a2"),Color("a7cbe5"),Color("dcc0ed")],
 	"ICE":[Color("a8cce9"),Color("bfc6d4"),Color("e8a5bd"),Color("a3d5c7"),Color("aaa9ee"),Color("e8d0a0")]
 }
+
+## リングの表示色を返す。colorsは検証済みのアクセントと5色。戻り値はプリセットだけ彩度を強めた5色、カスタムは元のRGB。副作用なし。
+static func ring_colors(colors: Array) -> Array:
+	var source=colors.slice(1)
+	if not PRESETS.values().has(colors):
+		return source
+	var result=[]
+	for color in source:
+		result.append(Color.from_hsv(color.h,1-pow(1-color.s,T.UNIT_RING_SATURATION_POWER),color.v,color.a))
+	return result
 
 ## 配色を検証する。colorsはアクセントと5色。戻り値はエラー、正常時空文字。副作用なし。
 static func validate(colors: Array) -> String:

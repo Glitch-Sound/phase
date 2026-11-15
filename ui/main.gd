@@ -31,6 +31,7 @@ const ICONS = {
 }
 var palette_colors: Array=P.PRESETS.DEFAULT.duplicate()
 var status_colors: Array=palette_colors.slice(1)
+var ring_colors: Array=P.ring_colors(palette_colors)
 var CYAN: Color=palette_colors[0]
 var MAGENTA: Color=palette_colors[0]
 var palette_pickers: Array=[]
@@ -644,7 +645,7 @@ func _settings() -> void:
 		editor.sliders_visible=false
 		editor.presets_visible=false
 		palette_pickers.append(picker)
-	_label(panel,"LIGHT COLORS / DISTINCT SIGNALS / BLACK FOUNDATION",Rect2(36,558,988,30),15,MUTED)
+	_label(panel,"RINGS: VIVID PRESETS / CUSTOM COLORS AS CHOSEN",Rect2(36,558,988,30),15,MUTED)
 	palette_error=_label(panel,"",Rect2(36,600,988,52),17,status_colors[1])
 	_button(panel,"APPLY COLORS",Rect2(36,676,988,48),_apply_colors,"check")
 	_button(panel,"CLOSE / ESC",Rect2(36,742,988,42),_close_aux,"close")
@@ -682,6 +683,7 @@ func _set_theme() -> void:
 	CYAN=palette_colors[0]
 	MAGENTA=palette_colors[0]
 	status_colors=palette_colors.slice(1)
+	ring_colors=P.ring_colors(palette_colors)
 	var skin=Theme.new()
 	skin.default_font=font
 	skin.default_font_size=20
@@ -721,7 +723,7 @@ func _unit_references(text: String) -> String:
 	return RegEx.create_from_string("\\b0([12])\\b").sub(text,"$1",true)
 
 func _ring(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,active: bool=false) -> void:
-	V.ring(canvas,center,radius,u,active,status_colors,CYAN,mono)
+	V.ring(canvas,center,radius,u,active,ring_colors,CYAN,mono)
 
 func _restart() -> void:
 	_close_aux()

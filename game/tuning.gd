@@ -31,3 +31,5 @@ const UNIT_BOARD_RADIUS := 31.0
 const UNIT_HP_PIXEL_MIN := 0.9
 const UNIT_COLOR_PIXEL_MIN := 1.1
 const UNIT_ARC_ERROR_PIXELS := 0.03
+# 色相とVを維持し、既存プリセットの判読性を保つリング用の彩度強調。
+const UNIT_RING_SATURATION_POWER := 2.0

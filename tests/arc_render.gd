@@ -77,7 +77,7 @@ func _draw_samples() -> void:
 	canvas.draw_rect(Rect2(0,0,1920,1080),P.BG)
 	for sample in samples:
 		sample.u.hp=health
-		V.ring(canvas,sample.position,sample.radius,sample.u,false,P.PRESETS.DEFAULT.slice(1),P.PRESETS.DEFAULT[0],typeface)
+		V.ring(canvas,sample.position,sample.radius,sample.u,false,P.ring_colors(P.PRESETS.DEFAULT),P.PRESETS.DEFAULT[0],typeface)
 func _signal(image: Image,zero: Image,center: Vector2,radius: float,angle: float) -> float:
 	var peak=0.0
 	for step in range(-8,9):
