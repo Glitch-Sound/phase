@@ -8,6 +8,8 @@ const TEXT=Color("e8ebed")
 const MUTED=Color("9ba4ad")
 const MIN_CONTRAST=4.5
 const MIN_DISTANCE=0.12
+# ACTIONはHPと同期の比較に使うため、背後の有効な配色を暗くしない。
+const ACTION_SCRIM_ALPHA=0.0
 const PRESETS={
 	"DEFAULT":[Color("b8d8d0"),Color("bec4ce"),Color("ee95a0"),Color("9ad4b5"),Color("9ebbe8"),Color("dfcb94")],
 	"AMBER":[Color("e6c78f"),Color("c4c8d0"),Color("f2a9a2"),Color("b8d8a2"),Color("a7cbe5"),Color("dcc0ed")],

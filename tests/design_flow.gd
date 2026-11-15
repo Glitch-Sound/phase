@@ -17,6 +17,8 @@ func _run() -> void:
 	await process_frame
 	await _test_apply(game,palette)
 	_test_icons(game)
+	await _test_help_terms(game)
+	await _test_action_context(game,palette)
 	await _test_focus_scope(game)
 	game.queue_free()
 	await process_frame
@@ -141,6 +143,71 @@ func _check(ok: bool,message: String) -> void:
 func _finish() -> void:
 	print("DESIGN FLOW: %d checks / %d failures" % [checks,failures])
 	quit(0 if failures==0 else 1)
+
+## REQ-020-S01
+func _test_help_terms(game) -> void:
+	game._help()
+	await process_frame
+	var guides=[]
+	for label in game.auxiliary.find_children("*","Label",true,false):
+		if label.text.contains("SAVE / LOADは"):
+			guides.append(label.text)
+	_check(guides==["−はダメージ、＋は回復。\nINFは攻撃と回復、RESは抵抗。\nSAVE / LOADは明示操作。以前の保存は退避する。"],"HELP separates effect signs from INF and RES mechanics")
+	game._close_aux()
+	game._settings()
+	await process_frame
+	var captions=[]
+	for label in game.auxiliary.find_children("*","Label",true,false):
+		if label.text.begins_with("INF") or label.text.begins_with("RES"):
+			captions.append(label.text)
+	_check(captions==["INF","RES"],"color labels do not imply that healing depends on RES")
+	game._close_aux()
+	await process_frame
+
+## NREQ-002-S01
+func _test_action_context(game,palette) -> void:
+	game._start_battle()
+	game._cell_input(Vector2i(4,4))
+	game._cell_input(Vector2i(4,4),true)
+	await process_frame
+	var dim: Color=game.overlay.get_child(0).color
+	var colors=palette.PRESETS.DEFAULT.duplicate()
+	colors.append_array([palette.TEXT,palette.MUTED,Color("858585")])
+	var minimum=100.0
+	for color in colors:
+		minimum=minf(minimum,_contrast(_under_dim(color,dim),_under_dim(palette.INTERACTIVE,dim)))
+	_check(minimum>=palette.MIN_CONTRAST,"ACTION preserves readable HP, skill, and sync text behind its scrim")
+	_check(_contrast(palette.TEXT,game.overlay.get_child(1).get_theme_stylebox("panel").bg_color)>=palette.MIN_CONTRAST,"ACTION panel text remains readable")
+	game._settings()
+	await process_frame
+	_check(game.auxiliary.get_child(0).color.a>dim.a,"SETTINGS keeps its own scrim")
+	game._close_aux()
+	game.battle.mode="RESULT"
+	game.battle.result="VICTORY"
+	game._result()
+	await process_frame
+	_check(game.overlay.get_child(0).color.a>dim.a,"RESULT keeps its own scrim")
+	game._build()
+	await process_frame
+	_check(game.overlay.get_child(0).color.a>dim.a,"BUILD keeps its own scrim")
+	game._help()
+	await process_frame
+	_check(game.auxiliary.get_child(0).color.a>dim.a,"HELP keeps its own scrim")
+	game._close_aux()
+	await process_frame
+
+func _under_dim(color: Color,dim: Color) -> Color:
+	return color*(1.0-dim.a)+Color(dim.r,dim.g,dim.b,1.0)*dim.a
+
+func _contrast(a: Color,b: Color) -> float:
+	var luminances=[]
+	for color in [a,b]:
+		var luminance=0.0
+		for channel in range(3):
+			var value: float=color[channel]
+			luminance+=[0.2126,0.7152,0.0722][channel]*(value/12.92 if value<=0.04045 else pow((value+0.055)/1.055,2.4))
+		luminances.append(luminance)
+	return (maxf(luminances[0],luminances[1])+0.05)/(minf(luminances[0],luminances[1])+0.05)
 
 ## NREQ-002-S03
 func _test_focus_scope(game) -> void:

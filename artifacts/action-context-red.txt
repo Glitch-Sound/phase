@@ -1,0 +1,10 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: ACTION preserves readable HP, skill, and sync text behind its scrim
+FAIL: RESULT keeps its own scrim
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+DESIGN FLOW: 135 checks / 2 failures

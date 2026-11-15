@@ -404,7 +404,7 @@ func _action_dialog() -> void:
 		if C.SKILLS[skill].type=="ACTIVE":
 			active.append(skill)
 	var height=122+active.size()*63
-	var panel=_modal(Rect2(700,330,420,height),false)
+	var panel=_modal(Rect2(700,330,420,height),false,true)
 	_label(panel,"UNIT "+battle.units[battle.actor].id+" / ACTION",Rect2(25,16,370,32),22,CYAN)
 	_button(panel,"WAIT",Rect2(25,63,370,48),func():battle.wait_turn();_after_action())
 	for i in range(active.size()):
@@ -626,7 +626,7 @@ func _help() -> void:
 	_label(panel,"BUILD / ARCHIVE",Rect2(36,589,490,28),16,CYAN)
 	_label(panel,"01と02を編集し、装備の5値と差分を比較する。\nスキルは最大3。NONEも可。取得品と変異は共有。",Rect2(36,631,500,66),18,WHITE)
 	_label(panel,"READING THE SIGNAL",Rect2(580,589,500,28),16,CYAN)
-	_label(panel,"INF / − は攻撃。RES / + は回復。\nSAVE / LOADは明示操作。以前の保存は退避する。",Rect2(580,631,510,66),18,WHITE)
+	_label(panel,"−はダメージ、＋は回復。\nINFは攻撃と回復、RESは抵抗。\nSAVE / LOADは明示操作。以前の保存は退避する。",Rect2(580,631,510,66),18,WHITE)
 	_button(panel,"CLOSE / ESC",Rect2(36,736,1048,44),_close_aux)
 
 func _settings() -> void:
@@ -652,7 +652,7 @@ func _settings() -> void:
 				palette_pickers[k].color=P.PRESETS[preset][k])
 	palette_pickers=[]
 	for i in range(6):
-		_label(panel,["ACCENT","VIT","INF / −","RES / +","SPD","LUK"][i],Rect2(36+i*166,422,150,28),16,WHITE)
+		_label(panel,["ACCENT","VIT","INF","RES","SPD","LUK"][i],Rect2(36+i*166,422,150,28),16,WHITE)
 		var picker=ColorPickerButton.new()
 		picker.position=Vector2(36+i*166,464)
 		picker.size=Vector2(150,64)
@@ -774,7 +774,7 @@ func _clear_overlay() -> void:
 	overlay=null
 	build_preview=null
 
-func _modal(rect: Rect2, is_aux: bool) -> Control:
+func _modal(rect: Rect2, is_aux: bool, keep_context: bool=false) -> Control:
 	var layer=Control.new()
 	layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	layer.mouse_filter=Control.MOUSE_FILTER_STOP
@@ -784,7 +784,7 @@ func _modal(rect: Rect2, is_aux: bool) -> Control:
 		layer.set_meta("previous_focus",weakref(owner))
 	_focus_modal.call_deferred(layer)
 	var dim=ColorRect.new()
-	dim.color=Color(BG,0.98 if build_open or is_aux else 0.82)
+	dim.color=Color(BG,P.ACTION_SCRIM_ALPHA if keep_context else (0.98 if build_open or is_aux else 0.82))
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(dim)
 	var panel=Panel.new()
@@ -792,7 +792,7 @@ func _modal(rect: Rect2, is_aux: bool) -> Control:
 	panel.size=rect.size
 	var style=StyleBoxFlat.new()
 	style.bg_color=PANEL
-	style.border_color=EDGE
+	style.border_color=CYAN if keep_context else EDGE
 	style.set_border_width_all(1)
 	style.shadow_color=Color(0,0,0,0.5)
 	style.shadow_size=0
