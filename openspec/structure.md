@@ -18,8 +18,9 @@
 ## 配置原則
 
 モデルから画面へ依存しない。
-保存をgame/collection.gdに集約する。
-画像を使わずui/visuals.gdでリングと波形を描画する。
+ビルドと収集の保存をgame/collection.gdに集約する。
+リングと波形はui/visuals.gdで手続き的に描く。
+配色と判読性はui/palette.gd、操作アイコンと権利表示はassets/lucide/に集約する。
 
 ## 命名規則
 

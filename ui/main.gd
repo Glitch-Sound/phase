@@ -6,13 +6,36 @@ const B = preload("res://game/battle.gd")
 const L = preload("res://game/collection.gd")
 const V = preload("res://ui/visuals.gd")
 const T = preload("res://game/tuning.gd")
-const CYAN = V.CYAN
-const WHITE = V.TEXT
-const MUTED = V.MUTED
-const BG = Color("080c13")
-const PANEL = Color("0d141f")
-const EDGE = Color("253443")
-const MAGENTA = Color("c47aff")
+const P = preload("res://ui/palette.gd")
+const WHITE = P.TEXT
+const MUTED = P.MUTED
+const BG = P.BG
+const PANEL = P.SURFACE
+const EDGE = P.EDGE
+const ICONS = {
+ "help":preload("res://assets/lucide/circle-question-mark.svg"),
+ "settings":preload("res://assets/lucide/settings-2.svg"),
+ "restart":preload("res://assets/lucide/rotate-ccw.svg"),
+ "quit":preload("res://assets/lucide/log-out.svg"),
+ "play":preload("res://assets/lucide/play.svg"),
+ "save":preload("res://assets/lucide/save.svg"),
+ "load":preload("res://assets/lucide/folder-open.svg"),
+ "wait":preload("res://assets/lucide/pause.svg"),
+ "attack":preload("res://assets/lucide/swords.svg"),
+ "heal":preload("res://assets/lucide/heart-pulse.svg"),
+ "close":preload("res://assets/lucide/x.svg"),
+ "back":preload("res://assets/lucide/arrow-left.svg"),
+ "check":preload("res://assets/lucide/check.svg"),
+ "move":preload("res://assets/lucide/move.svg"),
+ "target":preload("res://assets/lucide/target.svg")
+}
+var palette_colors: Array=P.PRESETS.DEFAULT.duplicate()
+var status_colors: Array=palette_colors.slice(1)
+var CYAN: Color=palette_colors[0]
+var MAGENTA: Color=palette_colors[0]
+var palette_pickers: Array=[]
+var palette_error: Label
+var settings_path="res://artifacts/runtime/ui-settings.json"
 const BOARD = Vector2(560,100)
 const SAVE_PATH = "res://artifacts/runtime/phase-save.json"
 var battle=B.new()
@@ -52,26 +75,8 @@ func _ready() -> void:
 	font.font_names=PackedStringArray(["Helvetica Neue","Hiragino Sans","Arial"])
 	mono=SystemFont.new()
 	mono.font_names=PackedStringArray(["Menlo","Monaco","monospace"])
-	var theme=Theme.new()
-	theme.default_font=font
-	theme.default_font_size=20
-	theme.set_color("font_color","Label",WHITE)
-	theme.set_color("font_color","Button",WHITE)
-	theme.set_color("font_hover_color","Button",CYAN)
-	theme.set_color("font_color","OptionButton",WHITE)
-	for name in ["normal","hover","pressed","focus","disabled"]:
-		var style=StyleBoxFlat.new()
-		style.bg_color=Color("111e2a") if name=="normal" else Color("18323a")
-		if name=="disabled":
-			style.bg_color=Color("0e151d")
-		style.border_color=EDGE if name=="normal" else CYAN
-		style.set_border_width_all(1)
-		style.set_corner_radius_all(3)
-		style.content_margin_left=16
-		style.content_margin_right=16
-		theme.set_stylebox(name,"Button",style)
-		theme.set_stylebox(name,"OptionButton",style)
-	self.theme=theme
+	palette_colors=P.load_from(settings_path)
+	_set_theme()
 	notice=Label.new()
 	notice.position=Vector2(300,956)
 	notice.size=Vector2(1320,43)
@@ -101,28 +106,28 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	draw_rect(Rect2(0,0,1920,1080),BG)
-	for y in range(0,1080,4):
-		draw_line(Vector2(0,y),Vector2(1920,y),Color(0.1,0.16,0.2,0.035))
-	_text("TACTICAL PHASE LABORATORY",Vector2(150,38),14,MUTED,mono)
-	_text("MANUAL CONTROL / BOTH FACTIONS",Vector2(1390,38),14,MUTED,mono)
+	if build_open:
+		return
+	_text("PHASE / TACTICAL STUDY",Vector2(150,38),14,MUTED,mono)
+	_text("BOTH SIDES / HUMAN",Vector2(1390,38),14,MUTED,mono)
 	_panel(Rect2(150,64,370,740))
 	_panel(Rect2(1300,64,470,740))
 	_draw_left()
 	_draw_board()
 	_draw_info()
 	_draw_preview()
-	_text("PHASE  /  4.7  /  NO COMBAT RNG",Vector2(150,1053),13,MUTED,mono)
+	_text("ROUTE → PHASE → EFFECT",Vector2(150,1053),13,MUTED,mono)
 	if message_time>0 and not build_open:
 		_text(message,Vector2(150,1028),18,CYAN)
 	for t in toasts:
 		var color: Color=t.color
 		color.a=clampf((2.4-t.age)/0.7,0,1)
-		var p: Vector2=BOARD+Vector2(t.cell)*70+Vector2(35,3-t.age*24)
+		var p: Vector2=BOARD+Vector2(t.cell)*70+Vector2(35,3-(t.age*24 if not reduced_motion else 0))
 		_center(t.text,p,24,color,mono)
 
 func _draw_left() -> void:
-	_text("P H A S E",Vector2(172,125),47,WHITE)
-	_text("MOVE / ALIGN / INTERFERE",Vector2(174,153),13,CYAN,mono)
+	_text("PHASE",Vector2(172,125),47,WHITE)
+	_text("ROUTE / PHASE / EFFECT",Vector2(174,153),13,CYAN,mono)
 	var y=191.0
 	for camp in ["PLAYER","ENEMY"]:
 		var hp=0.0
@@ -131,7 +136,7 @@ func _draw_left() -> void:
 			if u.camp==camp:
 				hp+=u.hp
 				max_hp+=u.max_hp
-		var color=CYAN if camp=="PLAYER" else V.COLORS[1]
+		var color=CYAN if camp=="PLAYER" else status_colors[1]
 		_text(camp,Vector2(174,y),17,color,mono)
 		_text("%s / %s" % [_hp(hp),_hp(max_hp)],Vector2(332,y),17,WHITE,mono)
 		_bar(Rect2(174,y+12,318,5),hp/maxf(1,max_hp),color)
@@ -144,16 +149,16 @@ func _draw_left() -> void:
 		var u: Dictionary=battle.units[row.index]
 		y=345+k*64
 		var rect=Rect2(164,y,342,58)
-		draw_rect(rect,Color("10282d") if k==0 else Color("0b111b"))
+		draw_rect(rect,Color(CYAN,0.09) if k==0 else PANEL)
 		draw_rect(rect,CYAN if k==0 else EDGE,false,1)
 		_text("%02d" % (k+1),Vector2(174,y+34),15,CYAN if k==0 else MUTED,mono)
-		V.ring(self,Vector2(223,y+29),22,u,k==0)
+		_ring(self,Vector2(223,y+29),22,u,k==0)
 		_text(u.id,Vector2(257,y+22),21,WHITE,mono)
-		_bar(Rect2(257,y+31,59,3),u.hp/u.max_hp,CYAN if u.camp=="PLAYER" else V.COLORS[1])
-		_text("I %3.0f%%" % (M.sync(u,1).factor*100),Vector2(331,y+23),13,V.COLORS[1],mono)
-		_text("R %3.0f%%" % (M.sync(u,2).factor*100),Vector2(331,y+43),13,V.COLORS[2],mono)
+		_bar(Rect2(257,y+31,59,3),u.hp/u.max_hp,CYAN if u.camp=="PLAYER" else status_colors[1])
+		_text("I %3.0f%%" % (M.sync(u,1).factor*100),Vector2(331,y+23),13,status_colors[1],mono)
+		_text("R %3.0f%%" % (M.sync(u,2).factor*100),Vector2(331,y+43),13,status_colors[2],mono)
 	_text("TURN %03d" % battle.turn,Vector2(174,762),15,CYAN,mono)
-	_text("ALL UNITS: YOU",Vector2(322,762),13,MUTED,mono)
+
 
 func _draw_board() -> void:
 	var effect_chips=[]
@@ -169,41 +174,41 @@ func _draw_board() -> void:
 			var pos=BOARD+Vector2(cell)*70
 			var rect=Rect2(pos+Vector2.ONE,Vector2(68,68))
 			var panel=battle.panels.get(cell,"NORMAL")
-			var color=Color("101923") if (x+y)%2==0 else Color("0c141e")
+			var color=Color("0d1013") if (x+y)%2==0 else Color("090c0f")
 			if panel!="NORMAL":
-				color=Color("19182a") if panel=="REVERSE" else Color("102229")
+				color=Color("13181d")
 			if battle.path.has(cell):
-				color=Color("16424a")
+				color=Color(CYAN,0.16)
 			if cell==hover_cell and not is_instance_valid(overlay):
-				color=color.lightened(0.12)
+				color=color.lightened(0.055)
 			draw_rect(rect,color)
 			draw_rect(rect,EDGE,false,1)
 			if panel!="NORMAL":
-				var pc=MAGENTA if panel=="REVERSE" else (V.COLORS[3] if panel=="LOCK" else CYAN)
+				var pc=MAGENTA if panel=="REVERSE" else (status_colors[3] if panel=="LOCK" else CYAN)
 				_text({"SHIFT":"S+","LOCK":"L=","REVERSE":"R-"}[panel],pos+Vector2(5,14),11,Color(pc,0.8),mono)
 			if cell==battle.stage.goal:
 				draw_rect(rect.grow(-4),Color(MAGENTA,0.6),false,1)
 				_text("GOAL",pos+Vector2(6,62),11,MAGENTA,mono)
 			if cell==battle.stage.enemy_goal:
-				draw_rect(rect.grow(-4),V.COLORS[1],false,2)
-				_text("LOSS",pos+Vector2(6,62),11,V.COLORS[1],mono)
+				draw_rect(rect.grow(-4),status_colors[1],false,2)
+				_text("LOSS",pos+Vector2(6,62),11,status_colors[1],mono)
 			if battle.mode=="TARGET" and _distance(cell,battle.units[battle.actor].pos)==1:
-				var tc=V.COLORS[1] if battle.selected_skill==C.DAMAGE else V.COLORS[2]
+				var tc=status_colors[1] if battle.selected_skill==C.DAMAGE else status_colors[2]
 				draw_rect(rect,Color(tc,0.12))
 				draw_rect(rect.grow(-3),Color(tc,0.7),false,1.5)
 			var i=battle.at(cell)
 			if i>=0:
 				var u: Dictionary=battle.units[i]
-				var center=pos+Vector2(35,29)
+				var center=pos+Vector2(35,27)
 				if i==battle.actor:
-					draw_circle(center,29,Color(CYAN,0.07))
-				V.ring(self,center,24,u,i==battle.actor)
-				_center(u.id,pos+Vector2(35,35),14,WHITE,mono)
-				_bar(Rect2(pos+Vector2(15,59),Vector2(40,3)),u.hp/u.max_hp,CYAN if u.camp=="PLAYER" else V.COLORS[1])
+					draw_arc(center,29,0,TAU,48,CYAN,1.5,true)
+				_ring(self,center,24,u,i==battle.actor)
+				_center(u.id,pos+Vector2(35,33),14,WHITE,mono)
+				_bar(Rect2(pos+Vector2(15,64),Vector2(40,2)),u.hp/u.max_hp,CYAN if u.camp=="PLAYER" else status_colors[1])
 				if i==selected:
 					_brackets(Rect2(pos+Vector2(5,5),Vector2(60,60)),MAGENTA)
 				if battle.mode=="TARGET" and battle.valid_target(battle.actor,i,battle.selected_skill):
-					var tc=V.COLORS[1] if battle.selected_skill==C.DAMAGE else V.COLORS[2]
+					var tc=status_colors[1] if battle.selected_skill==C.DAMAGE else status_colors[2]
 					draw_rect(rect.grow(-1),tc,false,2)
 					var amount=M.effect(battle.units[battle.actor],u,C.SKILLS[battle.selected_skill].effect)
 					if battle.selected_skill==C.HEAL:
@@ -225,7 +230,7 @@ func _draw_board() -> void:
 	# 全セルの描画後に重ね、次の行の背景で数字を隠さない。
 	for chip in effect_chips:
 		var rect=_effect_chip_rect(chip.cell)
-		draw_rect(rect,Color("0a1018"))
+		draw_rect(rect,BG)
 		draw_rect(rect,chip.color,false,1)
 		_center(chip.text,rect.position+Vector2(rect.size.x/2,16),16,chip.color,mono)
 	_text(battle.stage.brief,Vector2(560,828),15,MAGENTA,mono)
@@ -236,23 +241,24 @@ func _effect_chip_rect(cell: Vector2i) -> Rect2:
 func _draw_info() -> void:
 	var index=selected if selected>=0 else battle.actor
 	var u: Dictionary=battle.units[index]
-	var camp_color=CYAN if u.camp=="PLAYER" else V.COLORS[1]
-	_text("UNIT INFORMATION",Vector2(1324,94),14,MUTED,mono)
+	var camp_color=CYAN if u.camp=="PLAYER" else status_colors[1]
+	_text("INSPECT",Vector2(1324,94),14,MUTED,mono)
 	_text(u.id,Vector2(1324,147),44,WHITE,mono)
 	_text(u.camp+" / "+u.class_name,Vector2(1420,140),17,camp_color,mono)
-	V.ring(self,Vector2(1535,245),81,u,index==battle.actor)
-	_text("CORE / GEAR / ARMS",Vector2(1438,348),13,MUTED,mono)
+	_ring(self,Vector2(1535,245),81,u,index==battle.actor)
+	_text("INNER / MIDDLE / OUTER",Vector2(1438,348),13,MUTED,mono)
 	_text("HP",Vector2(1324,385),15,MUTED,mono)
 	_text("%s / %s" % [_hp(u.hp),_hp(u.max_hp)],Vector2(1390,385),21,WHITE,mono)
 	_text("MOVE %d / %d" % [u.moved,battle.movement(u)],Vector2(1588,385),16,CYAN,mono)
 	_bar(Rect2(1324,397,422,4),u.hp/u.max_hp,camp_color)
 	for k in range(5):
-		_text(["VIT","INF","RES","SPD","LUK"][k],Vector2(1410+k*68,432),14,V.COLORS[k],mono)
+		_text(["VIT","INF","RES","SPD","LUK"][k],Vector2(1410+k*68,432),14,status_colors[k],mono)
 	for r in range(3):
 		var y=461+r*27
 		_text(["CORE","GEAR","ARMS"][r],Vector2(1324,y),14,MUTED,mono)
 		for k in range(5):
 			_text("%02d" % u[M.KEYS[r]][k],Vector2(1415+k*68,y),17,WHITE,mono)
+			_bar(Rect2(1410+k*68,y+5,42,2),u[M.KEYS[r]][k]/100.0,status_colors[k])
 	_text(C.serial("ARMS",u.arms),Vector2(1324,558),15,WHITE,mono)
 	_text("MUTATION / "+u.arms_mutation,Vector2(1324,580),12,MUTED,mono)
 	_text(C.serial("GEAR",u.gear),Vector2(1324,611),15,WHITE,mono)
@@ -260,7 +266,7 @@ func _draw_info() -> void:
 	for k in range(u.skills.size()):
 		var skill: Dictionary=C.SKILLS[u.skills[k]]
 		var y=648+k*43
-		draw_rect(Rect2(1324,y,422,37),Color("111f2b"))
+		draw_rect(Rect2(1324,y,422,37),PANEL)
 		draw_rect(Rect2(1324,y,2,37),CYAN if skill.type=="ACTIVE" else MAGENTA)
 		_text(skill.type,Vector2(1335,y+24),12,MUTED,mono)
 		_text(skill.effect+" / "+skill.area,Vector2(1418,y+24),15,WHITE,mono)
@@ -271,21 +277,23 @@ func _draw_preview() -> void:
 	_text("PHASE PREVIEW",Vector2(174,879),14,MUTED,mono)
 	var length=battle.path.size() if battle.mode=="MOVE" else u.moved
 	_text("PATH %d / DESTINATION (%d, %d)" % [length,u.pos.x,u.pos.y],Vector2(415,879),15,CYAN,mono)
-	V.ring(self,Vector2(225,947),48,u)
+	_ring(self,Vector2(225,947),48,u)
 	_center(u.id,Vector2(225,953),19,WHITE,mono)
 	_text("G %05.1f" % u.gear_angle,Vector2(293,933),14,MUTED,mono)
 	_text("A %05.1f" % u.arms_angle,Vector2(293,958),14,MUTED,mono)
-	V.wave(self,Rect2(415,895,932,98),u,clock)
+	V.wave(self,Rect2(415,895,932,98),u,clock,status_colors)
 	_text("0°",Vector2(415,1005),10,MUTED,mono)
 	_text("180°",Vector2(860,1005),10,MUTED,mono)
 	_text("360°",Vector2(1316,1005),10,MUTED,mono)
 	_text("RESONANCE",Vector2(1380,879),14,MUTED,mono)
-	_text("INF SYNC",Vector2(1380,916),14,V.COLORS[1],mono)
-	_text("%5.1f%%" % (M.sync(u,1).factor*100),Vector2(1618,916),22,V.COLORS[1],mono)
-	_text("RES SYNC",Vector2(1380,948),14,V.COLORS[2],mono)
-	_text("%5.1f%%" % (M.sync(u,2).factor*100),Vector2(1618,948),22,V.COLORS[2],mono)
-	_text("SINGULARITY",Vector2(1380,984),14,MUTED,mono)
-	_text("READY ×5" if M.singularity(u) else "OFFLINE",Vector2(1618,984),17,MAGENTA if M.singularity(u) else MUTED,mono)
+	_bar(Rect2(1380,923,350,2),M.sync(u,1).factor/2,status_colors[1])
+	_text("INF SYNC",Vector2(1380,916),14,status_colors[1],mono)
+	_text("%5.1f%%" % (M.sync(u,1).factor*100),Vector2(1618,916),22,status_colors[1],mono)
+	_bar(Rect2(1380,955,350,2),M.sync(u,2).factor/2,status_colors[2])
+	_text("RES SYNC",Vector2(1380,948),14,status_colors[2],mono)
+	_text("%5.1f%%" % (M.sync(u,2).factor*100),Vector2(1618,948),22,status_colors[2],mono)
+	_text("SINGULARITY ×5",Vector2(1380,984),14,MUTED,mono)
+	_text("READY" if M.singularity(u) else "—",Vector2(1618,984),17,MAGENTA if M.singularity(u) else MUTED,mono)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not window_focused:
@@ -295,8 +303,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_help()
 		elif event.keycode==KEY_ESCAPE:
 			if is_instance_valid(auxiliary):
-				auxiliary.queue_free()
-				auxiliary=null
+				_close_aux()
 			elif battle.mode=="TARGET":
 				battle.back()
 				_action_dialog()
@@ -326,6 +333,10 @@ func _window_focus_exited() -> void:
 
 func _window_focus_entered() -> void:
 	window_focused=true
+	if is_instance_valid(auxiliary):
+		_focus_modal.call_deferred(auxiliary)
+	elif is_instance_valid(overlay):
+		_focus_modal.call_deferred(overlay)
 
 func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 	var index=battle.at(cell)
@@ -362,9 +373,9 @@ func _feedback() -> void:
 	var e: Dictionary=battle.last_effect
 	var u: Dictionary=battle.units[e.target]
 	var shown=str(e.amount) if e.kind=="DAMAGE" else _hp(e.actual)
-	toasts.append({"cell":u.pos,"text":("-" if e.kind=="DAMAGE" else "+")+shown,"color":V.COLORS[1] if e.kind=="DAMAGE" else V.COLORS[2],"age":0.0})
+	toasts.append({"cell":u.pos,"text":("-" if e.kind=="DAMAGE" else "+")+shown,"color":status_colors[1] if e.kind=="DAMAGE" else status_colors[2],"age":0.0})
 	if e.dead:
-		toasts.append({"cell":u.pos,"text":"DEFEATED","color":V.COLORS[1],"age":-0.65})
+		toasts.append({"cell":u.pos,"text":"DEFEATED","color":status_colors[1],"age":-0.65})
 
 func _hud() -> void:
 	if is_instance_valid(hud):
@@ -394,7 +405,7 @@ func _action_dialog() -> void:
 			active.append(skill)
 	var height=122+active.size()*63
 	var panel=_modal(Rect2(700,330,420,height),false)
-	_label(panel,"UNIT "+battle.units[battle.actor].id+" / ACTION",Rect2(25,20,370,25),17,CYAN)
+	_label(panel,"UNIT "+battle.units[battle.actor].id+" / ACTION",Rect2(25,16,370,32),22,CYAN)
 	_button(panel,"WAIT",Rect2(25,63,370,48),func():battle.wait_turn();_after_action())
 	for i in range(active.size()):
 		var skill: String=active[i]
@@ -412,11 +423,11 @@ func _build() -> void:
 	battle.start(collection.stage_index,collection.builds)
 	_clear_overlay()
 	var panel=_modal(Rect2(300,115,1320,810),false)
-	_label(panel,"BUILD / PHASE CONFIGURATION",Rect2(36,25,920,45),30,WHITE)
-	_label(panel,"Every route changes your phase. Every faction is controlled by you.",Rect2(36,78,1100,29),19,MUTED)
+	_label(panel,"BUILD",Rect2(36,25,920,45),32,WHITE)
+	_label(panel,"01 / 02     SHARED ARCHIVE     BOTH SIDES: HUMAN",Rect2(36,78,1100,29),19,MUTED)
 	for i in range(2):
-		_button(panel,"PLAYER %02d" % (i+1),Rect2(36+i*200,126,185,43),func():edit_unit=i;_build())
-	_label(panel,"SHARED ARCHIVE / %d ARMS / %d GEAR / %d MUTATIONS" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size()],Rect2(36,187,1150,22),14,CYAN)
+		_button(panel,"UNIT %02d" % (i+1),Rect2(36+i*200,126,185,43),func():edit_unit=i;_build(),"",i==edit_unit)
+	_label(panel,"ARCHIVE   %d ARMS / %d GEAR / %d MUTATIONS" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size()],Rect2(36,187,1150,22),14,CYAN)
 	var b: Dictionary=collection.builds[edit_unit]
 	_label(panel,"CLASS",Rect2(36,237,160,30),16,MUTED)
 	_option(panel,["STANDARD","REVERSE"],b.class_name,Rect2(210,230,390,43),func(value):b.class_name=value;_refresh_build())
@@ -424,7 +435,7 @@ func _build() -> void:
 	core_controls=[]
 	equipment_views={}
 	for k in range(5):
-		_label(panel,["VIT","INF","RES","SPD","LUK"][k],Rect2(36+k*116,326,100,25),17,V.COLORS[k])
+		_label(panel,["VIT","INF","RES","SPD","LUK"][k],Rect2(36+k*116,326,100,25),17,status_colors[k])
 		var spin=SpinBox.new()
 		spin.position=Vector2(36+k*116,359)
 		spin.size=Vector2(102,46)
@@ -435,7 +446,7 @@ func _build() -> void:
 		panel.add_child(spin)
 		core_controls.append(spin)
 		spin.value_changed.connect(func(value):_core_change(k,int(value)))
-	_label(panel,"Changing one value redistributes the others. All stats stay ≥ 1.",Rect2(36,414,570,27),14,MUTED)
+	_label(panel,"Σ 100   /   MIN 1   /   AUTOMATIC REDISTRIBUTION",Rect2(36,414,570,27),14,MUTED)
 	for r in range(2):
 		var key="arms" if r==0 else "gear"
 		var y=454+r*128
@@ -451,10 +462,11 @@ func _build() -> void:
 		view.draw.connect(func():
 			for status in range(5):
 				var delta=int(b[key][status])-int(view.get_meta("before")[status])
+				view.draw_line(Vector2(status*112,24),Vector2(status*112+minf(b[key][status],100)*0.85,24),status_colors[status],2)
 				var text="%s %d" % [["VIT","INF","RES","SPD","LUK"][status],b[key][status]]
 				if delta!=0:
 					text+=" (%+d)" % delta
-				view.draw_string(font,Vector2(status*112,20),text,HORIZONTAL_ALIGNMENT_LEFT,-1,14,V.COLORS[status]))
+				view.draw_string(font,Vector2(status*112,20),text,HORIZONTAL_ALIGNMENT_LEFT,-1,14,status_colors[status]))
 		var option=_option(panel,choices,C.serial(key.to_upper(),b[key]),Rect2(210,y-5,390,40),func(value):
 			view.set_meta("before",b[key].duplicate())
 			b[key]=collection.items[key.to_upper()][value].duplicate()
@@ -466,14 +478,14 @@ func _build() -> void:
 				option.get_popup().set_item_tooltip(index,_equipment_comparison(collection.items[key.to_upper()][choices[index]],b[key])))
 		_label(panel,"MUTATION",Rect2(36,y+77,170,24),14,MUTED)
 		_option(panel,collection.mutations,b[key+"_mutation"],Rect2(210,y+70,390,34),func(value):b[key+"_mutation"]=value;_refresh_build())
-	_label(panel,"Hover a model for equipped deltas. Row deltas show the last change.",Rect2(36,695,600,24),12,MUTED)
-	_label(panel,"SKILLS / UP TO 3 / NONE ALLOWED",Rect2(688,328,580,30),15,MUTED)
+	_label(panel,"MODEL: hover to compare   /   Δ: previous equipment",Rect2(36,695,600,24),12,MUTED)
+	_label(panel,"SKILLS / 3 SLOTS",Rect2(688,328,580,30),15,MUTED)
 	for i in range(3):
 		var choices=["NONE"]
 		choices.append_array(collection.skills)
 		var current: String=b.skills[i] if i<b.skills.size() else "NONE"
 		_option(panel,choices,current,Rect2(688,368+i*49,588,41),func(value):_skill_change(i,value))
-	_label(panel,"STAGE / OBJECTIVE",Rect2(688,536,570,26),16,MUTED)
+	_label(panel,"OPERATION",Rect2(688,536,570,26),16,MUTED)
 	var stages=[]
 	for s in C.stages():
 		stages.append(s.name)
@@ -481,18 +493,19 @@ func _build() -> void:
 	_label(panel,C.stages()[collection.stage_index].brief,Rect2(688,626,588,27),17,MAGENTA)
 	_label(panel,C.stages()[collection.stage_index].hint,Rect2(688,660,588,48),16,MUTED)
 	build_preview=Control.new()
-	build_preview.position=Vector2(688,218)
-	build_preview.size=Vector2(588,96)
+	build_preview.position=Vector2(688,115)
+	build_preview.size=Vector2(588,196)
 	build_preview.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	panel.add_child(build_preview)
-	build_preview.draw.connect(func():
+	var preview=build_preview
+	preview.draw.connect(func():
 		var u=C.unit("%02d" % (edit_unit+1),"PLAYER",Vector2i.ZERO,collection.builds[edit_unit])
-		V.ring(build_preview,Vector2(65,46),46,u,true)
-		build_preview.draw_string(mono,Vector2(135,28),"HP %s / MOVE %d" % [_hp(u.max_hp),battle.movement(u)],HORIZONTAL_ALIGNMENT_LEFT,-1,20,WHITE)
-		build_preview.draw_string(mono,Vector2(135,62),"DELAY %.1f / INF %.1f%%" % [M.delay(u),M.sync(u,1).factor*100],HORIZONTAL_ALIGNMENT_LEFT,-1,16,CYAN))
+		_ring(preview,Vector2(100,103),79,u,true)
+		preview.draw_string(mono,Vector2(220,84),"HP %s / MOVE %d" % [_hp(u.max_hp),battle.movement(u)],HORIZONTAL_ALIGNMENT_LEFT,-1,20,WHITE)
+		preview.draw_string(mono,Vector2(220,119),"DELAY %.1f / INF %.1f%%" % [M.delay(u),M.sync(u,1).factor*100],HORIZONTAL_ALIGNMENT_LEFT,-1,16,CYAN))
 	for row in [["SAVE",36,_save],["LOAD",151,_load],["HELP",266,_help],["SETTINGS",381,_settings],["QUIT",526,_quit]]:
 		_button(panel,row[0],Rect2(row[1],730,106 if row[0]!="SETTINGS" else 136,44),row[2])
-	_button(panel,"BATTLE START →",Rect2(934,730,342,48),_start_battle)
+	_button(panel,"START",Rect2(934,730,342,48),_start_battle)
 	_refresh_build()
 
 func _core_change(index: int, value: int) -> void:
@@ -568,44 +581,166 @@ func _result() -> void:
 		drops=collection.roll_loot(loot_rng)
 		result_awarded=true
 	var panel=_modal(Rect2(530,240,860,540),false)
-	_label(panel,battle.result,Rect2(40,35,780,66),53,CYAN if battle.result=="VICTORY" else V.COLORS[1])
+	_icon(panel,"check" if battle.result=="VICTORY" else "close",Rect2(40,42,48,48),CYAN if battle.result=="VICTORY" else status_colors[1])
+	_label(panel,battle.result,Rect2(110,35,710,66),48,CYAN if battle.result=="VICTORY" else status_colors[1])
 	_label(panel,"%s / %d TURNS" % [battle.stage.name,battle.turn],Rect2(40,120,780,34),19,MUTED)
-	_label(panel,"NEWLY UNLOCKED / SHARED BY ALL UNITS",Rect2(40,187,780,27),16,MUTED)
+	_label(panel,"ARCHIVE / NEW SIGNALS",Rect2(40,187,780,27),16,MUTED)
 	var y=235
 	if drops.is_empty():
-		_label(panel,"NO NEW SIGNALS / 0 ITEMS",Rect2(40,y,780,40),23,WHITE)
+		_label(panel,"0 / NO NEW SIGNALS",Rect2(40,y,780,40),23,WHITE)
 	for drop in drops:
 		if drop.has("skill"):
-			_label(panel,drop.skill,Rect2(40,y,780,33),20,CYAN)
+			_label(panel,C.SKILLS[drop.skill].label,Rect2(40,y,780,33),22,CYAN)
+			_label(panel,drop.skill,Rect2(40,y+36,780,30),14,MUTED)
 		else:
 			var title=C.serial(drop.kind,drop.stats,drop.mutation) if drop.new_item else "MUTATION / "+drop.mutation
 			_label(panel,title,Rect2(40,y,780,33),20,CYAN)
-			_label(panel,str(drop.stats)+(" / NEW MUTATION: "+drop.mutation if drop.new_mutation else ""),Rect2(40,y+36,780,35),16,MUTED)
+			var values=[]
+			for i in range(5):
+				values.append("%s %d" % [["VIT","INF","RES","SPD","LUK"][i],drop.stats[i]])
+			_label(panel," / ".join(values)+(" / "+drop.mutation if drop.new_mutation else ""),Rect2(40,y+36,780,35),16,MUTED)
 		y+=91
-	_button(panel,"RETURN TO BUILD →",Rect2(40,440,780,54),_build)
+	_button(panel,"RETURN TO BUILD",Rect2(40,440,780,54),_build)
 
 func _help() -> void:
 	_close_aux()
-	var panel=_modal(Rect2(445,155,1030,770),true)
-	_label(panel,"HELP / THINK IN ROUTES",Rect2(36,26,950,53),32,CYAN)
-	var text="両陣営を自分で操作する検証用の戦術ゲームです。敵CPUはありません。\n\n1  BUILDでPLAYER 01 / 02を編集し、ステージを選びます。\n2  シアンの手番ユニットから、空いている隣接マスを順番にクリックします。\n3  下のPHASE PREVIEWで経路後の位相と効果補正を比較します。\n4  最終マスをダブルクリックして確定し、WAITかACTIVEを選びます。\n5  赤 / 緑の対象をクリックして実行します。BACKは移動を保持します。\n\n選択済み経路のマスで後続を取消。開始マスまたはEscで経路を全取消。\n生存ユニットのマス、斜め、範囲外、同じマスへの再進入は禁止です。\n毎手番1マス以上の移動が必須です。閉塞時だけ無移動WAITが可能です。\nユニットや手番一覧をクリックすると右側の詳細を調べられます。\n\nNORMAL : GEAR ↶ / ARMS ↷     SHIFT S+ : ARMSの回転2倍\nLOCK L= : GEARを固定         REVERSE R- : ARMSを逆回転\n\nINFは赤、RESは緑。表示SYNCはベルカーブ適用後の効果補正(最大200%)。\nRAWの重なり率とASSISTEDの中間値は計算上で区別しています。\nSINGULARITYは生INF領域が完全一致し、CORE:INF≤10のときだけ5倍。\n\n装備と変異は共有されます。SAVEはビルドと開放一覧を保存します。\nLOADは明示的に行います。再保存時は以前のデータを別名で残します。"
-	_label(panel,text,Rect2(36,100,958,591),19,WHITE)
-	_button(panel,"CLOSE / ESC",Rect2(36,704,958,43),_close_aux)
+	var panel=_modal(Rect2(400,135,1120,810),true)
+	_label(panel,"HELP",Rect2(36,25,1048,48),32,WHITE)
+	_label(panel,"両陣営を手動で操作する。敵CPUはない。",Rect2(36,85,1048,30),19,MUTED)
+	var steps=[
+		["move","01 / ROUTE","隣接する空きマスを順番にクリック。\n経路上をクリックすると後続を取消。"],
+		["target","02 / ALIGN","下のリングと4波形で位相を比較。\nINF / RESは最終補正。最大200%。"],
+		["check","03 / ACT","終点をダブルクリックして確定。\nWAITかスキルを選び、対象をクリック。"]
+	]
+	for i in range(3):
+		var x=36+i*354
+		_icon(panel,steps[i][0],Rect2(x,153,28,28),CYAN)
+		_label(panel,steps[i][1],Rect2(x+42,149,298,32),20,WHITE)
+		_label(panel,steps[i][2],Rect2(x,201,340,76),18,MUTED)
+	_separator(panel,Rect2(36,300,1048,1))
+	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
+	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\nユニットか手番一覧をクリックして詳細を調べる。",Rect2(36,377,500,152),18,WHITE)
+	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
+	_label(panel,"NORMAL   GEAR ↶ / ARMS ↷\nSHIFT S+  ARMSの回転2倍\nLOCK L=   GEARを固定\nREVERSE R-  ARMSを逆回転\nSINGULARITY ×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
+	_separator(panel,Rect2(36,560,1048,1))
+	_label(panel,"BUILD / ARCHIVE",Rect2(36,589,490,28),16,CYAN)
+	_label(panel,"01と02を編集し、装備の5値と差分を比較する。\nスキルは最大3。NONEも可。取得品と変異は共有。",Rect2(36,631,500,66),18,WHITE)
+	_label(panel,"READING THE SIGNAL",Rect2(580,589,500,28),16,CYAN)
+	_label(panel,"INF / − は攻撃。RES / + は回復。\nSAVE / LOADは明示操作。以前の保存は退避する。",Rect2(580,631,510,66),18,WHITE)
+	_button(panel,"CLOSE / ESC",Rect2(36,736,1048,44),_close_aux)
 
 func _settings() -> void:
 	_close_aux()
-	var panel=_modal(Rect2(650,335,620,380),true)
-	_label(panel,"SETTINGS",Rect2(30,24,560,45),32,CYAN)
-	_button(panel,"WINDOWED",Rect2(30,95,270,55),func():DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED))
-	_button(panel,"FULLSCREEN",Rect2(320,95,270,55),func():DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN))
+	var panel=_modal(Rect2(430,135,1060,810),true)
+	_label(panel,"SETTINGS",Rect2(36,25,960,48),32,WHITE)
+	_label(panel,"DISPLAY",Rect2(36,98,400,28),14,MUTED)
+	_button(panel,"WINDOWED",Rect2(36,138,470,48),func():DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED))
+	_button(panel,"FULLSCREEN",Rect2(524,138,500,48),func():DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN))
 	var check=CheckButton.new()
 	check.text="REDUCED MOTION"
-	check.position=Vector2(30,180)
-	check.size=Vector2(560,50)
+	check.position=Vector2(36,205)
+	check.size=Vector2(988,46)
 	check.button_pressed=reduced_motion
 	check.toggled.connect(func(value):reduced_motion=value)
 	panel.add_child(check)
-	_button(panel,"CLOSE / ESC",Rect2(30,285,560,51),_close_aux)
+	_label(panel,"COLOR / ACCENT + FIVE SIGNALS",Rect2(36,286,988,28),16,MUTED)
+	var presets=P.PRESETS.keys()
+	for i in range(presets.size()):
+		var preset: String=presets[i]
+		_button(panel,preset,Rect2(36+i*332,335,316,44),func():
+			for k in range(6):
+				palette_pickers[k].color=P.PRESETS[preset][k])
+	palette_pickers=[]
+	for i in range(6):
+		_label(panel,["ACCENT","VIT","INF / −","RES / +","SPD","LUK"][i],Rect2(36+i*166,422,150,28),16,WHITE)
+		var picker=ColorPickerButton.new()
+		picker.position=Vector2(36+i*166,464)
+		picker.size=Vector2(150,64)
+		picker.color=palette_colors[i]
+		picker.edit_alpha=false
+		picker.tooltip_text="Choose color / "+["ACCENT","VIT","INF","RES","SPD","LUK"][i]
+		panel.add_child(picker)
+		var editor=picker.get_picker()
+		editor.sampler_visible=false
+		editor.color_modes_visible=false
+		editor.sliders_visible=false
+		editor.presets_visible=false
+		palette_pickers.append(picker)
+	_label(panel,"LIGHT COLORS / DISTINCT SIGNALS / BLACK FOUNDATION",Rect2(36,558,988,30),15,MUTED)
+	palette_error=_label(panel,"",Rect2(36,600,988,52),17,status_colors[1])
+	_button(panel,"APPLY COLORS",Rect2(36,676,988,48),_apply_colors,"check")
+	_button(panel,"CLOSE / ESC",Rect2(36,742,988,42),_close_aux,"close")
+
+func _apply_colors() -> void:
+	var colors=[]
+	for picker in palette_pickers:
+		colors.append(picker.color)
+	var error=P.validate(colors)
+	if not error.is_empty():
+		palette_error.text=error
+		return
+	error=P.save_to(settings_path,colors)
+	if not error.is_empty():
+		palette_error.text=error
+		return
+	palette_colors=colors
+	_set_theme()
+	if is_instance_valid(notice):
+		notice.add_theme_color_override("font_color",CYAN)
+	_close_aux()
+	if build_open:
+		_build()
+	elif battle.mode=="CHOICE":
+		_action_dialog()
+	elif battle.mode=="RESULT":
+		_result()
+	_hud()
+	_settings()
+	palette_error.text="APPLIED / Saved separately from your build."
+	palette_error.add_theme_color_override("font_color",CYAN)
+	queue_redraw()
+
+func _set_theme() -> void:
+	CYAN=palette_colors[0]
+	MAGENTA=palette_colors[0]
+	status_colors=palette_colors.slice(1)
+	var skin=Theme.new()
+	skin.default_font=font
+	skin.default_font_size=20
+	for type in ["Label","Button","OptionButton","CheckButton","LineEdit","SpinBox","PopupMenu"]:
+		skin.set_color("font_color",type,WHITE)
+		skin.set_color("font_hover_color",type,CYAN)
+		skin.set_color("font_pressed_color",type,CYAN)
+		skin.set_color("font_focus_color",type,CYAN)
+		skin.set_color("font_disabled_color",type,MUTED)
+		if type=="Label":
+			continue
+		for state in ["normal","hover","pressed","focus","disabled","panel"]:
+			var style=StyleBoxFlat.new()
+			style.bg_color=PANEL if state in ["normal","panel","disabled"] else P.INTERACTIVE
+			style.border_color=CYAN if state in ["pressed","focus"] else EDGE
+			style.set_border_width_all(2 if state=="focus" else 1)
+			style.content_margin_left=12
+			style.content_margin_right=12
+			style.content_margin_top=4
+			style.content_margin_bottom=4
+			skin.set_stylebox(state,type,style)
+	for type in ["PopupPanel","PanelContainer","TooltipPanel"]:
+		var surface=StyleBoxFlat.new()
+		surface.bg_color=PANEL
+		surface.border_color=EDGE
+		surface.set_border_width_all(1)
+		surface.content_margin_left=10
+		surface.content_margin_right=10
+		surface.content_margin_top=10
+		surface.content_margin_bottom=10
+		skin.set_stylebox("panel",type,surface)
+	skin.set_color("font_color","TooltipLabel",WHITE)
+	skin.set_font_size("font_size","TooltipLabel",18)
+	self.theme=skin
+
+func _ring(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,active: bool=false) -> void:
+	V.ring(canvas,center,radius,u,active,status_colors,CYAN)
 
 func _restart() -> void:
 	_close_aux()
@@ -626,9 +761,12 @@ func _quit() -> void:
 	get_tree().quit()
 
 func _close_aux() -> void:
+	var previous=null
 	if is_instance_valid(auxiliary):
+		previous=auxiliary.get_meta("previous_focus") if auxiliary.has_meta("previous_focus") else null
 		auxiliary.queue_free()
 	auxiliary=null
+	_restore_focus.call_deferred(previous)
 
 func _clear_overlay() -> void:
 	if is_instance_valid(overlay):
@@ -641,19 +779,23 @@ func _modal(rect: Rect2, is_aux: bool) -> Control:
 	layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	layer.mouse_filter=Control.MOUSE_FILTER_STOP
 	add_child(layer)
+	var owner=get_viewport().gui_get_focus_owner()
+	if is_instance_valid(owner):
+		layer.set_meta("previous_focus",weakref(owner))
+	_focus_modal.call_deferred(layer)
 	var dim=ColorRect.new()
-	dim.color=Color(0.015,0.025,0.045,0.90 if build_open else 0.56)
+	dim.color=Color(BG,0.98 if build_open or is_aux else 0.82)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(dim)
 	var panel=Panel.new()
 	panel.position=rect.position
 	panel.size=rect.size
 	var style=StyleBoxFlat.new()
-	style.bg_color=Color("0d1722")
-	style.border_color=Color("325462")
+	style.bg_color=PANEL
+	style.border_color=EDGE
 	style.set_border_width_all(1)
 	style.shadow_color=Color(0,0,0,0.5)
-	style.shadow_size=24
+	style.shadow_size=0
 	panel.add_theme_stylebox_override("panel",style)
 	layer.add_child(panel)
 	if is_aux:
@@ -662,12 +804,35 @@ func _modal(rect: Rect2, is_aux: bool) -> Control:
 		overlay=layer
 	return panel
 
-func _button(parent: Control, text: String, rect: Rect2, callback: Callable) -> Button:
+func _button(parent: Control, text: String, rect: Rect2, callback: Callable, icon_name: String="", active: bool=false) -> Button:
 	var button=Button.new()
 	button.text=text
+	button.tooltip_text=text
+	var key=icon_name
+	if key.is_empty():
+		key={"HELP":"help","SETTINGS":"settings","RESTART":"restart","QUIT":"quit","START":"play","SAVE":"save","LOAD":"load","WAIT":"wait","BACK":"back","CLOSE / ESC":"close","RETURN TO BUILD":"back"}.get(text,"")
+		if text.contains("DAMAGE"):
+			key="attack"
+		elif text.contains("HEAL"):
+			key="heal"
+	if ICONS.has(key):
+		button.icon=ICONS[key]
+		button.expand_icon=true
+		button.icon_alignment=HORIZONTAL_ALIGNMENT_LEFT
+		button.alignment=HORIZONTAL_ALIGNMENT_LEFT
+		button.add_theme_constant_override("icon_max_width",20)
+		button.add_theme_constant_override("h_separation",9)
+	if active:
+		button.add_theme_color_override("font_color",CYAN)
+		var selected_style=StyleBoxFlat.new()
+		selected_style.bg_color=P.INTERACTIVE
+		selected_style.border_color=CYAN
+		selected_style.set_border_width_all(1)
+		selected_style.border_width_bottom=3
+		button.add_theme_stylebox_override("normal",selected_style)
 	button.position=rect.position
 	button.size=rect.size
-	button.add_theme_font_size_override("font_size",17)
+	button.add_theme_font_size_override("font_size",15 if rect.size.x<=136 else 17)
 	button.pressed.connect(callback)
 	parent.add_child(button)
 	return button
@@ -678,7 +843,8 @@ func _option(parent: Control, values: Array, current: String, rect: Rect2, callb
 	option.size=rect.size
 	option.add_theme_font_size_override("font_size",16)
 	for value in values:
-		option.add_item(str(value))
+		option.add_item(C.SKILLS[value].label if C.SKILLS.has(value) else str(value))
+		option.get_popup().set_item_tooltip(option.item_count-1,str(value))
 	option.selected=maxi(0,values.find(current))
 	option.item_selected.connect(func(index):callback.call(str(values[index])))
 	parent.add_child(option)
@@ -704,8 +870,7 @@ func _notify(text: String) -> void:
 
 func _panel(rect: Rect2) -> void:
 	draw_rect(rect,PANEL)
-	draw_rect(rect,EDGE,false,1)
-	draw_line(rect.position,rect.position+Vector2(40,0),CYAN,2)
+	draw_line(rect.position,Vector2(rect.end.x,rect.position.y),EDGE,1)
 
 func _text(text: String, position_px: Vector2, font_size: int, color: Color=WHITE, typeface: Font=null) -> void:
 	draw_string(font if typeface==null else typeface,position_px,text,HORIZONTAL_ALIGNMENT_LEFT,-1,font_size,color)
@@ -716,7 +881,7 @@ func _center(text: String, position_px: Vector2, font_size: int, color: Color=WH
 	draw_string(f,position_px-Vector2(width/2,0),text,HORIZONTAL_ALIGNMENT_LEFT,-1,font_size,color)
 
 func _bar(rect: Rect2, ratio: float, color: Color) -> void:
-	draw_rect(rect,Color("25313b"))
+	draw_rect(rect,Color("232a30"))
 	draw_rect(Rect2(rect.position,Vector2(rect.size.x*clampf(ratio,0,1),rect.size.y)),color)
 
 func _brackets(rect: Rect2, color: Color) -> void:
@@ -732,3 +897,45 @@ static func _hp(value: float) -> String:
 
 static func _distance(a: Vector2i, b: Vector2i) -> int:
 	return absi(a.x-b.x)+absi(a.y-b.y)
+
+func _icon(parent: Control,key: String,rect: Rect2,tint: Color) -> void:
+	var icon=TextureRect.new()
+	icon.texture=ICONS[key]
+	icon.position=rect.position
+	icon.size=rect.size
+	icon.expand_mode=TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.modulate=tint
+	icon.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	parent.add_child(icon)
+
+func _separator(parent: Control,rect: Rect2) -> void:
+	var line=ColorRect.new()
+	line.position=rect.position
+	line.size=rect.size
+	line.color=EDGE
+	line.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	parent.add_child(line)
+
+func _focus_modal(layer: Control) -> void:
+	if not is_instance_valid(layer) or layer.is_queued_for_deletion():
+		return
+	var controls=[]
+	for control in layer.find_children("*","Control",true,false):
+		if control.focus_mode==Control.FOCUS_ALL and control.is_visible_in_tree() and not (control is BaseButton and control.disabled):
+			controls.append(control)
+	if controls.is_empty():
+		return
+	for i in range(controls.size()):
+		controls[i].focus_next=controls[(i+1)%controls.size()].get_path()
+		controls[i].focus_previous=controls[(i-1+controls.size())%controls.size()].get_path()
+	controls[0].grab_focus()
+
+func _restore_focus(previous) -> void:
+	if is_instance_valid(auxiliary):
+		return
+	var control=previous.get_ref() if previous is WeakRef else null
+	if is_instance_valid(control) and not control.is_queued_for_deletion() and control.is_visible_in_tree():
+		control.grab_focus()
+	elif is_instance_valid(overlay):
+		_focus_modal(overlay)

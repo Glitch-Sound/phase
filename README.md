@@ -9,7 +9,8 @@
 
 - Godot 4.7系(検証版4.7.2、Mac arm64)。
 - 開発検査にはNode.js 22.12以上とnpm、Git。
-- 追加のGodotアドオン、画像、外部サービスは不要。
+- 追加のGodotアドオンや外部サービスは不要。
+LucideのSVGアイコンとライセンスは同梱済みである。
 
 ### 手順
 
@@ -24,7 +25,7 @@ godot --path /Users/glitch/Developer/phase
 ## 使い方
 
 起動直後のBUILDでPLAYER 01、02の構成とステージを選び、BATTLE STARTを押す。
-シアンの手番ユニットから、空いた上下左右のセルを順にクリックする。
+アクセント色の円で示した手番ユニットから、空いた上下左右のセルを順にクリックする。
 PHASE PREVIEWで移動後のリングと同期補正を比較し、経路の終点をダブルクリックして確定する。
 WAITまたは装備したACTIVEを1つ選び、有効対象をクリックする。
 敵の手番も同じように自分で操作する。
@@ -153,3 +154,25 @@ chmod +x .githooks/pre-commit
 コミット前のフックがnpm run checkを実行する。
 生成されたOpenSpecスキルは手で編集しない。
 GitHubへのpushとゲームの公開は行っていない。
+
+## 配色とUI
+
+minimal dark intelligenceを方針とし、黒い面、位相リング、4波形、HPと同期の棒で情報を伝える。
+装備の5値、型番、変更差分、効果量と符号は保持する。
+SETTINGSでDEFAULT、AMBER、ICEを選ぶか、6個の色見本でアクセントと5ステータス色を編集する。
+APPLY COLORSで適用し、CLOSEまたはEscでは未適用の配色を取り消す。
+暗すぎる色や区別しづらいステータス色は理由を表示して拒否する。
+UI設定はartifacts/runtime/ui-settings.jsonへ保存し、既存設定はbackup付きで退避する。
+ビルド保存とは独立しており、SAVEとLOADの操作は従来どおりである。
+TabとShift+Tabは最前面の操作部品を移動し、Enterで実行する。
+Lucideの出典とISCおよびFeather由来MITの権利表示は[NOTICE](assets/lucide/NOTICE.md)と[LICENSE](assets/lucide/LICENSE)にある。
+
+UIだけを再現する検証ラボは次で起動する。
+戦闘難易度を検証するモードではなく、本体の起動シーンにも組み込まれない。
+
+~~~sh
+godot --path . --script tests/visual_lab.gd --resolution 1440x810
+~~~
+
+F2は勝利と0件、F3は敗北と2件の表示fixture、F4は回復対象、F5は攻撃対象、F6は行動選択、F10はartifacts/runtimeへの画面保存である。
+表示確認ではラボ専用の配色設定を使い、通常のビルドセーブには触れない。

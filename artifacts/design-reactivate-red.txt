@@ -1,0 +1,56 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: BUILD restores modal focus after reactivation
+FAIL: BUILD keeps focus on enabled modal controls
+FAIL: BUILD keeps focus on enabled modal controls
+FAIL: BUILD keeps focus on enabled modal controls
+FAIL: BUILD keeps focus on enabled modal controls
+FAIL: HELP restores modal focus after reactivation
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: HELP keeps focus on enabled modal controls
+FAIL: SETTINGS restores modal focus after reactivation
+FAIL: SETTINGS keeps focus on enabled modal controls
+FAIL: SETTINGS keeps focus on enabled modal controls
+FAIL: SETTINGS keeps focus on enabled modal controls
+FAIL: SETTINGS keeps focus on enabled modal controls
+FAIL: SETTINGS keeps focus on enabled modal controls
+FAIL: SETTINGS keeps focus on enabled modal controls
+FAIL: SETTINGS keeps focus on enabled modal controls
+FAIL: SETTINGS keeps focus on enabled modal controls
+FAIL: SETTINGS keeps focus on enabled modal controls
+FAIL: SETTINGS keeps focus on enabled modal controls
+FAIL: SETTINGS keeps focus on enabled modal controls
+FAIL: SETTINGS keeps focus on enabled modal controls
+FAIL: SETTINGS keeps focus on enabled modal controls
+FAIL: SETTINGS keeps focus on enabled modal controls
+FAIL: SETTINGS keeps focus on enabled modal controls
+FAIL: SETTINGS keeps focus on enabled modal controls
+PHASE / UNIT 01 / PLAYER — Click adjacent empty cells, then double-click the endpoint.
+FAIL: ACTION restores modal focus after reactivation
+FAIL: ACTION keeps focus on enabled modal controls
+FAIL: ACTION keeps focus on enabled modal controls
+FAIL: ACTION keeps focus on enabled modal controls
+FAIL: ACTION keeps focus on enabled modal controls
+FAIL: RESULT restores modal focus after reactivation
+FAIL: RESULT keeps focus on enabled modal controls
+FAIL: RESULT keeps focus on enabled modal controls
+FAIL: RESULT keeps focus on enabled modal controls
+FAIL: RESULT keeps focus on enabled modal controls
+DESIGN FLOW: 127 checks / 49 failures
