@@ -1,0 +1,122 @@
+[
+  {
+    "id": "REQ-001-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-001-S02",
+    "manual": false
+  },
+  {
+    "id": "REQ-002-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-003-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-004-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-005-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-006-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-007-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-007-S02",
+    "manual": false
+  },
+  {
+    "id": "REQ-008-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-008-S02",
+    "manual": false
+  },
+  {
+    "id": "REQ-009-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-010-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-011-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-012-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-013-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-013-S02",
+    "manual": false
+  },
+  {
+    "id": "REQ-022-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-014-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-015-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-015-S02",
+    "manual": false
+  },
+  {
+    "id": "REQ-016-S01",
+    "manual": false
+  },
+  {
+    "id": "REQ-016-S02",
+    "manual": false
+  },
+  {
+    "id": "REQ-017-S01",
+    "manual": true
+  },
+  {
+    "id": "REQ-018-S01",
+    "manual": true
+  },
+  {
+    "id": "REQ-019-S01",
+    "manual": true
+  },
+  {
+    "id": "REQ-020-S01",
+    "manual": true
+  },
+  {
+    "id": "REQ-021-S01",
+    "manual": true
+  },
+  {
+    "id": "NREQ-001-S01",
+    "manual": true
+  },
+  {
+    "id": "REQ-013-S03",
+    "manual": false
+  }
+]

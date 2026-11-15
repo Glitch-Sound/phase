@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+SCRIPT ERROR: Parse Error: Preload file "res://game/phase_math.gd" does not exist.
+   at: GDScript::reload (res://tests/run.gd:3)
+SCRIPT ERROR: Parse Error: Preload file "res://game/battle.gd" does not exist.
+   at: GDScript::reload (res://tests/run.gd:4)
+SCRIPT ERROR: Parse Error: Preload file "res://game/catalog.gd" does not exist.
+   at: GDScript::reload (res://tests/run.gd:5)
+SCRIPT ERROR: Parse Error: Preload file "res://game/collection.gd" does not exist.
+   at: GDScript::reload (res://tests/run.gd:6)
+SCRIPT ERROR: Parse Error: Preload file "res://game/tuning.gd" does not exist.
+   at: GDScript::reload (res://tests/run.gd:7)
+ERROR: Failed to load script "res://tests/run.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript_resource_format.cpp:46)

@@ -1,0 +1,308 @@
+[
+	{
+		"arms_before": 60.0,
+		"destination": "(3, 2)",
+		"gear_before": 300.0,
+		"long": {
+			"inf": 0.932633258969407,
+			"length": 4,
+			"path": "[(3, 3), (2, 3), (2, 2), (3, 2)]",
+			"res": 1.13636538136918
+		},
+		"normal_steps_before": 2,
+		"short": {
+			"inf": 0.716839687980865,
+			"length": 2,
+			"path": "[(3, 3), (3, 2)]",
+			"res": 0.931373001630511
+		}
+	},
+	{
+		"arms_before": 60.0,
+		"destination": "(2, 3)",
+		"gear_before": 300.0,
+		"long": {
+			"inf": 0.932633258969407,
+			"length": 4,
+			"path": "[(3, 3), (3, 2), (2, 2), (2, 3)]",
+			"res": 1.13636538136918
+		},
+		"normal_steps_before": 2,
+		"short": {
+			"inf": 0.716839687980865,
+			"length": 2,
+			"path": "[(3, 3), (2, 3)]",
+			"res": 0.931373001630511
+		}
+	},
+	{
+		"arms_before": 60.0,
+		"destination": "(5, 4)",
+		"gear_before": 300.0,
+		"long": {
+			"inf": 0.932633258969407,
+			"length": 4,
+			"path": "[(3, 3), (4, 3), (4, 4), (5, 4)]",
+			"res": 1.13636538136918
+		},
+		"normal_steps_before": 2,
+		"short": {
+			"inf": 0.716839687980865,
+			"length": 2,
+			"path": "[(4, 4), (5, 4)]",
+			"res": 0.931373001630511
+		}
+	},
+	{
+		"arms_before": 60.0,
+		"destination": "(1, 4)",
+		"gear_before": 300.0,
+		"long": {
+			"inf": 0.932633258969407,
+			"length": 4,
+			"path": "[(3, 3), (2, 3), (2, 4), (1, 4)]",
+			"res": 1.13636538136918
+		},
+		"normal_steps_before": 2,
+		"short": {
+			"inf": 0.716839687980865,
+			"length": 2,
+			"path": "[(2, 4), (1, 4)]",
+			"res": 0.931373001630511
+		}
+	},
+	{
+		"arms_before": 240.0,
+		"destination": "(3, 3)",
+		"gear_before": 120.0,
+		"long": {
+			"inf": 1.50950417044675,
+			"length": 3,
+			"path": "[(4, 4), (4, 3), (3, 3)]",
+			"res": 1.62571418092512
+		},
+		"normal_steps_before": 8,
+		"short": {
+			"inf": 0.716839687980865,
+			"length": 1,
+			"path": "[(3, 3)]",
+			"res": 0.931373001630511
+		}
+	},
+	{
+		"arms_before": 240.0,
+		"destination": "(3, 2)",
+		"gear_before": 120.0,
+		"long": {
+			"inf": 2.0,
+			"length": 4,
+			"path": "[(3, 3), (4, 3), (4, 2), (3, 2)]",
+			"res": 2.0
+		},
+		"normal_steps_before": 8,
+		"short": {
+			"inf": 0.75887636989318,
+			"length": 2,
+			"path": "[(3, 3), (3, 2)]",
+			"res": 0.972632523449658
+		}
+	},
+	{
+		"arms_before": 240.0,
+		"destination": "(4, 3)",
+		"gear_before": 120.0,
+		"long": {
+			"inf": 2.0,
+			"length": 4,
+			"path": "[(3, 3), (3, 2), (4, 2), (4, 3)]",
+			"res": 2.0
+		},
+		"normal_steps_before": 8,
+		"short": {
+			"inf": 0.858321483384969,
+			"length": 2,
+			"path": "[(3, 3), (4, 3)]",
+			"res": 1.06757365745583
+		}
+	},
+	{
+		"arms_before": 240.0,
+		"destination": "(2, 3)",
+		"gear_before": 120.0,
+		"long": {
+			"inf": 2.0,
+			"length": 4,
+			"path": "[(3, 3), (3, 2), (2, 2), (2, 3)]",
+			"res": 2.0
+		},
+		"normal_steps_before": 8,
+		"short": {
+			"inf": 0.75887636989318,
+			"length": 2,
+			"path": "[(3, 3), (2, 3)]",
+			"res": 0.972632523449658
+		}
+	},
+	{
+		"arms_before": 240.0,
+		"destination": "(5, 4)",
+		"gear_before": 120.0,
+		"long": {
+			"inf": 2.0,
+			"length": 4,
+			"path": "[(3, 3), (4, 3), (5, 3), (5, 4)]",
+			"res": 2.0
+		},
+		"normal_steps_before": 8,
+		"short": {
+			"inf": 0.74203706845928,
+			"length": 2,
+			"path": "[(4, 4), (5, 4)]",
+			"res": 0.956190930150257
+		}
+	},
+	{
+		"arms_before": 240.0,
+		"destination": "(4, 4)",
+		"gear_before": 120.0,
+		"long": {
+			"inf": 1.50950417044675,
+			"length": 3,
+			"path": "[(3, 3), (4, 3), (4, 4)]",
+			"res": 1.62571418092512
+		},
+		"normal_steps_before": 8,
+		"short": {
+			"inf": 0.716839687980865,
+			"length": 1,
+			"path": "[(4, 4)]",
+			"res": 0.931373001630511
+		}
+	},
+	{
+		"arms_before": 240.0,
+		"destination": "(4, 5)",
+		"gear_before": 120.0,
+		"long": {
+			"inf": 2.0,
+			"length": 4,
+			"path": "[(2, 4), (2, 5), (3, 5), (4, 5)]",
+			"res": 2.0
+		},
+		"normal_steps_before": 8,
+		"short": {
+			"inf": 0.74203706845928,
+			"length": 2,
+			"path": "[(3, 5), (4, 5)]",
+			"res": 0.956190930150257
+		}
+	},
+	{
+		"arms_before": 240.0,
+		"destination": "(2, 4)",
+		"gear_before": 120.0,
+		"long": {
+			"inf": 2.0,
+			"length": 3,
+			"path": "[(3, 5), (2, 5), (2, 4)]",
+			"res": 2.0
+		},
+		"normal_steps_before": 8,
+		"short": {
+			"inf": 0.716839687980865,
+			"length": 1,
+			"path": "[(2, 4)]",
+			"res": 0.931373001630511
+		}
+	},
+	{
+		"arms_before": 240.0,
+		"destination": "(2, 5)",
+		"gear_before": 120.0,
+		"long": {
+			"inf": 2.0,
+			"length": 4,
+			"path": "[(3, 3), (2, 3), (2, 4), (2, 5)]",
+			"res": 2.0
+		},
+		"normal_steps_before": 8,
+		"short": {
+			"inf": 0.858321483384969,
+			"length": 2,
+			"path": "[(3, 5), (2, 5)]",
+			"res": 1.06757365745583
+		}
+	},
+	{
+		"arms_before": 240.0,
+		"destination": "(1, 4)",
+		"gear_before": 120.0,
+		"long": {
+			"inf": 2.0,
+			"length": 4,
+			"path": "[(3, 3), (2, 3), (2, 4), (1, 4)]",
+			"res": 2.0
+		},
+		"normal_steps_before": 8,
+		"short": {
+			"inf": 0.75887636989318,
+			"length": 2,
+			"path": "[(2, 4), (1, 4)]",
+			"res": 0.972632523449658
+		}
+	},
+	{
+		"arms_before": 240.0,
+		"destination": "(3, 5)",
+		"gear_before": 120.0,
+		"long": {
+			"inf": 2.0,
+			"length": 3,
+			"path": "[(2, 4), (2, 5), (3, 5)]",
+			"res": 2.0
+		},
+		"normal_steps_before": 8,
+		"short": {
+			"inf": 0.716839687980865,
+			"length": 1,
+			"path": "[(3, 5)]",
+			"res": 0.931373001630511
+		}
+	},
+	{
+		"arms_before": 300.0,
+		"destination": "(4, 4)",
+		"gear_before": 60.0,
+		"long": {
+			"inf": 2.0,
+			"length": 3,
+			"path": "[(3, 5), (4, 5), (4, 4)]",
+			"res": 2.0
+		},
+		"normal_steps_before": 10,
+		"short": {
+			"inf": 0.858321483384969,
+			"length": 1,
+			"path": "[(4, 4)]",
+			"res": 1.06757365745583
+		}
+	},
+	{
+		"arms_before": 300.0,
+		"destination": "(3, 5)",
+		"gear_before": 60.0,
+		"long": {
+			"inf": 2.0,
+			"length": 3,
+			"path": "[(4, 4), (4, 5), (3, 5)]",
+			"res": 2.0
+		},
+		"normal_steps_before": 10,
+		"short": {
+			"inf": 1.42157452730746,
+			"length": 1,
+			"path": "[(3, 5)]",
+			"res": 1.55519213119621
+		}
+	}
+]

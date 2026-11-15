@@ -1,0 +1,9 @@
+# OpenSpec テンプレートが使うもの
+# 言語やツールごとのものは、この下に追加する。
+node_modules/
+openspec/traceability.md
+.godot/
+.tool-cache/
+.template-source/
+artifacts/runtime/
+*.log

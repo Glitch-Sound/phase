@@ -1,0 +1,16 @@
+{
+  "name": "phase",
+  "version": "1.0.0",
+  "description": "移動経路による位相変換を予測するGodot戦術ゲーム",
+  "scripts": {
+    "test": "sh scripts/check.sh",
+    "check": "sh scripts/check.sh && sh scripts/check-specs.sh"
+  },
+  "keywords": [],
+  "author": "",
+  "type": "commonjs",
+  "devDependencies": {
+    "@fission-ai/openspec": "1.16.0"
+  },
+  "private": true
+}

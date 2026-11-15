@@ -1,0 +1,40 @@
+[
+  {
+    "name": "GEAR direction",
+    "caught": true,
+    "exit": 1,
+    "failures": [
+      "FAIL: panel NORMAL",
+      "FAIL: panel SHIFT",
+      "FAIL: panel REVERSE",
+      "FAIL: path prediction",
+      "FAIL: prediction equals committed"
+    ]
+  },
+  {
+    "name": "Resistance division",
+    "caught": true,
+    "exit": 1,
+    "failures": [
+      "FAIL: independent damage formula"
+    ]
+  },
+  {
+    "name": "Singularity tolerance",
+    "caught": true,
+    "exit": 1,
+    "failures": [
+      "FAIL: tiny angle mismatch"
+    ]
+  },
+  {
+    "name": "Pair interference",
+    "caught": true,
+    "exit": 1,
+    "failures": [
+      "FAIL: triple and pair weighted wave",
+      "FAIL: assisted power",
+      "FAIL: bell input ordering"
+    ]
+  }
+]
