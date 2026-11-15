@@ -27,3 +27,7 @@ const UNIT_TICK_WIDTH := 0.025
 # 盤面だけを中央に揃え、外径を約13%広げる。
 const UNIT_BOARD_CENTER := Vector2(35,35)
 const UNIT_BOARD_RADIUS := 31.0
+# 細線が物理1px未満で途切れない下限と、円弧の物理的な弦誤差。
+const UNIT_HP_PIXEL_MIN := 0.9
+const UNIT_COLOR_PIXEL_MIN := 1.1
+const UNIT_ARC_ERROR_PIXELS := 0.03

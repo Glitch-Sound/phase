@@ -28,12 +28,22 @@ static func glyph(radius: float, u: Dictionary, selected: bool, colors: Array, a
 ## 記号を描く。canvasは描画先、centerは中心、radiusは基準半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色、typefaceは名前のフォント。戻り値なし。副作用は描画。
 static func ring(canvas: CanvasItem, center: Vector2, radius: float, u: Dictionary, selected: bool, colors: Array, accent: Color, typeface: Font) -> void:
 	var g=glyph(radius,u,selected,colors,accent)
+	# viewport_transformはRetinaを含む実描画倍率を既に持つ。OSのDPIを追加で掛けない。
+	var scale_px=(canvas.get_viewport_transform()*canvas.get_global_transform()).get_scale().x
 	for arc in g.arcs:
-		canvas.draw_arc(center,arc.radius,arc.start,arc.end,maxi(3,ceili(rad_to_deg(arc.end-arc.start)/3)),arc.color,arc.width,true)
+		var style=stroke_style(arc,scale_px)
+		canvas.draw_arc(center,arc.radius,arc.start,arc.end,style.points,arc.color,style.width,true)
 	canvas.draw_line(center+g.tick.from,center+g.tick.to,g.tick.color,g.tick.width,true)
 	var size=typeface.get_string_size(g.name,HORIZONTAL_ALIGNMENT_LEFT,-1,g.font_size)
 	var baseline=(typeface.get_ascent(g.font_size)-typeface.get_descent(g.font_size))/2
 	canvas.draw_string(typeface,center+Vector2(-size.x/2,baseline),g.name,HORIZONTAL_ALIGNMENT_LEFT,-1,g.font_size,TEXT)
+
+## 物理描画に適した線を返す。arcは円弧の記述、pixel_scaleは論理1pxに対応する物理倍率。戻り値は線幅と頂点数。副作用なし。
+static func stroke_style(arc: Dictionary, pixel_scale: float) -> Dictionary:
+	var scale=maxf(0.001,pixel_scale)
+	var floor_px=T.UNIT_HP_PIXEL_MIN if arc.role=="HP" else T.UNIT_COLOR_PIXEL_MIN
+	var step=2*acos(clampf(1-T.UNIT_ARC_ERROR_PIXELS/(arc.radius*scale),-1,1))
+	return {"width":maxf(arc.width,floor_px/scale),"points":maxi(3,ceili((arc.end-arc.start)/maxf(0.001,step))+1)}
 
 ## 波形を描く。canvasは描画先、rectは共通角度領域、uは予測配置、_timeは互換用の秒数、colorsは5色。戻り値なし。副作用は描画。
 static func wave(canvas: CanvasItem, rect: Rect2, u: Dictionary, _time: float, colors: Array) -> void:
