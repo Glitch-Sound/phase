@@ -9,7 +9,7 @@ const T = preload("res://game/tuning.gd")
 static func unit_name(u: Dictionary) -> String:
 	return str(int(u.id)) if u.camp=="PLAYER" and u.id in ["01","02"] else u.id
 
-## ユニット記号を記述する。radiusは外半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色。戻り値は円弧と目盛りと中央名の描画データ。副作用なし。
+## ユニット記号を記述する。radiusは基準半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色。戻り値は円弧と目盛りと中央名の描画データ。副作用なし。
 static func glyph(radius: float, u: Dictionary, selected: bool, colors: Array, accent: Color) -> Dictionary:
 	var arcs=[]
 	for r in range(3):
@@ -22,10 +22,10 @@ static func glyph(radius: float, u: Dictionary, selected: bool, colors: Array, a
 			arcs.append({"role":["CORE","GEAR","ARMS"][r],"radius":rad,"start":start+gap/2,"end":end-gap/2,"color":colors[status],"width":maxf(T.UNIT_MIN_LINE,radius*T.UNIT_RING_WIDTH)})
 	var health=clampf(u.hp/maxf(1.0,u.max_hp),0.0,1.0)
 	if health>0:
-		arcs.append({"role":"HP","radius":radius*T.UNIT_HP_RADIUS,"start":-PI/2,"end":-PI/2+TAU*health,"color":TEXT,"width":maxf(T.UNIT_MIN_LINE,radius*T.UNIT_HP_WIDTH)})
+		arcs.append({"role":"HP","radius":radius*T.UNIT_HP_RADIUS,"start":-PI/2,"end":-PI/2+TAU*health,"color":TEXT,"width":maxf(T.UNIT_HP_MIN_LINE,radius*T.UNIT_HP_WIDTH)})
 	return {"arcs":arcs,"tick":{"from":Vector2(0,-radius*T.UNIT_TICK_RADII.x),"to":Vector2(0,-radius*T.UNIT_TICK_RADII.y),"color":accent if selected else TEXT,"width":maxf(T.UNIT_MIN_LINE,radius*T.UNIT_TICK_WIDTH)},"name":unit_name(u),"font_size":maxi(T.UNIT_NAME_MIN,roundi(radius*T.UNIT_NAME_SIZE))}
 
-## 記号を描く。canvasは描画先、centerは中心、radiusは外半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色、typefaceは名前のフォント。戻り値なし。副作用は描画。
+## 記号を描く。canvasは描画先、centerは中心、radiusは基準半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色、typefaceは名前のフォント。戻り値なし。副作用は描画。
 static func ring(canvas: CanvasItem, center: Vector2, radius: float, u: Dictionary, selected: bool, colors: Array, accent: Color, typeface: Font) -> void:
 	var g=glyph(radius,u,selected,colors,accent)
 	for arc in g.arcs:

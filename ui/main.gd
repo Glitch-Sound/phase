@@ -191,8 +191,8 @@ func _draw_board() -> void:
 			var i=battle.at(cell)
 			if i>=0:
 				var u: Dictionary=battle.units[i]
-				var center=pos+Vector2(35,27)
-				_ring(self,center,24,u,i==battle.actor)
+				var center=pos+T.UNIT_BOARD_CENTER
+				_ring(self,center,T.UNIT_BOARD_RADIUS,u,i==battle.actor)
 				if i==selected:
 					_brackets(Rect2(pos+Vector2(5,5),Vector2(60,60)),MAGENTA)
 				if battle.mode=="TARGET" and battle.valid_target(battle.actor,i,battle.selected_skill):
