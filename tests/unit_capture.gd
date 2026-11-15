@@ -3,6 +3,7 @@ extends SceneTree
 # 旧外周円のアンチエイリアスはセル上端から3px出ていたため、その消去も含める。
 const UNIT_AREAS=[Rect2i(196,345,122,58),Rect2i(196,409,122,58),Rect2i(196,473,122,58),Rect2i(196,537,122,58),Rect2i(196,601,122,58),Rect2i(196,665,122,58),Rect2i(910,376,70,74),Rect2i(770,516,70,74),Rect2i(980,376,70,74),Rect2i(980,516,70,74),Rect2i(1320,100,100,55),Rect2i(1445,155,180,180),Rect2i(1324,397,422,4),Rect2i(172,894,106,106)]
 var game
+var failed=false
 var stamp=str(Time.get_unix_time_from_system()).replace(".","-")
 func _initialize() -> void:
 	_run.call_deferred()
@@ -69,7 +70,7 @@ func _run() -> void:
 	await _capture("healing-after")
 	game._restart()
 	await process_frame
-	quit()
+	quit(1 if failed else 0)
 func _capture(suffix: String,audit: bool=false) -> void:
 	game.queue_redraw()
 	await create_timer(0.2).timeout
@@ -77,7 +78,9 @@ func _capture(suffix: String,audit: bool=false) -> void:
 	var image=root.get_texture().get_image()
 	if audit:
 		var reference=Image.load_from_file("res://artifacts/ui-review/map-labels-battle.png")
-		assert(image.get_size()==reference.get_size(),"Comparison uses the same viewport size")
+		if image.get_size()!=reference.get_size():
+			_fail("Comparison uses the same viewport size")
+			return
 		var inside=0
 		var outside=0
 		var examples=[]
@@ -92,8 +95,17 @@ func _capture(suffix: String,audit: bool=false) -> void:
 					if examples.size()<5:
 						examples.append(Vector2i(x,y))
 		print("UNIT PIXEL AUDIT: inside ",inside," / outside ",outside," / examples ",examples)
-		assert(inside>0 and outside==0,"Only authorized unit regions change")
+		if inside==0 or outside!=0:
+			_fail("Only authorized unit regions change")
+			return
 	var path="res://artifacts/runtime/PHASE-units-"+stamp+"-"+suffix+".png"
-	assert(not FileAccess.file_exists(path),"Never overwrite a capture")
-	assert(image.save_png(path)==OK,"Capture saved")
+	if FileAccess.file_exists(path):
+		_fail("Never overwrite a capture")
+		return
+	if image.save_png(path)!=OK:
+		_fail("Capture could not be saved")
+		return
 	print("CAPTURE ",ProjectSettings.globalize_path(path)," ",image.get_size())
+func _fail(message: String) -> void:
+	failed=true
+	printerr("FAIL: ",message)

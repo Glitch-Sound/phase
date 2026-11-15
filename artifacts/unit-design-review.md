@@ -60,7 +60,9 @@ Godot 4.7.2、Apple M4、Compatibilityレンダラーの実ビューポートを
 
 `godot --path . --script tests/unit_capture.gd --resolution 1920x1080 --log-file "$PWD/artifacts/runtime/unit-capture.log"`で実描画を再現できる。\
 新しい時刻の画像を作り、過去の画像は上書きしない。\
-以前のmap_chrome_captureは72f3ae4までの文字削除だけを検証した履歴用であり、今回の比較にはunit_captureを使う。
+以前のmap_chrome_captureは72f3ae4までの文字削除だけを検証した履歴用であり、今回の比較にはunit_captureを使う。\
+撮影用スクリプトでも比較違反、寸法違い、既存ファイル、保存失敗は終了コード1とする。\
+初回の境界マスク検査でGodotのassertだけでは終了コード0になったため、明示的な失敗状態へ修正し、不正な比較マスクで終了コード1になることを確認した。
 
 比較用の画像はartifacts/ui-review/unit-rings-battle.pngである。\
 実戦闘のTURN2、内部手番02、AのHP89、経路(4,6)から(5,6)を保存した。\
