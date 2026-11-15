@@ -27,3 +27,13 @@ if rg 'SCRIPT ERROR|FAIL:|Failed to load script' artifacts/runtime/ui-output.txt
   exit 1
 fi
 rg 'UI CONNECTIONS: [0-9]+ checks / 0 failures' artifacts/runtime/ui-output.txt
+
+for suite in review_regressions contested_play; do
+  godot --headless --path . --script "tests/$suite.gd" --log-file "$PWD/artifacts/runtime/$suite.log" > "artifacts/runtime/$suite-output.txt" 2>&1
+  cat "artifacts/runtime/$suite-output.txt"
+  if rg 'SCRIPT ERROR|FAIL:|Failed to load script' "artifacts/runtime/$suite-output.txt"; then
+    exit 1
+  fi
+done
+rg 'REVIEW REGRESSIONS: [0-9]+ checks / 0 failures' artifacts/runtime/review_regressions-output.txt
+rg 'CONTESTED PLAY: PASS' artifacts/runtime/contested_play-output.txt

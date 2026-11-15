@@ -5,7 +5,7 @@ const M = preload("res://game/phase_math.gd")
 const T = preload("res://game/tuning.gd")
 var items: Dictionary={"ARMS":{},"GEAR":{}}
 var mutations: Array=["NORMAL"]
-var skills: Array=[C.DAMAGE,C.HEAL,C.MOVE]
+var skills: Array=[C.DAMAGE,C.HEAL]
 var builds: Array=[]
 var stage_index := 0
 var last_backup := ""
@@ -14,7 +14,7 @@ func _init() -> void:
 	for kind in ["ARMS","GEAR"]:
 		for stats in C.STARTER_STATS:
 			items[kind][C.serial(kind,stats)]=stats.duplicate()
-	builds=[C.default_build(),C.default_build()]
+	builds=C.player_builds()
 
 ## ビルドを検証する。buildは候補、inventoryは検証用開放状態で空なら現状態。戻り値は適否。
 func valid_build(build: Variant, inventory: Dictionary={}) -> bool:

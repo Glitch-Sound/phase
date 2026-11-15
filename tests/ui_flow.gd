@@ -44,6 +44,8 @@ func _run() -> void:
 	game.collection.stage_index=2
 	game._start_battle()
 	game.loot_rng.seed=187
+	# この検査はREACHからRESULTへの接続であり、実ステージの攻略ではない。
+	game.battle.stage.victory=[{"type":"REACH","camp":"PLAYER","unit":"01","cell":Vector2i(5,4)}]
 	game._cell_input(Vector2i(4,4))
 	game._cell_input(Vector2i(5,4))
 	game._cell_input(Vector2i(5,4),true)

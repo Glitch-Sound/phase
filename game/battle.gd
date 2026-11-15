@@ -20,7 +20,8 @@ var history: Array=[]
 func start(stage_index: int, builds: Array) -> void:
 	stage=C.stages()[stage_index].duplicate(true)
 	panels=C.panels()
-	units=[C.unit("01","PLAYER",Vector2i(3,4),builds[0]),C.unit("02","PLAYER",Vector2i(3,6),builds[1]),C.unit("A","ENEMY",Vector2i(6,4),C.default_build()),C.unit("B","ENEMY",Vector2i(6,6),C.default_build())]
+	panels.merge(stage.panel_overrides,true)
+	units=[C.unit("01","PLAYER",stage.spawns[0],builds[0]),C.unit("02","PLAYER",stage.spawns[1],builds[1]),C.unit("A","ENEMY",stage.spawns[2],C.starter_build()),C.unit("B","ENEMY",stage.spawns[3],C.starter_build())]
 	path=[]
 	result=""
 	turn=1

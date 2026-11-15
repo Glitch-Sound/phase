@@ -1,0 +1,22 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+FAIL: no first-action result: stage 2 / build 0 / endings 7
+FAIL: no first-action result: stage 2 / build 2 / endings 7
+FAIL: enemy has an opportunity before fastest goal
+FAIL: goal starts defended
+FAIL: no first-action result: stage 3 / build 0 / endings 3
+FAIL: no first-action result: stage 3 / build 2 / endings 3
+FAIL: enemy has an opportunity before fastest goal
+FAIL: goal starts defended
+FAIL: new game leaves MOVE collectible
+FAIL: new build cannot equip locked MOVE
+FAIL: new build cannot equip locked MOVE
+FAIL: collected MOVE is shared
+FAIL: collected MOVE is shared
+FAIL: same result cannot reroll rewards
+FAIL: no rewards outside RESULT
+FAIL: decimal equipment comparison exists
+FAIL: effect chip layout exists
+REVIEW REGRESSIONS: 28 checks / 17 failures

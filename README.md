@@ -42,12 +42,16 @@ WAITまたは装備したACTIVEを1つ選び、有効対象をクリックする
 | ステージ | 勝利条件 | 役割 |
 | --- | --- | --- |
 | INTERFERENCE | ENEMY全滅 | 基本戦闘と経路比較 |
-| SEVERANCE | 敵Aを撃破 | 指定対象の勝敗判定 |
-| BREACH | 01が(5,4)へ移動を確定 | REACHの短い動作確認 |
-| ANCHOR | PLAYERが(5,5)を占有して手番終了 | OCCUPYと行動選択の確認 |
+| SEVERANCE | 敵Aを撃破 | 01を守り、02で敵Bを遮る |
+| BREACH | 01が(9,0)へ移動を確定 | 守備役Aを突破し、Bの(0,9)到達を阻止する |
+| ANCHOR | PLAYERが(8,0)を占有して手番終了 | 守備役Aを退け、ENEMYの(0,9)占有を防ぐ |
 
 いずれもPLAYER全滅で敗北する。
-後半2ステージは機能確認用であり、長期攻略用のキャンペーンではない。
+SEVERANCEは01の撃破でも敗北する。
+後半2ステージは赤のLOSS目標を相手に達成されても敗北する。
+敵を全滅させただけでは終わらず、指定目標の達成が必要である。
+初期01はSPD30のランナー、02はCOREと装備のINF30を持つ迎撃役である。
+敵は手動で操作するため、目標へ急ぐか攻撃するかもプレイヤーが選ぶ。
 
 ### パネルと位相
 
@@ -70,8 +74,11 @@ COREを変更すると他の値を再配分し、全値1以上、合計100を維
 STANDARDとREVERSEはCOREの配置順を変える。
 装備と開放した変異は全PLAYERで共有し、同じものを複数人へ装備できる。
 スキルは最大3個、未設定も許可する。
-開発検証のため、定義済みの3スキルは初期開放してある。
-未開放スキルの取得処理自体は自動テストで検証する。
+DAMAGEとHEALは初期開放し、MOVE+1は戦利品で取得する。
+取得後は両PLAYERで共有できる。
+既存セーブの開放済み3スキルはそのまま使える。
+装備の型番の下には5ステータスを十進表示し、変更直後は前の装備との差分を表示する。
+候補をポイントすると現在装備との差分も確認できる。
 
 SAVEはビルド、開放一覧、ステージを作業先のartifacts/runtime/phase-save.jsonへ保存する。
 再保存時は元のファイルを別名の.backup.jsonとして残す。
@@ -97,9 +104,11 @@ Godotだけの検証は次のコマンドで行う。
 ~~~sh
 godot --headless --path . --script tests/run.gd
 godot --headless --path . --script tests/playthrough.gd
+godot --headless --path . --script tests/review_regressions.gd
+godot --headless --path . --script tests/contested_play.gd
 ~~~
 
-自動テスト、全滅戦の再生、実画面での操作は[検証記録](artifacts/verification.md)に区別して記録する。
+初版の検証は[初版検証記録](artifacts/verification.md)、レビュー後の修正と28手の実操作は[追加検証記録](artifacts/review-verification.md)に区別して記録する。
 仕様の対応は[仕様書一覧](openspec/specs/README.md)、ユーザーの最終確認は[実機確認表](openspec/manual-checks.md)を参照する。
 
 制限されたシェルではGodotの標準ユーザーデータディレクトリとシステム証明書の初期化が拒否され、エンジンの警告が出る。

@@ -40,6 +40,8 @@ var effect_hover := -1
 var hover_cell := Vector2i(-1,-1)
 var loot_rng := RandomNumberGenerator.new()
 var notice: Label
+var result_awarded := false
+var equipment_views: Dictionary={}
 
 func _ready() -> void:
 	loot_rng.randomize()
@@ -151,6 +153,7 @@ func _draw_left() -> void:
 	_text("ALL UNITS: YOU",Vector2(322,762),13,MUTED,mono)
 
 func _draw_board() -> void:
+	var effect_chips=[]
 	_text(battle.stage.name,Vector2(560,77),18,WHITE,mono)
 	_text(battle.stage.type,Vector2(1090,77),14,CYAN,mono)
 	for x in range(10):
@@ -178,6 +181,9 @@ func _draw_board() -> void:
 			if cell==battle.stage.goal:
 				draw_rect(rect.grow(-4),Color(MAGENTA,0.6),false,1)
 				_text("GOAL",pos+Vector2(6,62),11,MAGENTA,mono)
+			if cell==battle.stage.enemy_goal:
+				draw_rect(rect.grow(-4),V.COLORS[1],false,2)
+				_text("LOSS",pos+Vector2(6,62),11,V.COLORS[1],mono)
 			if battle.mode=="TARGET" and _distance(cell,battle.units[battle.actor].pos)==1:
 				var tc=V.COLORS[1] if battle.selected_skill==C.DAMAGE else V.COLORS[2]
 				draw_rect(rect,Color(tc,0.12))
@@ -199,7 +205,7 @@ func _draw_board() -> void:
 					var amount=M.effect(battle.units[battle.actor],u,C.SKILLS[battle.selected_skill].effect)
 					if battle.selected_skill==C.HEAL:
 						amount=mini(amount,ceili(u.max_hp-u.hp))
-					_center(("-" if battle.selected_skill==C.DAMAGE else "+")+str(amount),pos+Vector2(35,76),17,tc,mono)
+					effect_chips.append({"cell":cell,"text":("-" if battle.selected_skill==C.DAMAGE else "+")+str(amount),"color":tc})
 	if battle.mode=="MOVE":
 		var prev: Vector2=BOARD+Vector2(battle.units[battle.actor].pos)*70+Vector2(35,35)
 		for cell in battle.path:
@@ -213,7 +219,16 @@ func _draw_board() -> void:
 			_center(str(i+1),center+Vector2(0,6),17,BG,mono)
 		if not battle.path.is_empty():
 			_brackets(Rect2(BOARD+Vector2(battle.path.back())*70+Vector2(3,3),Vector2(64,64)),CYAN)
+	# 全セルの描画後に重ね、次の行の背景で数字を隠さない。
+	for chip in effect_chips:
+		var rect=_effect_chip_rect(chip.cell)
+		draw_rect(rect,Color("0a1018"))
+		draw_rect(rect,chip.color,false,1)
+		_center(chip.text,rect.position+Vector2(rect.size.x/2,16),16,chip.color,mono)
 	_text(battle.stage.brief,Vector2(560,828),15,MAGENTA,mono)
+
+func _effect_chip_rect(cell: Vector2i) -> Rect2:
+	return Rect2(BOARD+Vector2(cell)*70+Vector2(25,2),Vector2(43,22))
 
 func _draw_info() -> void:
 	var index=selected if selected>=0 else battle.actor
@@ -392,6 +407,7 @@ func _build() -> void:
 	_option(panel,["STANDARD","REVERSE"],b.class_name,Rect2(210,230,390,43),func(value):b.class_name=value;_refresh_build())
 	_label(panel,"CORE / TOTAL 100",Rect2(36,292,560,27),16,MUTED)
 	core_controls=[]
+	equipment_views={}
 	for k in range(5):
 		_label(panel,["VIT","INF","RES","SPD","LUK"][k],Rect2(36+k*116,326,100,25),17,V.COLORS[k])
 		var spin=SpinBox.new()
@@ -407,12 +423,35 @@ func _build() -> void:
 	_label(panel,"Changing one value redistributes the others. All stats stay ≥ 1.",Rect2(36,414,570,27),14,MUTED)
 	for r in range(2):
 		var key="arms" if r==0 else "gear"
-		var y=460+r*110
+		var y=454+r*128
 		_label(panel,key.to_upper(),Rect2(36,y,170,28),17,WHITE)
 		var choices: Array=collection.items[key.to_upper()].keys()
-		_option(panel,choices,C.serial(key.to_upper(),b[key]),Rect2(210,y-5,390,40),func(value):b[key]=collection.items[key.to_upper()][value].duplicate();_refresh_build())
-		_label(panel,"MUTATION",Rect2(36,y+46,170,24),14,MUTED)
-		_option(panel,collection.mutations,b[key+"_mutation"],Rect2(210,y+39,390,36),func(value):b[key+"_mutation"]=value;_refresh_build())
+		var view=Control.new()
+		view.position=Vector2(36,y+40)
+		view.size=Vector2(564,27)
+		view.mouse_filter=Control.MOUSE_FILTER_IGNORE
+		view.set_meta("before",b[key].duplicate())
+		panel.add_child(view)
+		equipment_views[key]=view
+		view.draw.connect(func():
+			for status in range(5):
+				var delta=int(b[key][status])-int(view.get_meta("before")[status])
+				var text="%s %d" % [["VIT","INF","RES","SPD","LUK"][status],b[key][status]]
+				if delta!=0:
+					text+=" (%+d)" % delta
+				view.draw_string(font,Vector2(status*112,20),text,HORIZONTAL_ALIGNMENT_LEFT,-1,14,V.COLORS[status]))
+		var option=_option(panel,choices,C.serial(key.to_upper(),b[key]),Rect2(210,y-5,390,40),func(value):
+			view.set_meta("before",b[key].duplicate())
+			b[key]=collection.items[key.to_upper()][value].duplicate()
+			_refresh_build())
+		for index in range(choices.size()):
+			option.get_popup().set_item_tooltip(index,_equipment_comparison(collection.items[key.to_upper()][choices[index]],b[key]))
+		option.item_selected.connect(func(_index):
+			for index in range(choices.size()):
+				option.get_popup().set_item_tooltip(index,_equipment_comparison(collection.items[key.to_upper()][choices[index]],b[key])))
+		_label(panel,"MUTATION",Rect2(36,y+77,170,24),14,MUTED)
+		_option(panel,collection.mutations,b[key+"_mutation"],Rect2(210,y+70,390,34),func(value):b[key+"_mutation"]=value;_refresh_build())
+	_label(panel,"Hover a model for equipped deltas. Row deltas show the last change.",Rect2(36,695,600,24),12,MUTED)
 	_label(panel,"SKILLS / UP TO 3 / NONE ALLOWED",Rect2(688,328,580,30),15,MUTED)
 	for i in range(3):
 		var choices=["NONE"]
@@ -482,6 +521,17 @@ func _refresh_build() -> void:
 	queue_redraw()
 	if is_instance_valid(build_preview):
 		build_preview.queue_redraw()
+	for view in equipment_views.values():
+		if is_instance_valid(view):
+			view.queue_redraw()
+
+func _equipment_comparison(candidate: Array, equipped: Array) -> String:
+	var lines=[]
+	for index in range(5):
+		var delta=int(candidate[index])-int(equipped[index])
+		var change="0" if delta==0 else "%+d" % delta
+		lines.append("%s %d (%s)" % [["VIT","INF","RES","SPD","LUK"][index],candidate[index],change])
+	return "\n".join(lines)
 
 func _start_battle() -> void:
 	for b in collection.builds:
@@ -489,14 +539,19 @@ func _start_battle() -> void:
 			_notify("Invalid build. Check unlocked elements and the CORE total.")
 			return
 	build_open=false
+	result_awarded=false
 	battle.start(collection.stage_index,collection.builds)
 	_clear_overlay()
 	_hud()
 	_notify("UNIT %s / %s — Click adjacent empty cells, then double-click the endpoint." % [battle.units[battle.actor].id,battle.units[battle.actor].camp])
 
 func _result() -> void:
+	if battle.mode!="RESULT" or battle.result.is_empty():
+		return
 	_clear_overlay()
-	drops=collection.roll_loot(loot_rng)
+	if not result_awarded:
+		drops=collection.roll_loot(loot_rng)
+		result_awarded=true
 	var panel=_modal(Rect2(530,240,860,540),false)
 	_label(panel,battle.result,Rect2(40,35,780,66),53,CYAN if battle.result=="VICTORY" else V.COLORS[1])
 	_label(panel,"%s / %d TURNS" % [battle.stage.name,battle.turn],Rect2(40,120,780,34),19,MUTED)

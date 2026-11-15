@@ -197,6 +197,7 @@ func test_objectives() -> void:
 		elif stage==1:
 			b.units[2].hp=0.0
 		else:
+			b.units[2].pos=Vector2i(9,9)
 			b.units[0].pos=C.stages()[stage].goal
 		var event=["DEATH","DEATH","MOVE","END"][stage]
 		if stage>=2:
@@ -291,8 +292,11 @@ func test_invalid_load() -> void:
 func test_deterministic_play() -> void:
 	var a=B.new()
 	var b=B.new()
-	a.start(2,[C.default_build(),C.default_build()])
-	b.start(2,[C.default_build(),C.default_build()])
+	a.start(0,[C.default_build(),C.default_build()])
+	b.start(0,[C.default_build(),C.default_build()])
+	# 接続のfixtureを実ステージの難易度から独立させる。
+	a.stage.victory=[{"type":"REACH","camp":"PLAYER","unit":"01","cell":Vector2i(5,4)}]
+	b.stage.victory=a.stage.victory.duplicate(true)
 	for cell in [Vector2i(4,4),Vector2i(5,4)]:
 		a.path_click(cell)
 		b.path_click(cell)
@@ -333,6 +337,8 @@ func test_skill_limits() -> void:
 ## REQ-015-S02
 func test_skill_unlock_and_distribution() -> void:
 	var l=L.new()
+	if not l.skills.has(C.MOVE):
+		l.skills.append(C.MOVE)
 	l.skills.erase(C.HEAL)
 	var rng=RandomNumberGenerator.new()
 	rng.seed=918
