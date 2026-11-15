@@ -16,6 +16,7 @@ func _run() -> void:
 		_check(false,"actual phase field and closed contours exist")
 	await _test_ui()
 	await _test_board()
+	await _test_notifications()
 	print("PHASE PREVIEW: %d checks / %d failures" % [checks,failures])
 	quit(0 if failures==0 else 1)
 ## REQ-033-S01
@@ -154,6 +155,56 @@ func _test_board() -> void:
 			_check(game.battle.path==[Vector2i(4,4)],"actual scaled click reaches enlarged cell: "+str(dimensions))
 	game.queue_free()
 	await process_frame
+## REQ-033-S03、NREQ-001-S01
+func _test_notifications() -> void:
+	var game=load("res://tests/phase_preview_audit.gd").new()
+	game.settings_path="res://artifacts/runtime/notification-no-settings-"+str(Time.get_ticks_usec())+".json"
+	root.add_child(game)
+	await process_frame
+	for state in ["start","invalid-move","invalid-target"]:
+		game._start_battle()
+		await process_frame
+		var expected="UNIT 1 / PLAYER — Click adjacent empty cells, then double-click the endpoint."
+		if state=="invalid-move":
+			game._cell_input(Vector2i(0,9))
+			expected="Add an empty adjacent cell. No revisits. Maximum %d steps." % T.BASE_MOVE
+		elif state=="invalid-target":
+			game._cell_input(Vector2i(4,4))
+			game._cell_input(Vector2i(5,4))
+			game._cell_input(Vector2i(5,4),true)
+			await process_frame
+			game.battle.choose_skill(game.C.DAMAGE)
+			game._clear_overlay()
+			game._hud()
+			game._cell_input(Vector2i(0,0))
+			expected="Choose a highlighted adjacent target. BACK keeps your movement."
+		await create_timer(0.08).timeout
+		var messages=game.drawn_text.filter(func(item):return item.text==expected)
+		_check(game.message==expected and game.message_time>0 and messages.size()==1,"real notification is visible: "+state)
+		if messages.size()!=1:
+			continue
+		var bounds=_text_bounds(messages[0])
+		var metrics=game.drawn_text.filter(func(item):return item.text.begins_with("INF ") or item.text.begins_with("RES "))
+		_check(metrics.size()==2 and metrics.all(func(item):return not bounds.intersects(_text_bounds(item))),"notification does not obscure either final sync rate: "+state)
+		_check(not bounds.intersects(game.T.PREVIEW_PANEL) and not bounds.intersects(Rect2(game.BOARD,Vector2.ONE*game.CELL*10)),"notification is separate from rings and map: "+state)
+		var buttons=game.hud.find_children("*","Button",true,false)
+		_check(buttons.all(func(button):return not bounds.intersects(button.get_global_rect())),"notification does not obscure actions or footer: "+state)
+		if state=="start":
+			for dimensions in [Vector2i(1152,648),Vector2i(1440,810),Vector2i(1200,1600),Vector2i(1920,1080)]:
+				root.size=dimensions
+				await process_frame
+				var transform=root.get_final_transform()
+				var visible=Rect2(Vector2.ZERO,Vector2(dimensions))
+				_check(visible.encloses(transform*bounds) and metrics.all(func(item):return not (transform*bounds).intersects(transform*_text_bounds(item))),"longest notification and metrics stay visible at "+str(dimensions))
+	game._process(8.0)
+	await create_timer(0.08).timeout
+	_check(not game.drawn_text.any(func(item):return item.text==game.message),"expired notification no longer draws")
+	game.queue_free()
+	await process_frame
+func _text_bounds(item: Dictionary) -> Rect2:
+	var font: Font=item.typeface
+	var size: int=item.font_size
+	return Rect2(item.position-Vector2(0,font.get_ascent(size)),Vector2(font.get_string_size(item.text,HORIZONTAL_ALIGNMENT_LEFT,-1,size).x,font.get_ascent(size)+font.get_descent(size)))
 func _check(ok: bool,message: String) -> void:
 	checks+=1
 	if not ok:

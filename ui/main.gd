@@ -123,7 +123,7 @@ func _draw() -> void:
 	_draw_info()
 	_draw_preview()
 	if message_time>0 and not build_open:
-		_text(message,Vector2(150,1028),18,CYAN)
+		_text(message,T.BATTLE_MESSAGE_POSITION,18,CYAN)
 	for t in toasts:
 		var color: Color=t.color
 		color.a=clampf((2.4-t.age)/0.7,0,1)

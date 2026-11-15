@@ -41,14 +41,18 @@ const PREVIEW_PANEL := Rect2(150,820,370,220)
 const PREVIEW_CENTER := Vector2(335,925)
 const PREVIEW_RADIUS := 48.0
 const PREVIEW_SYNC_BASELINE := 1026.0
+# 戦闘通知は予測の右側へ分離し、同期率とフッターを覆わない。
+const BATTLE_MESSAGE_POSITION := Vector2(550,976)
 # 各領域の中央と境界を、離れた細い閉曲線の山と谷へ写す。
 const PREVIEW_SAMPLES := 360
 const PREVIEW_RADII := [51.0,57.0,63.0,70.0]
 const PREVIEW_AMPLITUDES := [5.0,5.0,5.0,8.0]
 const PREVIEW_LINE := 0.9
-const PREVIEW_RESULT_LINE := 1.4
+# 結果の輪郭を通常の縮小表示でも追えるよう、他の細線より少し太くする。
+const PREVIEW_RESULT_LINE := 2.0
 const PREVIEW_PIXEL_MIN := 0.9
-const PREVIEW_BASE_ALPHA := 0.42
+# 通常の縮小表示でも色状態を読めるよう、不一致時の細線を残す。
+const PREVIEW_BASE_ALPHA := 0.55
 const PREVIEW_CLEAR_ALPHA := 0.92
-const PREVIEW_RESULT_BASE_ALPHA := 0.12
+const PREVIEW_RESULT_BASE_ALPHA := 0.25
 const PREVIEW_RESULT_CLEAR_ALPHA := 1.0

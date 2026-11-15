@@ -17,6 +17,8 @@ func _text(text: String,position_px: Vector2,font_size: int,color: Color=WHITE,t
 	if in_preview:
 		preview_text.append({"text":text,"position":position_px})
 	super._text(text,position_px,font_size,color,typeface)
+	drawn_text[-1].font_size=font_size
+	drawn_text[-1].typeface=font if typeface==null else typeface
 func _ring(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,active: bool=false) -> void:
 	if in_preview:
 		preview_rings.append({"center":center,"radius":radius,"unit":u.duplicate(true)})
