@@ -52,7 +52,7 @@ static func stages() -> Array:
 	var result=[
 		{"name":"01 / INTERFERENCE","type":"ELIMINATE","goal":Vector2i(-1,-1),"brief":"ELIMINATE ALL ENEMY UNITS","hint":"Compare routes. Both sides are under your control."},
 		{"name":"02 / SEVERANCE","type":"TARGET","goal":Vector2i(-1,-1),"brief":"DEFEAT A / KEEP 01 ALIVE","hint":"Lose if 01 falls. 02 can screen the enemy guard."},
-		{"name":"03 / BREACH","type":"REACH","goal":Vector2i(9,0),"brief":"01 REACH (9,0) / STOP B REACHING (0,9)","hint":"A guards the exit. 02 can intercept B. Both sides are manual."},
+		{"name":"03 / BREACH","type":"REACH","goal":Vector2i(9,0),"brief":"01 REACH (9,0) / KEEP 01 ALIVE / STOP B (0,9)","hint":"Lose if 01 falls. A guards the exit; 02 can intercept B."},
 		{"name":"04 / ANCHOR","type":"OCCUPY","goal":Vector2i(8,0),"brief":"PLAYER HOLD (8,0) / DENY ENEMY (0,9)","hint":"Occupation resolves at turn end. Moving every turn opens gaps."}
 	]
 	for stage in result:
@@ -71,6 +71,7 @@ static func stages() -> Array:
 			stage.enemy_goal=Vector2i(0,9)
 			stage.panel_overrides={Vector2i(8,0):"LOCK",Vector2i(8,1):"REVERSE",Vector2i(9,1):"SHIFT",Vector2i(3,7):"REVERSE",Vector2i(2,8):"LOCK",Vector2i(1,8):"SHIFT"}
 			stage.victory=[{"type":"REACH","camp":"PLAYER","unit":"01","cell":stage.goal}]
+			stage.defeat.append({"type":"TARGET","camp":"PLAYER","unit":"01"})
 			stage.defeat.append({"type":"REACH","camp":"ENEMY","unit":"B","cell":stage.enemy_goal})
 		elif stage.type=="OCCUPY":
 			stage.spawns[2]=stage.goal
