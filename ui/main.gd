@@ -132,7 +132,6 @@ func _draw() -> void:
 
 func _draw_left() -> void:
 	_text("PHASE",Vector2(172,125),47,WHITE)
-	_text("ROUTE / PHASE / EFFECT",Vector2(174,153),13,CYAN,mono)
 	var y=191.0
 	for camp in ["PLAYER","ENEMY"]:
 		var hp=0.0
@@ -146,8 +145,6 @@ func _draw_left() -> void:
 		_text("%s / %s" % [_hp(hp),_hp(max_hp)],Vector2(332,y),17,WHITE,mono)
 		_bar(Rect2(174,y+12,318,5),hp/maxf(1,max_hp),color)
 		y+=57
-	_text("TURN ORDER",Vector2(174,328),14,MUTED,mono)
-	_text("T / %.1f" % battle.units[battle.actor].next_time,Vector2(367,328),14,CYAN,mono)
 	var rows=battle.timeline(6)
 	for k in range(rows.size()):
 		var row: Dictionary=rows[k]
@@ -237,10 +234,8 @@ func _draw_info() -> void:
 	var index=selected if selected>=0 else battle.actor
 	var u: Dictionary=battle.units[index]
 	var camp_color=CYAN if u.camp=="PLAYER" else status_colors[1]
-	_text("INSPECT",Vector2(1324,94),14,MUTED,mono)
 	_text(u.camp+" / "+u.class_name,Vector2(1420,140),17,camp_color,mono)
 	_ring(self,Vector2(1535,245),81,u,index==battle.actor)
-	_text("INNER / MIDDLE / OUTER",Vector2(1438,348),13,MUTED,mono)
 	_text("HP",Vector2(1324,385),15,MUTED,mono)
 	_text("%s / %s" % [_hp(u.hp),_hp(u.max_hp)],Vector2(1390,385),21,WHITE,mono)
 	_text("MOVE %d / %d" % [u.moved,battle.movement(u)],Vector2(1588,385),16,CYAN,mono)
@@ -267,9 +262,6 @@ func _draw_info() -> void:
 func _draw_preview() -> void:
 	var u=battle.preview()
 	_panel(T.PREVIEW_PANEL)
-	_text("PHASE PREVIEW",Vector2(174,849),14,MUTED,mono)
-	var length=battle.path.size() if battle.mode=="MOVE" else u.moved
-	_text("PATH %d / DESTINATION (%d, %d)" % [length,u.pos.x,u.pos.y],Vector2(530,902),15,CYAN,mono)
 	var signature=[u.core,u.gear,u.arms,u.class_name,u.gear_mutation,u.arms_mutation,u.gear_angle,u.arms_angle,status_colors]
 	if signature!=preview_signature:
 		preview_signature=signature.duplicate(true)
