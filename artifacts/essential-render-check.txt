@@ -1,0 +1,8 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OpenGL API 4.1 Metal - 91.7 - Compatibility - Using Device: Apple - Apple M4
+
+LUMINANCE old=0.02048440252019 new=0.00154131170943 ratio=0.07524318602477
+DISPLAY FULL: window (4608, 2592) / image (4608, 2592) / transform [X: (2.4, 0.0), Y: (0.0, 2.4), O: (0.0, 0.0)]
+DISPLAY PORTRAIT: window (1200, 1600) / image (1200, 675) / transform [X: (0.625, 0.0), Y: (0.0, 0.625), O: (0.0, 463.0)]
+DETAIL PIXELS: choice 6366 / target 6366
+ESSENTIAL RENDER: 14 checks / 0 failures

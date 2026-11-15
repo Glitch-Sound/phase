@@ -37,7 +37,8 @@ func _test_gui_mouse(game: Control, factor: float, offset: Vector2) -> void:
 	game._build()
 	await process_frame
 	# BUILDのBATTLE STARTを、実ウィンドウ座標からGUI入力へ通す。
-	_push_click(offset+Vector2(1404,870)*factor)
+	var start: Button=_find_button(game.overlay,"START")
+	_push_click(offset+start.get_global_rect().get_center()*factor)
 	await process_frame
 	_check(not game.build_open,"scaled GUI button receives click")
 	_push_click(offset+Vector2(875,415)*factor)
@@ -97,7 +98,8 @@ func _test_focus(game: Control) -> void:
 	root.focus_entered.emit()
 	game._unhandled_input(event)
 	_check(game.battle.path==[Vector2i(4,4),Vector2i(5,4)],"focus return resumes the preserved route")
-	_push_click(root.get_final_transform()*Vector2(1277,1045))
+	var menu: Button=_find_button(game.hud,"MENU")
+	_push_click(root.get_final_transform()*menu.get_global_rect().get_center())
 	await process_frame
 	_check(is_instance_valid(game.auxiliary),"GUI remains usable after focus return")
 	game._close_aux()
@@ -117,3 +119,9 @@ func _check(ok: bool, message: String) -> void:
 	if not ok:
 		failures+=1
 		printerr("FAIL: ",message)
+
+func _find_button(layer: Control,text: String) -> Button:
+	for button in layer.find_children("*","Button",true,false):
+		if button.text==text:
+			return button
+	return null

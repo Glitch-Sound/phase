@@ -39,9 +39,9 @@ func _test_palette(palette) -> void:
 	_check(not palette.validate(colors).is_empty(),"reject transparent text")
 	_check(not palette.validate([Color.WHITE]).is_empty(),"reject incomplete palette")
 	colors=palette.PRESETS.DEFAULT.duplicate()
-	colors[0]=Color("858585")
+	colors[0]=Color("7c7c7c")
 	_check(palette.validate(colors).is_empty(),"accept readable boundary accent")
-	colors[0]=Color("7b7b7b")
+	colors[0]=Color("747474")
 	_check(not palette.validate(colors).is_empty(),"reject below contrast boundary")
 	colors[0]=Color(NAN,1,1)
 	_check(not palette.validate(colors).is_empty(),"reject nonfinite color")
@@ -59,14 +59,14 @@ func _test_apply(game,palette) -> void:
 	await process_frame
 	game._cell_input(Vector2i(4,4))
 	var before=game.battle.units.duplicate(true)
-	game._settings()
+	game._settings("COLOR")
 	await process_frame
 	game.palette_pickers[0].color=Color("08090b")
 	game._close_aux()
 	await process_frame
 	_check(game.palette_colors==palette.PRESETS.DEFAULT,"cancel preserves current palette")
 	_check(game.battle.path==[Vector2i(4,4)] and game.battle.units==before,"cancel preserves route and model")
-	game._settings()
+	game._settings("COLOR")
 	await process_frame
 	for i in range(6):
 		game.palette_pickers[i].color=palette.PRESETS.AMBER[i]
@@ -85,7 +85,7 @@ func _test_apply(game,palette) -> void:
 	game._cell_input(Vector2i(4,4),true)
 	await process_frame
 	_check(game.battle.mode=="CHOICE","action overlay after palette apply")
-	game._settings()
+	game._settings("COLOR")
 	await process_frame
 	for i in range(6):
 		game.palette_pickers[i].color=palette.PRESETS.DEFAULT[i]
@@ -95,11 +95,11 @@ func _test_apply(game,palette) -> void:
 	game._close_aux()
 	game.battle.choose_skill(game.C.DAMAGE)
 	game._clear_overlay()
-	game._settings()
+	game._settings("COLOR")
 	await process_frame
 	game._close_aux()
 	_check(game.battle.mode=="TARGET" and game.battle.selected_skill==game.C.DAMAGE,"cancel preserves target mode")
-	game._settings()
+	game._settings("COLOR")
 	await process_frame
 	for i in range(6):
 		game.palette_pickers[i].color=palette.PRESETS.ICE[i]
@@ -112,7 +112,7 @@ func _test_apply(game,palette) -> void:
 	game._result()
 	var drops=game.drops.duplicate(true)
 	var rng=game.loot_rng.state
-	game._settings()
+	game._settings("COLOR")
 	await process_frame
 	game._apply_colors()
 	await process_frame
@@ -146,15 +146,15 @@ func _finish() -> void:
 
 ## REQ-020-S01
 func _test_help_terms(game) -> void:
-	game._help()
+	game._help("PHASE")
 	await process_frame
 	var guides=[]
 	for label in game.auxiliary.find_children("*","Label",true,false):
-		if label.text.contains("SAVE / LOADは"):
+		if label.text.begins_with("−は"):
 			guides.append(label.text)
-	_check(guides==["−はダメージ、＋は回復。\nINFは攻撃と回復、RESは抵抗。\nSAVE / LOADは明示操作。以前の保存は退避する。"],"HELP separates effect signs from INF and RES mechanics")
+	_check(guides==["−はダメージ、＋は回復。\nINFは攻撃と回復、RESは抵抗。"],"HELP separates effect signs from INF and RES mechanics")
 	game._close_aux()
-	game._settings()
+	game._settings("COLOR")
 	await process_frame
 	var captions=[]
 	for label in game.auxiliary.find_children("*","Label",true,false):
@@ -178,7 +178,7 @@ func _test_action_context(game,palette) -> void:
 		minimum=minf(minimum,_contrast(_under_dim(color,dim),_under_dim(palette.INTERACTIVE,dim)))
 	_check(minimum>=palette.MIN_CONTRAST,"ACTION preserves readable HP, skill, and sync text behind its scrim")
 	_check(_contrast(palette.TEXT,game.overlay.get_child(1).get_theme_stylebox("panel").bg_color)>=palette.MIN_CONTRAST,"ACTION panel text remains readable")
-	game._settings()
+	game._settings("COLOR")
 	await process_frame
 	_check(game.auxiliary.get_child(0).color.a>dim.a,"SETTINGS keeps its own scrim")
 	game._close_aux()
@@ -221,7 +221,7 @@ func _test_focus_scope(game) -> void:
 	game._close_aux()
 	await process_frame
 	_check(root.gui_get_focus_owner()==original,"close restores prior focus")
-	game._settings()
+	game._settings("COLOR")
 	await process_frame
 	await _tab_cycle(game,game.auxiliary,"SETTINGS")
 	game._close_aux()

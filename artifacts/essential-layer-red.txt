@@ -1,0 +1,8 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+FAIL: retired modal detaches before replacement receives input
+FAIL: retired auxiliary detaches before replacement
+ESSENTIAL AUDIT: {"chars":89,"rings":1,"texts":["02","A","B","01",">>",">>","<","=","01","A",">>","<",">>","<","02","=","B","=","1","2","INF  130.6%","RES  94.5%","2 / 3"]}
+ESSENTIAL FLOW: 33 checks / 2 failures

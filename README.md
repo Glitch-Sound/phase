@@ -24,9 +24,9 @@ godot --path /Users/glitch/Developer/phase
 
 ## 使い方
 
-起動直後のBUILDでPLAYER 01、02の構成とステージを選び、BATTLE STARTを押す。
+起動直後のBUILDでPLAYER 01、02の構成とステージを選び、STARTを押す。
 アクセント色の円で示した手番ユニットから、空いた上下左右のセルを順にクリックする。
-PHASE PREVIEWで移動後のリングと同期補正を比較し、経路の終点をダブルクリックして確定する。
+下のリングとINF/RESで移動後の補正を比較し、経路の終点をダブルクリックして確定する。
 WAITまたは装備したACTIVEを1つ選び、有効対象をクリックする。
 敵の手番も同じように自分で操作する。
 
@@ -37,6 +37,12 @@ WAITまたは装備したACTIVEを1つ選び、有効対象をクリックする
 - 毎手番の移動は必須であり、四方を塞がれたときだけ無移動WAITができる。
 - 別ユニットまたは手番一覧をクリックすると右側の詳細を調べられる。
 - RESTARTは現在戦闘を破棄してBUILDへ戻る。
+
+IまたはINFOでユニットの詳細、PまたはPHASEで4波形と正確な角度を開閉する。
+ORDERは予定手番と陣営HP、ステージ名は目標の説明を開く。
+MまたはMENUからHELP、SETTINGS、RESTART、QUITへ進み、F1は直接HELPを開く。
+BUILDはCORE、EQUIP、SKILLSを切り替えて編集し、MENUにSAVEとLOADがある。
+RESULTの取得品を押すと型番と5値を調べられる。
 
 ### ステージ
 
@@ -60,9 +66,9 @@ SEVERANCEとBREACHは01の撃破でも直ちに敗北する。
 | 表示 | 効果 |
 | --- | --- |
 | 無印 / NORMAL | GEAR反時計、ARMS時計回り |
-| S+ / SHIFT | ARMSだけ通常の2倍回転 |
-| L= / LOCK | GEARだけ回転しない |
-| R- / REVERSE | ARMSだけ逆回転 |
+| >> / SHIFT | ARMSだけ通常の2倍回転 |
+| = / LOCK | GEARだけ回転しない |
+| < / REVERSE | ARMSだけ逆回転 |
 
 COREは回転しない。
 赤はINF、緑はRES、青はSPD、黄はLUK、灰はVITを示す。
@@ -91,7 +97,7 @@ LOADは明示操作で行い、破損や未知の版は現在データを変え�
 ### 表示設定
 
 HELPに日本語の操作説明がある。
-SETTINGSでウィンドウ、フルスクリーン、波形の動きを抑えるREDUCED MOTIONを選べる。
+MENUからSETTINGSのDISPLAYでウィンドウ、フルスクリーン、効果表示の移動を抑えるREDUCED MOTIONを選べる。
 1920x1080の内容全体を16:9のまま画面へ合わせ、異なる縦横比では上下または左右に余白を置く。
 RetinaでもOSの倍率を重ねず、文字と盤面とリングとオーバーレイを同じ比率で拡縮する。
 
@@ -157,9 +163,11 @@ GitHubへのpushとゲームの公開は行っていない。
 
 ## 配色とUI
 
-minimal dark intelligenceを方針とし、黒い面、位相リング、4波形、HPと同期の棒で情報を伝える。
+minimal dark intelligenceを方針とし、非常に濃い黒、細い輪郭、1組の予測リングを基本表示とする。
+盤面の円はPLAYER、菱形はENEMY、外側の円と手番の点は現在の操作対象を示す。
+装備、4波形、陣営集計は常時表示せず、必要時に開く。
 装備の5値、型番、変更差分、効果量と符号は保持する。
-SETTINGSでDEFAULT、AMBER、ICEを選ぶか、6個の色見本でアクセントと5ステータス色を編集する。
+MENU → SETTINGS → COLORでDEFAULT、AMBER、ICEを選ぶか、6個の色見本でアクセントと5ステータス色を編集する。
 APPLY COLORSで適用し、CLOSEまたはEscでは未適用の配色を取り消す。
 暗すぎる色や区別しづらいステータス色は理由を表示して拒否する。
 UI設定はartifacts/runtime/ui-settings.jsonへ保存し、既存設定はbackup付きで退避する。
@@ -176,3 +184,11 @@ godot --path . --script tests/visual_lab.gd --resolution 1440x810
 
 F2は勝利と0件、F3は敗北と2件の表示fixture、F4は回復対象、F5は攻撃対象、F6は行動選択、F10はartifacts/runtimeへの画面保存である。
 表示確認ではラボ専用の配色設定を使い、通常のビルドセーブには触れない。
+
+新しい表示の削減理由、測定、確認範囲は[最小表示の検証](artifacts/essential-ui-verification.md)にある。
+全画面の画像取得はGodotの実レンダーから行う。
+
+~~~sh
+godot --path . --script tests/essential_capture.gd --resolution 1920x1080
+godot --path . --script tests/essential_render.gd --resolution 1920x1080
+~~~

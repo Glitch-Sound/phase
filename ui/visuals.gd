@@ -3,13 +3,15 @@ extends RefCounted
 const M = preload("res://game/phase_math.gd")
 const P = preload("res://ui/palette.gd")
 const TEXT = P.TEXT
+# 細い輪郭で位相を読み、広い色面を作らない。
+const RING_WIDTH_RATIO=0.065
 
 ## リングを描く。canvasは描画先、centerは中心、radiusは外半径、uは現在配置、selectedは選択枠、colorsは5色、accentは選択色。戻り値なし。副作用は描画。
 static func ring(canvas: CanvasItem, center: Vector2, radius: float, u: Dictionary, selected: bool, colors: Array, accent: Color) -> void:
-	canvas.draw_circle(center,radius+2,Color("040506"))
+	canvas.draw_circle(center,radius+2,P.BG)
 	for r in range(3):
 		var rad=radius*(0.48+0.23*r)
-		var width=radius*0.16
+		var width=radius*RING_WIDTH_RATIO
 		for status in range(5):
 			var sector=M.sector(u,r,status)
 			var start=deg_to_rad(sector.x-90)
@@ -21,7 +23,7 @@ static func ring(canvas: CanvasItem, center: Vector2, radius: float, u: Dictiona
 
 ## 波形を描く。canvasは描画先、rectは共通角度領域、uは予測配置、_timeは互換用の秒数、colorsは5色。戻り値なし。副作用は描画。
 static func wave(canvas: CanvasItem, rect: Rect2, u: Dictionary, _time: float, colors: Array) -> void:
-	canvas.draw_line(Vector2(rect.position.x,rect.end.y-15),Vector2(rect.end.x,rect.end.y-15),Color("30363d"),1)
+	canvas.draw_line(Vector2(rect.position.x,rect.end.y-15),Vector2(rect.end.x,rect.end.y-15),P.EDGE,1)
 	var prev=[]
 	var prev_colors=[]
 	for sample in range(201):

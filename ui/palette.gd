@@ -1,17 +1,17 @@
 ## 黒い計測面の配色、判読性検証、独立した表示設定を扱う。
 extends RefCounted
-const BG=Color("040506")
-const SURFACE=Color("090b0e")
-const INTERACTIVE=Color("151c21")
-const EDGE=Color("30363d")
-const TEXT=Color("e8ebed")
-const MUTED=Color("9ba4ad")
+const BG=Color("010203")
+const SURFACE=Color("030405")
+const INTERACTIVE=Color("0a0c0e")
+const EDGE=Color("15191d")
+const TEXT=Color("b5babc")
+const MUTED=Color("858b90")
 const MIN_CONTRAST=4.5
 const MIN_DISTANCE=0.12
 # ACTIONはHPと同期の比較に使うため、背後の有効な配色を暗くしない。
 const ACTION_SCRIM_ALPHA=0.0
 const PRESETS={
-	"DEFAULT":[Color("b8d8d0"),Color("bec4ce"),Color("ee95a0"),Color("9ad4b5"),Color("9ebbe8"),Color("dfcb94")],
+	"DEFAULT":[Color("9aa5a2"),Color("858e94"),Color("bb6e7c"),Color("71a98a"),Color("7b91b6"),Color("b09a69")],
 	"AMBER":[Color("e6c78f"),Color("c4c8d0"),Color("f2a9a2"),Color("b8d8a2"),Color("a7cbe5"),Color("dcc0ed")],
 	"ICE":[Color("a8cce9"),Color("bfc6d4"),Color("e8a5bd"),Color("a3d5c7"),Color("aaa9ee"),Color("e8d0a0")]
 }
