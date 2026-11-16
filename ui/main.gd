@@ -114,8 +114,6 @@ func _draw() -> void:
 	draw_rect(Rect2(0,0,1920,1080),BG)
 	if build_open:
 		return
-	_panel(Rect2(150,64,370,740))
-	_panel(Rect2(1300,64,470,740))
 	_draw_left()
 	_draw_board()
 	_draw_info()
@@ -149,13 +147,15 @@ func _draw_left() -> void:
 		var u: Dictionary=battle.units[row.index]
 		y=345+k*64
 		var rect=Rect2(164,y,342,58)
-		draw_rect(rect,Color(CYAN,0.09) if k==0 else PANEL)
-		draw_rect(rect,CYAN if k==0 else EDGE,false,1)
+		if k==0:
+			# 外側のパネルがなくても手番強調の合成色を維持する。
+			draw_rect(rect,PANEL)
+			draw_rect(rect,Color(CYAN,0.09))
+			draw_rect(rect,CYAN,false,1)
 		_text("%02d" % (k+1),Vector2(174,y+34),15,CYAN if k==0 else MUTED,mono)
 		_ring(self,Vector2(223,y+29),22,u,k==0)
 		_text("I %3.0f%%" % (M.sync(u,1).factor*100),Vector2(331,y+23),13,status_colors[1],mono)
 		_text("R %3.0f%%" % (M.sync(u,2).factor*100),Vector2(331,y+43),13,status_colors[2],mono)
-	_text("TURN %03d" % battle.turn,Vector2(174,762),15,CYAN,mono)
 
 
 func _draw_board() -> void:
@@ -252,14 +252,12 @@ func _draw_info() -> void:
 	for k in range(u.skills.size()):
 		var skill: Dictionary=C.SKILLS[u.skills[k]]
 		var y=648+k*43
-		draw_rect(Rect2(1324,y,422,37),PANEL)
 		draw_rect(Rect2(1324,y,2,37),CYAN if skill.type=="ACTIVE" else MAGENTA)
 		_text(skill.type,Vector2(1335,y+24),12,MUTED,mono)
 		_text(skill.effect+" / "+skill.area,Vector2(1418,y+24),15,WHITE,mono)
 
 func _draw_preview() -> void:
 	var u=battle.preview()
-	_panel(T.PREVIEW_PANEL)
 	var signature=[u.core,u.gear,u.arms,u.class_name,u.gear_mutation,u.arms_mutation,u.gear_angle,u.arms_angle,status_colors]
 	if signature!=preview_signature:
 		preview_signature=signature.duplicate(true)

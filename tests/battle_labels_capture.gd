@@ -1,5 +1,5 @@
 extends "res://tests/notification_capture.gd"
-const LABEL_AREAS=[Rect2i(172,832,160,22),Rect2i(528,882,450,30),Rect2i(172,136,270,22),Rect2i(172,310,150,24),Rect2i(365,310,145,24),Rect2i(1322,78,110,24),Rect2i(1436,330,205,26),Rect2i(148,18,230,28),Rect2i(1388,18,230,28)]
+const LABEL_AREAS=[Rect2i(172,832,160,22),Rect2i(528,882,450,30),Rect2i(172,136,270,22),Rect2i(172,310,150,24),Rect2i(365,310,145,24),Rect2i(1322,78,110,24),Rect2i(1436,330,205,26),Rect2i(148,18,230,28),Rect2i(1388,18,230,28),Rect2i(172,742,180,26)]
 ## REQ-019-S01、REQ-019-S03
 func _capture(suffix: String) -> void:
 	game.queue_redraw()

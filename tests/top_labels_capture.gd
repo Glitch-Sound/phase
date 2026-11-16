@@ -11,7 +11,7 @@ func _capture(suffix: String) -> void:
 			failed=true
 			printerr("FAIL: comparison dimensions differ")
 			return
-		var areas=load("res://tests/battle_labels_capture.gd").LABEL_AREAS.slice(7)
+		var areas=load("res://tests/battle_labels_capture.gd").LABEL_AREAS.slice(7,9)
 		var counts=[0,0]
 		var outside=0
 		for y in range(image.get_height()):
