@@ -127,8 +127,8 @@ func _draw() -> void:
 		_center(t.text,p,24,color,mono)
 
 func _draw_left() -> void:
-	_text("PHASE",Vector2(172,125),47,WHITE)
-	var y=191.0
+	_text("PHASE",Vector2(T.BATTLE_LEFT_ORIGIN.x,T.BATTLE_TITLE_BASELINE),47,WHITE)
+	var y=T.BATTLE_HP_BASELINE
 	for camp in ["PLAYER","ENEMY"]:
 		var hp=0.0
 		var max_hp=0.0
@@ -137,19 +137,21 @@ func _draw_left() -> void:
 				hp+=u.hp
 				max_hp+=u.max_hp
 		var color=CYAN if camp=="PLAYER" else status_colors[1]
-		_text(camp,Vector2(174,y),17,color,mono)
-		_text("%s / %s" % [_hp(hp),_hp(max_hp)],Vector2(332,y),17,WHITE,mono)
-		_bar(Rect2(174,y+12,318,5),hp/maxf(1,max_hp),color)
-		y+=57
+		var value="%s / %s" % [_hp(hp),_hp(max_hp)]
+		var bar_start=maxf(T.BATTLE_HP_BAR.position.x,T.BATTLE_HP_VALUE_X+mono.get_string_size(value,HORIZONTAL_ALIGNMENT_LEFT,-1,T.BATTLE_HP_FONT_SIZE).x+T.BATTLE_HP_GAP)
+		_text(camp,Vector2(T.BATTLE_LEFT_ORIGIN.x,y),T.BATTLE_HP_FONT_SIZE,color,mono)
+		_text(value,Vector2(T.BATTLE_HP_VALUE_X,y),T.BATTLE_HP_FONT_SIZE,WHITE,mono)
+		_bar(Rect2(Vector2(bar_start,y+T.BATTLE_HP_BAR.position.y),Vector2(T.BATTLE_HP_BAR.end.x-bar_start,T.BATTLE_HP_BAR.size.y)),hp/maxf(1,max_hp),color)
+		y+=T.BATTLE_HP_STEP
 	var rows=battle.timeline(6)
 	for k in range(rows.size()):
 		var row: Dictionary=rows[k]
 		var u: Dictionary=battle.units[row.index]
-		y=345+k*64
-		_text("%02d" % (k+1),Vector2(174,y+34),15,CYAN if k==0 else MUTED,mono)
-		_ring(self,Vector2(223,y+29),22,u,k==0)
-		_text("I %3.0f%%" % (M.sync(u,1).factor*100),Vector2(331,y+23),13,status_colors[1],mono)
-		_text("R %3.0f%%" % (M.sync(u,2).factor*100),Vector2(331,y+43),13,status_colors[2],mono)
+		var origin=_timeline_rect(k).position
+		_text("%02d" % (k+1),origin+Vector2(10,34),15,CYAN if k==0 else MUTED,mono)
+		_ring(self,origin+Vector2(59,29),22,u,k==0)
+		_text("I %3.0f%%" % (M.sync(u,1).factor*100),origin+Vector2(167,23),13,status_colors[1],mono)
+		_text("R %3.0f%%" % (M.sync(u,2).factor*100),origin+Vector2(167,43),13,status_colors[2],mono)
 
 
 func _draw_board() -> void:
@@ -222,33 +224,37 @@ func _effect_chip_rect(cell: Vector2i) -> Rect2:
 func _board_point(cell: Vector2i, offset: Vector2=Vector2.ZERO) -> Vector2:
 	return BOARD+Vector2(cell)*CELL+offset*BOARD_SCALE
 
+func _timeline_rect(index: int) -> Rect2:
+	return Rect2(T.BATTLE_TIMELINE_RECT.position+Vector2(0,index*T.BATTLE_TIMELINE_STEP),T.BATTLE_TIMELINE_RECT.size)
+
 func _draw_info() -> void:
+	var offset=T.BATTLE_INFO_OFFSET
 	var index=selected if selected>=0 else battle.actor
 	var u: Dictionary=battle.units[index]
 	var camp_color=CYAN if u.camp=="PLAYER" else status_colors[1]
-	_text(u.camp+" / "+u.class_name,Vector2(1420,140),17,camp_color,mono)
-	_ring(self,Vector2(1535,245),81,u,index==battle.actor)
-	_text("HP",Vector2(1324,385),15,MUTED,mono)
-	_text("%s / %s" % [_hp(u.hp),_hp(u.max_hp)],Vector2(1390,385),21,WHITE,mono)
-	_text("MOVE %d / %d" % [u.moved,battle.movement(u)],Vector2(1588,385),16,CYAN,mono)
+	_text(u.camp+" / "+u.class_name,(Vector2(1420,140)+offset),17,camp_color,mono)
+	_ring(self,(Vector2(1535,245)+offset),81,u,index==battle.actor)
+	_text("HP",(Vector2(1324,385)+offset),15,MUTED,mono)
+	_text("%s / %s" % [_hp(u.hp),_hp(u.max_hp)],(Vector2(1390,385)+offset),21,WHITE,mono)
+	_text("MOVE %d / %d" % [u.moved,battle.movement(u)],(Vector2(1588,385)+offset),16,CYAN,mono)
 	for k in range(5):
-		_text(["VIT","INF","RES","SPD","LUK"][k],Vector2(1410+k*68,432),14,status_colors[k],mono)
+		_text(["VIT","INF","RES","SPD","LUK"][k],(Vector2(1410+k*68,432)+offset),14,status_colors[k],mono)
 	for r in range(3):
 		var y=461+r*27
-		_text(["CORE","GEAR","ARMS"][r],Vector2(1324,y),14,MUTED,mono)
+		_text(["CORE","GEAR","ARMS"][r],(Vector2(1324,y)+offset),14,MUTED,mono)
 		for k in range(5):
-			_text("%02d" % u[M.KEYS[r]][k],Vector2(1415+k*68,y),17,WHITE,mono)
-			_bar(Rect2(1410+k*68,y+5,42,2),u[M.KEYS[r]][k]/100.0,status_colors[k])
-	_text(C.serial("ARMS",u.arms),Vector2(1324,558),15,WHITE,mono)
-	_text("MUTATION / "+u.arms_mutation,Vector2(1324,580),12,MUTED,mono)
-	_text(C.serial("GEAR",u.gear),Vector2(1324,611),15,WHITE,mono)
-	_text("MUTATION / "+u.gear_mutation,Vector2(1324,633),12,MUTED,mono)
+			_text("%02d" % u[M.KEYS[r]][k],(Vector2(1415+k*68,y)+offset),17,WHITE,mono)
+			_bar(Rect2(Vector2(1410+k*68,y+5)+offset,Vector2(42,2)),u[M.KEYS[r]][k]/100.0,status_colors[k])
+	_text(C.serial("ARMS",u.arms),(Vector2(1324,558)+offset),15,WHITE,mono)
+	_text("MUTATION / "+u.arms_mutation,(Vector2(1324,580)+offset),12,MUTED,mono)
+	_text(C.serial("GEAR",u.gear),(Vector2(1324,611)+offset),15,WHITE,mono)
+	_text("MUTATION / "+u.gear_mutation,(Vector2(1324,633)+offset),12,MUTED,mono)
 	for k in range(u.skills.size()):
 		var skill: Dictionary=C.SKILLS[u.skills[k]]
 		var y=648+k*43
-		draw_rect(Rect2(1324,y,2,37),CYAN if skill.type=="ACTIVE" else MAGENTA)
-		_text(skill.type,Vector2(1335,y+24),12,MUTED,mono)
-		_text(skill.effect+" / "+skill.area,Vector2(1418,y+24),15,WHITE,mono)
+		draw_rect(Rect2(Vector2(1324,y)+offset,Vector2(2,37)),CYAN if skill.type=="ACTIVE" else MAGENTA)
+		_text(skill.type,(Vector2(1335,y+24)+offset),12,MUTED,mono)
+		_text(skill.effect+" / "+skill.area,(Vector2(1418,y+24)+offset),15,WHITE,mono)
 
 func _draw_preview() -> void:
 	var u=battle.preview()
@@ -259,10 +265,10 @@ func _draw_preview() -> void:
 		preview_generation+=1
 	V.phase_orbit(self,T.PREVIEW_CENTER,preview_contours)
 	_ring(self,T.PREVIEW_CENTER,T.PREVIEW_RADIUS,u)
-	_text("INF %.1f%%" % (M.sync(u,1).factor*100),Vector2(174,T.PREVIEW_SYNC_BASELINE),15,status_colors[1],mono)
-	_text("RES %.1f%%" % (M.sync(u,2).factor*100),Vector2(320,T.PREVIEW_SYNC_BASELINE),15,status_colors[2],mono)
+	_text("INF %.1f%%" % (M.sync(u,1).factor*100),Vector2(T.PREVIEW_PANEL.position.x,T.PREVIEW_SYNC_BASELINE),15,status_colors[1],mono)
+	_text("RES %.1f%%" % (M.sync(u,2).factor*100),Vector2(T.PREVIEW_PANEL.position.x+166,T.PREVIEW_SYNC_BASELINE),15,status_colors[2],mono)
 	if M.singularity(u):
-		_text("×5",Vector2(474,T.PREVIEW_SYNC_BASELINE),15,MAGENTA,mono)
+		_text("×5",Vector2(T.PREVIEW_PANEL.position.x+286,T.PREVIEW_SYNC_BASELINE),15,MAGENTA,mono)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not window_focused:
@@ -291,7 +297,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_cell_input(Vector2i(floori((p.x-BOARD.x)/CELL),floori((p.y-BOARD.y)/CELL)),event.double_click)
 		else:
 			for k in range(6):
-				if Rect2(164,345+k*64,342,58).has_point(p):
+				if _timeline_rect(k).has_point(p):
 					selected=battle.timeline(6)[k].index
 
 func _window_focus_exited() -> void:
@@ -355,9 +361,9 @@ func _hud() -> void:
 	for row in [["HELP",1218,_help],["SETTINGS",1346,_settings],["RESTART",1492,_restart],["QUIT",1640,_quit]]:
 		_button(hud,row[0],Rect2(row[1],1025,118,40),row[2])
 	if battle.mode=="TARGET":
-		_button(hud,"BACK",Rect2(1024,878,236,37),func():battle.back();_action_dialog())
+		_button(hud,"BACK",T.BATTLE_CONTEXT_BUTTON,func():battle.back();_action_dialog())
 	elif battle.mode=="MOVE" and battle.trapped():
-		_button(hud,"WAIT",Rect2(1024,878,236,37),func():battle.wait_turn();_after_action())
+		_button(hud,"WAIT",T.BATTLE_CONTEXT_BUTTON,func():battle.wait_turn();_after_action())
 
 func _action_dialog() -> void:
 	_clear_overlay()
@@ -572,7 +578,7 @@ func _help() -> void:
 	_label(panel,"両陣営を手動で操作する。敵CPUはない。",Rect2(36,85,1048,30),19,MUTED)
 	var steps=[
 		["move","01 / ROUTE","隣接する空きマスを順番にクリック。\n経路上をクリックすると後続を取消。"],
-		["target","02 / ALIGN","細線は内からCORE、GEAR、ARMS。\n外側は生領域の重なり。"],
+		["target","02 / ALIGN","4輪郭はCORE、GEAR、ARMSと全体。\n実位相の一致を示し、境界色を補間。"],
 		["check","03 / ACT","終点をダブルクリックして確定。\nWAITかスキルを選び、対象をクリック。"]
 	]
 	for i in range(3):

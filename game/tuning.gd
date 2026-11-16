@@ -34,19 +34,33 @@ const UNIT_ARC_ERROR_PIXELS := 0.03
 # 色相とVを維持し、既存プリセットの判読性を保つリング用の彩度強調。
 const UNIT_RING_SATURATION_POWER := 2.0
 
-# 左右パネルを維持し、正方形の盤面と入力に同じ寸法を使う。
-const BATTLE_BOARD_ORIGIN := Vector2(530,100)
-const BATTLE_CELL := 76.0
-const PREVIEW_PANEL := Rect2(150,820,370,220)
-const PREVIEW_CENTER := Vector2(335,925)
-const PREVIEW_RADIUS := 48.0
-const PREVIEW_SYNC_BASELINE := 1026.0
-# 戦闘通知は予測の右側へ分離し、同期率とフッターを覆わない。
-const BATTLE_MESSAGE_POSITION := Vector2(550,976)
-# 各領域の中央と境界を、離れた細い閉曲線の山と谷へ写す。
+# フッターを残して高さを使い、周囲の情報を盤面へ近接配置する。
+const BATTLE_BOARD_ORIGIN := Vector2(384,16)
+const BATTLE_CELL := 100.0
+const BATTLE_LEFT_ORIGIN := Vector2(40,0)
+const BATTLE_TITLE_BASELINE := 76.0
+const BATTLE_TIMELINE_RECT := Rect2(40,232,320,58)
+const BATTLE_TIMELINE_STEP := 64.0
+const BATTLE_INFO_OFFSET := Vector2(76,-44)
+const BATTLE_HP_BASELINE := 120.0
+const BATTLE_HP_STEP := 40.0
+const BATTLE_HP_VALUE_X := 126.0
+const BATTLE_HP_FONT_SIZE := 17
+const BATTLE_HP_BAR := Rect2(240,-6,120,5)
+const BATTLE_HP_GAP := 16.0
+const BATTLE_CONTEXT_BUTTON := Rect2(1400,950,360,37)
+const PREVIEW_PANEL := Rect2(40,680,320,280)
+const PREVIEW_CENTER := Vector2(200,804)
+const PREVIEW_RADIUS := 60.0
+const PREVIEW_SYNC_BASELINE := 934.0
+# 通知は盤面の下で、同期率とシステムメニューを避ける。
+const BATTLE_MESSAGE_POSITION := Vector2(40,1053)
+# 同じ軌道付近で4曲線を重ね、形は実際の配分と一致度へ従わせる。
 const PREVIEW_SAMPLES := 360
-const PREVIEW_RADII := [51.0,57.0,63.0,70.0]
-const PREVIEW_AMPLITUDES := [5.0,5.0,5.0,8.0]
+const PREVIEW_RADII := [78.0,78.8,79.6,78.8]
+const PREVIEW_AMPLITUDES := [8.0,8.0,8.0,10.0]
+# 実境界の両側を滑らかに結び、狭い領域では隣接間隔の半分へ縮める。
+const PREVIEW_BLEND_DEGREES := 8.0
 const PREVIEW_LINE := 0.9
 # 結果の輪郭を通常の縮小表示でも追えるよう、他の細線より少し太くする。
 const PREVIEW_RESULT_LINE := 2.0

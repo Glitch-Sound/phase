@@ -12,11 +12,13 @@ func _run() -> void:
 	if visual.has_method("phase_field") and visual.has_method("phase_contours"):
 		_test_fields(visual)
 		_test_contours(visual)
+		_test_gradient(visual)
 	else:
 		_check(false,"actual phase field and closed contours exist")
 	await _test_ui()
 	await _test_board()
 	await _test_notifications()
+	await _test_compact_layout()
 	print("PHASE PREVIEW: %d checks / %d failures" % [checks,failures])
 	quit(0 if failures==0 else 1)
 ## REQ-033-S01
@@ -109,15 +111,15 @@ func _test_ui() -> void:
 		await create_timer(0.08).timeout
 		_check(game.preview_generation==generation+2 and game.battle.units==units and game.battle.path==[Vector2i(4,4)],"palette updates once without changing battle or route")
 		var actual: Color=game.preview_contours[0].colors[0]
-		var expected: Color=P.PRESETS.AMBER[1]
-		_check(is_equal_approx(actual.r,expected.r) and is_equal_approx(actual.g,expected.g) and is_equal_approx(actual.b,expected.b),"orbit connects base status RGB independently of vivid ring palette")
+		var expected: Color=P.PRESETS.AMBER[5].lerp(P.PRESETS.AMBER[1],0.5)
+		_check(is_equal_approx(actual.r,expected.r) and is_equal_approx(actual.g,expected.g) and is_equal_approx(actual.b,expected.b),"orbit blends actual boundary colors independently of vivid ring palette")
 		game.queue_redraw()
 		await create_timer(0.08).timeout
 		_check(game.preview_generation==generation+2,"time does not change or recompute orbit")
 	game._help()
 	await process_frame
-	var guide=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text.contains("外側") and label.text.contains("重なり"))
-	_check(guide.size()==1,"HELP explains ordered contours and overlap")
+	var guide=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text=="4輪郭はCORE、GEAR、ARMSと全体。\n実位相の一致を示し、境界色を補間。")
+	_check(guide.size()==1,"HELP explains overlapping roles and interpolation without an inner-to-outer order")
 	if guide.size()==1:
 		var label=guide[0]
 		var next=game.auxiliary.find_children("*","Label",true,false).filter(func(item):return item.text.begins_with("終点をダブルクリック"))[0]
@@ -135,7 +137,7 @@ func _test_board() -> void:
 	if cell_size==null:
 		_check(false,"drawing and input use shared enlarged board geometry")
 	else:
-		_check(cell_size>70 and game.BOARD.x>520 and game.BOARD.x+10*cell_size<1300,"map is larger without touching side panels")
+		_check(cell_size>70 and game.BOARD.x>0 and game.BOARD.x+10*cell_size<1920,"map is larger without touching side panels")
 		var bounds=Rect2(game.BOARD,Vector2.ONE*10*cell_size)
 		var cases=[{"p":bounds.position+Vector2.ONE*0.1,"cell":Vector2i(0,0)},{"p":bounds.end-Vector2.ONE*0.1,"cell":Vector2i(9,9)},{"p":bounds.position-Vector2.ONE*0.1,"cell":Vector2i(-1,-1)},{"p":bounds.end,"cell":Vector2i(-1,-1)}]
 		for item in cases:
@@ -199,6 +201,91 @@ func _test_notifications() -> void:
 	game._process(8.0)
 	await create_timer(0.08).timeout
 	_check(not game.drawn_text.any(func(item):return item.text==game.message),"expired notification no longer draws")
+	game.queue_free()
+	await process_frame
+## REQ-033-S04
+func _test_gradient(visual) -> void:
+	var u=C.unit("01","PLAYER",Vector2i.ZERO,C.default_build())
+	for key in ["core","gear","arms"]:
+		u[key]=[20,20,20,20,20]
+	var colors=P.PRESETS.ICE.slice(1)
+	var curves: Array=visual.phase_contours(u,colors)
+	var index=int(T.PREVIEW_SAMPLES/5)
+	var mix=colors[0].lerp(colors[1],0.5)
+	var radii=T.PREVIEW_RADII
+	_check(radii.max()-radii.min()<T.PREVIEW_AMPLITUDES.min(),"four contours share an overlapping radial band")
+	for curve in curves:
+		var actual: Color=curve.colors[index]
+		_check(Vector3(actual.r,actual.g,actual.b).is_equal_approx(Vector3(mix.r,mix.g,mix.b)),"true VIT-INF boundary is the exact adjacent-color midpoint: "+curve.role)
+		var a: Color=curve.colors[index-1]
+		var b: Color=curve.colors[index+1]
+		var span=Vector3(colors[0].r-colors[1].r,colors[0].g-colors[1].g,colors[0].b-colors[1].b).length()
+		_check(Vector3(a.r-b.r,a.g-b.g,a.b-b.b).length()<span/4,"boundary color connects smoothly: "+curve.role)
+	var aligned_alpha=curves[3].colors[int(T.PREVIEW_SAMPLES/10)].a
+	u.gear_angle=72.0
+	u.arms_angle=144.0
+	var apart: Array=visual.phase_contours(u,colors)
+	_check(aligned_alpha>apart[3].colors[int(T.PREVIEW_SAMPLES/10)].a,"result clarity still distinguishes actual agreement")
+## REQ-019-S05、NREQ-001-S04
+func _test_compact_layout() -> void:
+	var game=load("res://tests/map_orbit_audit.gd").new()
+	game.settings_path="res://artifacts/runtime/map-layout-no-settings-"+str(Time.get_ticks_usec())+".json"
+	root.add_child(game)
+	await process_frame
+	game._start_battle()
+	await create_timer(0.08).timeout
+	var board=Rect2(game.BOARD,Vector2.ONE*game.CELL*10)
+	var buttons=game.hud.find_children("*","Button",true,false)
+	var footer_y=buttons.map(func(b):return b.position.y).min()
+	_check(footer_y-board.end.y<=board.position.y and board.end.y<footer_y,"square map uses the available height above footer")
+	_check(game.drawn_text.filter(func(t):return not t.in_board).all(func(t):return not _text_bounds(t).intersects(board)),"all peripheral text stays outside the expanded map")
+	_check(not game.T.PREVIEW_PANEL.intersects(board) and buttons.all(func(b):return not b.get_global_rect().intersects(board)),"preview and system buttons stay outside map")
+	for i in range(2):
+		var label=game.drawn_text.filter(func(t):return t.text==["PLAYER","ENEMY"][i])[0]
+		var value=game.drawn_text.filter(func(t):return t.text=="200 / 200")[i]
+		var bar=game.drawn_bars[i].rect
+		_check(label.position.y==value.position.y and _text_bounds(value).position.y<=bar.get_center().y and bar.get_center().y<=_text_bounds(value).end.y,"camp, HP value and bar share one row: "+str(i))
+		_check(_text_bounds(label).end.x<_text_bounds(value).position.x and _text_bounds(value).end.x<bar.position.x and bar.end.x<board.position.x,"one-row HP fields do not overlap: "+str(i))
+	var original=game.battle.units.duplicate(true)
+	# VIT96の3係数から各11059.2、陣営合計22118.4となる表示境界を確認する。
+	for i in range(2):
+		game.battle.units[i].max_hp=T.BASE_HP*pow(96.0/20.0,3)
+		game.battle.units[i].hp=game.battle.units[i].max_hp
+	for empty in [false,true]:
+		if empty:
+			game.battle.units[0].hp=0
+			game.battle.units[1].hp=0
+		game.queue_redraw()
+		await create_timer(0.08).timeout
+		var expected="0 / 22118.4" if empty else "22118.4 / 22118.4"
+		var value=game.drawn_text.filter(func(t):return t.text==expected)[0]
+		var bar=game.drawn_bars[0]
+		_check(_text_bounds(value).end.x<bar.rect.position.x and bar.rect.size.x>0 and bar.rect.end.x<board.position.x and value.font_size==T.BATTLE_HP_FONT_SIZE and bar.ratio==(0.0 if empty else 1.0),"maximum valid HP digits remain readable with a valid proportional bar: "+str(empty))
+	for dimensions in [Vector2i(1152,648),Vector2i(1440,810),Vector2i(1920,1080),Vector2i(2560,1440),Vector2i(1200,1600)]:
+		root.size=dimensions
+		await process_frame
+		var transform=root.get_final_transform()
+		var visible=Rect2(Vector2.ZERO,Vector2(dimensions))
+		_check(game.drawn_text.all(func(t):return visible.encloses(transform*_text_bounds(t))) and visible.encloses(transform*board),"map and all text fit at "+str(dimensions))
+	game.battle.units=original
+	# 新しい手番位置もウィンドウ座標から入力経路を通す。
+	for row in [2,0]:
+		var event=InputEventMouseButton.new()
+		event.button_index=MOUSE_BUTTON_LEFT
+		event.pressed=true
+		event.position=root.get_final_transform()*(T.BATTLE_TIMELINE_RECT.position+Vector2(T.BATTLE_TIMELINE_RECT.size.x/2,row*T.BATTLE_TIMELINE_STEP+T.BATTLE_TIMELINE_RECT.size.y/2))
+		root.push_input(event,false)
+		_check(game.selected==row,"scaled timeline row selects its original unit: "+str(row))
+	game._cell_input(Vector2i(4,4))
+	game._cell_input(Vector2i(5,4))
+	game._cell_input(Vector2i(5,4),true)
+	await process_frame
+	game.battle.choose_skill(game.C.DAMAGE)
+	game._clear_overlay()
+	game._hud()
+	await process_frame
+	var back=game.hud.find_children("*","Button",true,false).filter(func(b):return b.text=="BACK")[0]
+	_check(not back.get_global_rect().intersects(board),"target BACK remains outside enlarged map")
 	game.queue_free()
 	await process_frame
 func _text_bounds(item: Dictionary) -> Rect2:

@@ -90,6 +90,13 @@ static func _phase_field(sectors: Array, angle: float, colors: Array) -> Diction
 ## 閉じた4輪郭を返す。uは予測ユニット、colorsは基本5色。戻り値はCORE、GEAR、ARMS、結果の局所座標と頂点色と線幅。副作用なし。
 static func phase_contours(u: Dictionary, colors: Array) -> Array:
 	var sectors=_sectors(u)
+	var boundaries=[]
+	for row in sectors:
+		for sector in row:
+			var boundary=fposmod(sector.x,360.0)
+			if not boundaries.any(func(value):return is_equal_approx(value,boundary)):
+				boundaries.append(boundary)
+	boundaries.sort()
 	var curves=[]
 	for role in ["CORE","GEAR","ARMS","RESULT"]:
 		curves.append({"role":role,"points":PackedVector2Array(),"colors":PackedColorArray(),"width":T.PREVIEW_RESULT_LINE if role=="RESULT" else T.PREVIEW_LINE})
@@ -97,14 +104,37 @@ static func phase_contours(u: Dictionary, colors: Array) -> Array:
 		# 最後の点は0度を再利用し、色と形の継ぎ目を一致させる。
 		var angle=(sample%T.PREVIEW_SAMPLES)*360.0/T.PREVIEW_SAMPLES
 		var field=_phase_field(sectors,angle,colors)
+		var paint=_phase_paint(sectors,boundaries,angle,colors,field)
 		var direction=Vector2.from_angle(deg_to_rad(angle)-PI/2)
 		for r in range(4):
 			var height=field.profiles[r] if r<3 else field.height
-			var color=colors[field.roles[r]] if r<3 else field.color
-			color.a=lerpf(T.PREVIEW_BASE_ALPHA,T.PREVIEW_CLEAR_ALPHA,field.clarity) if r<3 else lerpf(T.PREVIEW_RESULT_BASE_ALPHA,T.PREVIEW_RESULT_CLEAR_ALPHA,field.clarity)
+			var color: Color=paint.colors[r]
+			color.a=lerpf(T.PREVIEW_BASE_ALPHA,T.PREVIEW_CLEAR_ALPHA,paint.clarity) if r<3 else lerpf(T.PREVIEW_RESULT_BASE_ALPHA,T.PREVIEW_RESULT_CLEAR_ALPHA,paint.clarity)
 			curves[r].points.append(direction*(T.PREVIEW_RADII[r]+height*T.PREVIEW_AMPLITUDES[r]))
 			curves[r].colors.append(color)
 	return curves
+
+static func _field_colors(field: Dictionary, colors: Array) -> Array:
+	return [colors[field.roles[0]],colors[field.roles[1]],colors[field.roles[2]],field.color]
+
+static func _phase_paint(sectors: Array,boundaries: Array,angle: float,colors: Array,field: Dictionary) -> Dictionary:
+	for i in range(boundaries.size()):
+		var boundary: float=boundaries[i]
+		var before=fposmod(boundary-boundaries[posmod(i-1,boundaries.size())],360.0)
+		var after=fposmod(boundaries[(i+1)%boundaries.size()]-boundary,360.0)
+		var half=minf(T.PREVIEW_BLEND_DEGREES,minf(before,after)/2)
+		var delta=fposmod(angle-boundary+180.0,360.0)-180.0
+		if half>0 and absf(delta)<=half:
+			var a=_phase_field(sectors,boundary-0.0001,colors)
+			var b=_phase_field(sectors,boundary+0.0001,colors)
+			var t=smoothstep(-half,half,delta)
+			var left=_field_colors(a,colors)
+			var right=_field_colors(b,colors)
+			var blended=[]
+			for r in range(4):
+				blended.append(left[r].lerp(right[r],t))
+			return {"colors":blended,"clarity":lerpf(a.clarity,b.clarity,t)}
+	return {"colors":_field_colors(field,colors),"clarity":field.clarity}
 
 ## 円形予測を描く。canvasは描画先、centerは中心、curvesは生成済みの4輪郭。戻り値なし。副作用は描画だけ。
 static func phase_orbit(canvas: CanvasItem, center: Vector2, curves: Array) -> void:
