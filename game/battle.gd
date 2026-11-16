@@ -2,11 +2,13 @@
 extends RefCounted
 const M = preload("res://game/phase_math.gd")
 const C = preload("res://game/catalog.gd")
+const PANEL_LAYOUT = preload("res://game/panel_layout.gd")
 const T = preload("res://game/tuning.gd")
 const DIRS = [Vector2i.UP,Vector2i.RIGHT,Vector2i.DOWN,Vector2i.LEFT]
 const TIME_EPS := 0.00000001
 var units: Array=[]
 var panels: Dictionary={}
+var panel_seed: int=0
 var path: Array=[]
 var actor := 0
 var mode := "BUILD"
@@ -17,11 +19,11 @@ var turn := 1
 var last_effect: Dictionary={}
 var history: Array=[]
 
-## 戦闘を初期化する。stage_indexは0から3、buildsはPLAYER2体の構成。既存戦闘を置換する。
-func start(stage_index: int, builds: Array) -> void:
+## 戦闘を初期化する。stage_indexは0から3、buildsはPLAYER2体の構成、layout_seedは配置の再現用整数。既存戦闘を置換する。
+func start(stage_index: int, builds: Array, layout_seed: int=0) -> void:
 	stage=C.stages()[stage_index].duplicate(true)
-	panels=C.panels()
-	panels.merge(stage.panel_overrides,true)
+	panel_seed=layout_seed
+	panels=PANEL_LAYOUT.generate(stage,panel_seed)
 	units=[C.unit("01","PLAYER",stage.spawns[0],builds[0]),C.unit("02","PLAYER",stage.spawns[1],builds[1]),C.unit("A","ENEMY",stage.spawns[2],C.starter_build()),C.unit("B","ENEMY",stage.spawns[3],C.starter_build())]
 	path=[]
 	result=""

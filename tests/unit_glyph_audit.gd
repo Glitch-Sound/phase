@@ -1,4 +1,4 @@
-extends "res://ui/main.gd"
+extends "res://tests/fixture_main.gd"
 var rings=[]
 func _draw() -> void:
 	rings=[]

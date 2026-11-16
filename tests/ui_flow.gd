@@ -7,7 +7,7 @@ func _initialize() -> void:
 	_run.call_deferred()
 
 func _run() -> void:
-	var game=load("res://main.tscn").instantiate()
+	var game=load("res://tests/fixture_main.gd").new()
 	root.add_child(game)
 	await process_frame
 	_check(game.build_open and is_instance_valid(game.overlay),"startup BUILD")

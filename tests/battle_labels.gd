@@ -59,7 +59,7 @@ func _check_scene(game, title: String) -> void:
 		var hits=game.drawn_text.filter(func(item):return (i in [1,4,9] and LABEL_AREAS[i].has_point(Vector2i(item.position)) and (RegEx.create_from_string("^[0-9]+([.][0-9]+)?$").search(item.text)!=null or item.text.contains("DESTINATION"))) or (item.text.begins_with(label) if label in ["PATH ","T / ","TURN "] else item.text==label)).map(func(item):return item.text)
 		_check(hits.is_empty(),"only requested labels absent: "+title+" / "+label+" / "+str(hits))
 	var displayed=game.battle.units[game.selected if game.selected>=0 else game.battle.actor]
-	var expected_count=15+displayed.skills.size()+int(displayed.gear_mutation!="NORMAL")+int(displayed.arms_mutation!="NORMAL")+int(game.M.singularity(game.battle.preview()))+game.battle.panels.values().filter(func(p):return p!="NORMAL").size()
+	var expected_count=15+displayed.skills.size()+int(displayed.gear_mutation!="NORMAL")+int(displayed.arms_mutation!="NORMAL")+int(game.M.singularity(game.battle.preview()))
 	for goal in [game.battle.stage.goal,game.battle.stage.enemy_goal]:
 		if Rect2i(0,0,10,10).has_point(goal):
 			expected_count+=1

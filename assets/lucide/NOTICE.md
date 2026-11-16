@@ -6,4 +6,4 @@
 SVGのcurrentColorのみ白へ置換し、Godot側で配色する。
 形状は変更していない。
 
-同梱アイコン: circle-question-mark, settings-2, rotate-ccw, log-out, play, save, folder-open, pause, swords, heart-pulse, x, arrow-left, check, move, target, arrow-right。
+同梱アイコン: circle-question-mark, settings-2, rotate-ccw, log-out, play, save, folder-open, pause, swords, heart-pulse, x, arrow-left, check, move, target, arrow-right, lock, fast-forward。

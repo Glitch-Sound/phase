@@ -128,7 +128,7 @@ func _test_ui() -> void:
 	await process_frame
 ## NREQ-001-S02、REQ-027-S01
 func _test_board() -> void:
-	var game=load("res://main.tscn").instantiate()
+	var game=load("res://tests/fixture_main.gd").new()
 	game.settings_path="res://artifacts/runtime/preview-map-no-settings.json"
 	root.add_child(game)
 	await process_frame

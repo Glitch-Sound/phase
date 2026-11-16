@@ -60,7 +60,7 @@ func _initialize() -> void:
 	_run.call_deferred()
 func _run() -> void:
 	root.title="PHASE / UI LAB"
-	var game=load("res://main.tscn").instantiate()
+	var game=load("res://tests/fixture_main.gd").new()
 	game.settings_path="res://artifacts/runtime/ui-lab-settings.json"
 	root.add_child(game)
 	var input=LabInput.new()

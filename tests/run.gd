@@ -1,7 +1,7 @@
 extends SceneTree
 
 const M = preload("res://game/phase_math.gd")
-const B = preload("res://game/battle.gd")
+const B = preload("res://tests/fixture_battle.gd")
 const C = preload("res://game/catalog.gd")
 const L = preload("res://game/collection.gd")
 const T = preload("res://game/tuning.gd")

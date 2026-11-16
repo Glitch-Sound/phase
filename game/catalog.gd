@@ -58,7 +58,6 @@ static func stages() -> Array:
 	for stage in result:
 		stage.spawns=[Vector2i(3,4),Vector2i(3,6),Vector2i(6,4),Vector2i(6,6)]
 		stage.enemy_goal=Vector2i(-1,-1)
-		stage.panel_overrides={}
 		stage.victory=[{"type":"ELIMINATE","camp":"ENEMY"}]
 		stage.defeat=[{"type":"ELIMINATE","camp":"PLAYER"}]
 		if stage.type=="TARGET":
@@ -69,18 +68,12 @@ static func stages() -> Array:
 		elif stage.type=="REACH":
 			stage.spawns[2]=stage.goal
 			stage.enemy_goal=Vector2i(0,9)
-			stage.panel_overrides={Vector2i(8,0):"LOCK",Vector2i(8,1):"REVERSE",Vector2i(9,1):"SHIFT",Vector2i(3,7):"REVERSE",Vector2i(2,8):"LOCK",Vector2i(1,8):"SHIFT"}
 			stage.victory=[{"type":"REACH","camp":"PLAYER","unit":"01","cell":stage.goal}]
 			stage.defeat.append({"type":"TARGET","camp":"PLAYER","unit":"01"})
 			stage.defeat.append({"type":"REACH","camp":"ENEMY","unit":"B","cell":stage.enemy_goal})
 		elif stage.type=="OCCUPY":
 			stage.spawns[2]=stage.goal
 			stage.enemy_goal=Vector2i(0,9)
-			stage.panel_overrides={Vector2i(7,0):"LOCK",Vector2i(8,1):"REVERSE",Vector2i(9,0):"SHIFT",Vector2i(3,7):"SHIFT",Vector2i(2,8):"REVERSE",Vector2i(1,8):"LOCK"}
 			stage.victory=[{"type":"OCCUPY","camp":"PLAYER","cell":stage.goal}]
 			stage.defeat.append({"type":"OCCUPY","camp":"ENEMY","cell":stage.enemy_goal})
 	return result
-
-## 特殊パネルを返す。戻り値は座標から種類への辞書。
-static func panels() -> Dictionary:
-	return {Vector2i(4,3):"SHIFT",Vector2i(4,4):"LOCK",Vector2i(4,5):"REVERSE",Vector2i(5,3):"REVERSE",Vector2i(5,5):"SHIFT",Vector2i(5,6):"LOCK",Vector2i(2,5):"SHIFT",Vector2i(7,5):"REVERSE",Vector2i(4,7):"LOCK",Vector2i(5,2):"SHIFT"}

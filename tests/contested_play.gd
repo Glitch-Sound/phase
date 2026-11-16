@@ -1,6 +1,7 @@
 extends SceneTree
 const C=preload("res://game/catalog.gd")
-const B=preload("res://game/battle.gd")
+const B=preload("res://tests/fixture_battle.gd")
+const RUNTIME_B=preload("res://game/battle.gd")
 const M=preload("res://game/phase_math.gd")
 var failures=0
 
@@ -41,9 +42,9 @@ func _initialize() -> void:
 	quit(0 if failures==0 else 1)
 
 ## REQ-023-S02
-func _unopposed(stage: int) -> Dictionary:
-	var b=B.new()
-	b.start(stage,[C.starter_build(),C.starter_build()])
+func _unopposed(stage: int, layout_seed: Variant=null) -> Dictionary:
+	var b=B.new() if layout_seed==null else RUNTIME_B.new()
+	b.start(stage,[C.starter_build(),C.starter_build()],0 if layout_seed==null else int(layout_seed))
 	var actors=[]
 	while b.result.is_empty() and b.turn<40:
 		var source=b.actor
@@ -66,9 +67,9 @@ func _unopposed(stage: int) -> Dictionary:
 	return {"stage":stage,"result":b.result,"turns":b.turn,"actors":actors,"history":b.history}
 
 ## REQ-023-S03
-func _mutual(heal_weight: float, limit: int, roles: bool=false) -> Dictionary:
-	var b=B.new()
-	b.start(0,C.player_builds() if roles else [C.starter_build(),C.starter_build()])
+func _mutual(heal_weight: float, limit: int, roles: bool=false, layout_seed: Variant=null) -> Dictionary:
+	var b=B.new() if layout_seed==null else RUNTIME_B.new()
+	b.start(0,C.player_builds() if roles else [C.starter_build(),C.starter_build()],0 if layout_seed==null else int(layout_seed))
 	var actions={"PLAYER":{"DAMAGE":0,"HEAL":0,"WAIT":0},"ENEMY":{"DAMAGE":0,"HEAL":0,"WAIT":0}}
 	var commands=[]
 	var state_counts={}
@@ -139,9 +140,9 @@ func _mutual(heal_weight: float, limit: int, roles: bool=false) -> Dictionary:
 			repeated_states+=1
 	return {"roles":roles,"heal_weight":heal_weight,"result":b.result,"turns":b.turn,"actions":actions,"repeated_states":repeated_states,"history":b.history,"commands":commands}
 
-func _contested_win(stage_index: int) -> Dictionary:
-	var b=B.new()
-	b.start(stage_index,C.player_builds())
+func _contested_win(stage_index: int, layout_seed: Variant=null, builds_override: Array=[]) -> Dictionary:
+	var b=B.new() if layout_seed==null else RUNTIME_B.new()
+	b.start(stage_index,C.player_builds() if builds_override.is_empty() else builds_override,0 if layout_seed==null else int(layout_seed))
 	var commands=[]
 	while b.result.is_empty() and b.turn<100:
 		var routes=[]
@@ -193,7 +194,7 @@ func _contested_win(stage_index: int) -> Dictionary:
 				target=-1
 				skill=""
 			# 初動で02の最短攻撃経路(4,6)を塞がず、迎撃を連携する。
-			if b.turn==1 and b.actor==0 and unit.pos==Vector2i(5,5):
+			if b.turn==1 and b.actor==0 and unit.pos==(Vector2i(5,6) if source.skills.has(C.MOVE) else Vector2i(5,5)):
 				score+=1000
 			score+=M.sync(unit,2).factor*0.05-route.size()*0.001
 			if score>best.score:

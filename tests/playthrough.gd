@@ -1,5 +1,5 @@
 extends SceneTree
-const B=preload("res://game/battle.gd")
+const B=preload("res://tests/fixture_battle.gd")
 const C=preload("res://game/catalog.gd")
 const M=preload("res://game/phase_math.gd")
 var failed=false

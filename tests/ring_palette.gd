@@ -49,7 +49,7 @@ func _test_connection() -> void:
 	var file=FileAccess.open(path,FileAccess.WRITE)
 	file.store_string(content)
 	file.close()
-	var game=load("res://main.tscn").instantiate()
+	var game=load("res://tests/fixture_main.gd").new()
 	game.settings_path=path
 	root.add_child(game)
 	await process_frame

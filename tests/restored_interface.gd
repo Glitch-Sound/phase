@@ -5,7 +5,7 @@ func _initialize() -> void:
 	_run.call_deferred()
 ## REQ-019-S01、REQ-020-S01、NREQ-001-S01、NREQ-002-S01
 func _run() -> void:
-	var game=load("res://main.tscn").instantiate()
+	var game=load("res://tests/fixture_main.gd").new()
 	game.settings_path="res://artifacts/runtime/restore-test-no-settings.json"
 	root.add_child(game)
 	await process_frame

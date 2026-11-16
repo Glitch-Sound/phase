@@ -10,7 +10,7 @@ func _run() -> void:
 		return
 	var palette=load("res://ui/palette.gd")
 	_test_palette(palette)
-	var game=load("res://main.tscn").instantiate()
+	var game=load("res://tests/fixture_main.gd").new()
 	game.settings_path="res://artifacts/runtime/design-test-settings.json"
 	palette.save_to(game.settings_path,palette.PRESETS.DEFAULT)
 	root.add_child(game)

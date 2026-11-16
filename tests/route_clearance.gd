@@ -45,7 +45,7 @@ func _test_geometry(visual) -> void:
 func _test_connection() -> void:
 	root.size=Vector2i(1920,1080)
 	await process_frame
-	var game=load("res://main.tscn").instantiate()
+	var game=load("res://tests/fixture_main.gd").new()
 	game.settings_path="res://artifacts/runtime/clearance-lab-"+str(Time.get_ticks_usec())+".json"
 	root.add_child(game)
 	await process_frame

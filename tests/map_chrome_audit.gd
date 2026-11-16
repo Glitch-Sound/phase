@@ -1,4 +1,4 @@
-extends "res://ui/main.gd"
+extends "res://tests/fixture_main.gd"
 var drawn_text=[]
 func _draw() -> void:
 	drawn_text=[]

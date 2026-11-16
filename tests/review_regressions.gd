@@ -1,6 +1,6 @@
 extends SceneTree
 const C=preload("res://game/catalog.gd")
-const B=preload("res://game/battle.gd")
+const B=preload("res://tests/fixture_battle.gd")
 const L=preload("res://game/collection.gd")
 const M=preload("res://game/phase_math.gd")
 var checks=0
@@ -15,7 +15,7 @@ func _run() -> void:
 	_test_breach_runner()
 	_test_surviving_runner()
 	_test_result_priority()
-	var game=load("res://main.tscn").instantiate()
+	var game=load("res://tests/fixture_main.gd").new()
 	root.add_child(game)
 	await process_frame
 	_test_rewards(game)

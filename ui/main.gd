@@ -13,7 +13,14 @@ const MUTED = P.MUTED
 const BG = P.BG
 const PANEL = P.SURFACE
 const EDGE = P.EDGE
+const PANEL_VIEWS = {
+ "SHIFT":{"icon":"fast_forward","text":"SHIFT / ARMSの回転量を2倍","short":"ARMS ×2"},
+ "LOCK":{"icon":"lock","text":"LOCK / GEARを回転させない","short":"GEAR固定"},
+ "REVERSE":{"icon":"restart","text":"REVERSE / ARMSを逆回転","short":"ARMS逆回転"}
+}
 const ICONS = {
+ "fast_forward":preload("res://assets/lucide/fast-forward.svg"),
+ "lock":preload("res://assets/lucide/lock.svg"),
  "help":preload("res://assets/lucide/circle-question-mark.svg"),
  "settings":preload("res://assets/lucide/settings-2.svg"),
  "restart":preload("res://assets/lucide/rotate-ccw.svg"),
@@ -69,6 +76,10 @@ var core_refreshing := false
 var effect_hover := -1
 var hover_cell := Vector2i(-1,-1)
 var loot_rng := RandomNumberGenerator.new()
+var panel_rng := RandomNumberGenerator.new()
+var panel_seed_override: Variant=null
+var last_panel_seed: int=-1
+var panel_probe: Control
 var notice: Label
 var preview_contours: Array=[]
 var preview_signature: Array=[]
@@ -82,6 +93,7 @@ func _ready() -> void:
 	get_window().focus_entered.connect(_window_focus_entered)
 	get_window().mouse_exited.connect(_timeline_mouse_exited)
 	loot_rng.randomize()
+	panel_rng.randomize()
 	font=SystemFont.new()
 	font.font_names=PackedStringArray(["Helvetica Neue","Hiragino Sans","Arial"])
 	mono=SystemFont.new()
@@ -97,11 +109,20 @@ func _ready() -> void:
 	notice.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	notice.z_index=1000
 	add_child(notice)
+	panel_probe=preload("res://ui/panel_probe.gd").new()
+	panel_probe.host=self
+	panel_probe.position=BOARD
+	panel_probe.size=Vector2.ONE*CELL*10
+	panel_probe.mouse_filter=Control.MOUSE_FILTER_PASS
+	panel_probe.focus_mode=Control.FOCUS_NONE
+	panel_probe.visible=false
+	add_child(panel_probe)
 	battle.start(collection.stage_index,collection.builds)
 	_hud()
 	_build()
 
 func _process(delta: float) -> void:
+	panel_probe.visible=not build_open
 	clock+=delta if not reduced_motion else 0.0
 	message_time=maxf(0,message_time-delta)
 	notice.visible=message_time>0 and build_open
@@ -208,7 +229,7 @@ func _draw_board() -> void:
 			draw_rect(rect,EDGE,false,1)
 			if panel!="NORMAL":
 				var pc=MAGENTA if panel=="REVERSE" else (status_colors[3] if panel=="LOCK" else CYAN)
-				_text({"SHIFT":"S+","LOCK":"L=","REVERSE":"R-"}[panel],pos+Vector2(5,14)*BOARD_SCALE,11,Color(pc,0.8),mono)
+				_draw_panel_icon(panel,Rect2(pos+T.PANEL_ICON_OFFSET,Vector2.ONE*T.PANEL_ICON_SIZE),pc)
 			if cell==battle.stage.goal:
 				draw_rect(rect.grow(-4),Color(MAGENTA,0.6),false,1)
 				_text("GOAL",pos+Vector2(6,62)*BOARD_SCALE,11,MAGENTA,mono)
@@ -248,6 +269,14 @@ func _draw_board() -> void:
 		draw_rect(rect,BG)
 		draw_rect(rect,chip.color,false,1)
 		_center(chip.text,rect.position+Vector2(rect.size.x/2,16*BOARD_SCALE),roundi(16*BOARD_SCALE),chip.color,mono)
+
+func _draw_panel_icon(kind: String, rect: Rect2, color: Color) -> void:
+	draw_texture_rect(ICONS[PANEL_VIEWS[kind].icon],rect,false,color)
+
+## セルの説明を返す。cellは盤面座標。戻り値は特殊効果の正確な意味、通常や盤外なら空文字。戦闘を変更しない。
+func panel_description(cell: Vector2i) -> String:
+	var kind: String=battle.panels.get(cell,"NORMAL") if Rect2i(0,0,10,10).has_point(cell) else "NORMAL"
+	return PANEL_VIEWS[kind].text if PANEL_VIEWS.has(kind) else ""
 
 func _route_segments() -> Array:
 	var segments=[]
@@ -598,7 +627,11 @@ func _start_battle() -> void:
 	timeline_hover_event={}
 	timeline_selected_event={}
 	result_awarded=false
-	battle.start(collection.stage_index,collection.builds)
+	var layout_seed=int(panel_seed_override) if panel_seed_override!=null else panel_rng.randi()
+	while panel_seed_override==null and layout_seed==last_panel_seed:
+		layout_seed=panel_rng.randi()
+	last_panel_seed=layout_seed
+	battle.start(collection.stage_index,collection.builds,layout_seed)
 	_clear_overlay()
 	_hud()
 	_notify("UNIT %s / %s — Click adjacent empty cells, then double-click the endpoint." % [V.unit_name(battle.units[battle.actor]),battle.units[battle.actor].camp])
@@ -651,7 +684,14 @@ func _help() -> void:
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
 	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\n白は相対進捗、灰は残り。満周は待ち0。\n表示最大の待ち量で再計算。個別周期ではない。\n縦は順番。中心点が手番。満周でも順番待ち。",Rect2(36,377,500,174),18,WHITE)
 	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
-	_label(panel,"鮮明な所ほど同じステータスが一致。\nINF / RESはLUK補助後の最終補正(最大200%)。\nS+ ARMSの回転2倍 / L= GEAR固定\nR- ARMS逆回転 / 通常はGEAR ↶、ARMS ↷\n×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
+	_label(panel,"鮮明な所ほど同じステータスが一致。\nINF / RESはLUK補助後の最終補正(最大200%)。\n通常はGEAR ↶、ARMS ↷\n×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
+	var panel_kinds=["SHIFT","LOCK","REVERSE"]
+	for i in range(panel_kinds.size()):
+		var view=PANEL_VIEWS[panel_kinds[i]]
+		_icon(panel,view.icon,Rect2(580+i*172,481,20,20),CYAN)
+		_label(panel,view.short,Rect2(608+i*172,479,140,28),14,WHITE)
+	if not build_open:
+		_label(panel,"%s / SEED %d" % [battle.stage.name,battle.panel_seed],Rect2(36,704,1048,24),13,MUTED)
 	_separator(panel,Rect2(36,560,1048,1))
 	_label(panel,"BUILD / ARCHIVE",Rect2(36,589,490,28),16,CYAN)
 	_label(panel,"1と2を編集し、装備の5値と差分を比較する。\nスキルは最大3。NONEも可。取得品と変異は共有。",Rect2(36,631,500,66),18,WHITE)

@@ -9,7 +9,7 @@ func _initialize() -> void:
 	_run.call_deferred()
 ## REQ-030-S03、REQ-031-S02
 func _run() -> void:
-	game=load("res://main.tscn").instantiate()
+	game=load("res://tests/fixture_main.gd").new()
 	game.settings_path="res://artifacts/runtime/unit-capture-no-settings-"+stamp+".json"
 	root.add_child(game)
 	await process_frame

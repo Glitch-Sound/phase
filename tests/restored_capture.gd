@@ -3,7 +3,7 @@ func _initialize() -> void:
 	_run.call_deferred()
 func _run() -> void:
 	var stamp=str(Time.get_unix_time_from_system()).replace(".","-")
-	var game=load("res://main.tscn").instantiate()
+	var game=load("res://tests/fixture_main.gd").new()
 	game.settings_path="res://artifacts/runtime/capture-no-settings-"+stamp+".json"
 	root.add_child(game)
 	await process_frame

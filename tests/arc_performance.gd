@@ -1,6 +1,6 @@
 extends SceneTree
 const V=preload("res://ui/visuals.gd")
-class MeasuredGame extends "res://ui/main.gd":
+class MeasuredGame extends "res://tests/fixture_main.gd":
 	var baseline=false
 	var measuring=false
 	var samples=[]

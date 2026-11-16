@@ -8,6 +8,10 @@ const BASE_MOVE := 3
 const BASE_DELAY := 100.0
 const MUTANT_CHANCE := 0.10
 const SAVE_VERSION := 1
+# 密度の母数は除外前の全100セル。
+const PANEL_EFFECT_RATE := 0.20
+const PANEL_ICON_SIZE := 20.0
+const PANEL_ICON_OFFSET := Vector2(3,3)
 
 # 参照の細い分割円弧を、最小セルでも読める比率で描く。
 # COREは固定し、GEARとARMSだけ内側へ寄せる。
