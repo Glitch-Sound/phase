@@ -11,6 +11,7 @@ func _run() -> void:
 	if ResourceLoader.exists("res://ui/timeline.gd"):
 		model=load("res://ui/timeline.gd").new()
 		_test_times()
+		_test_progress()
 		_test_current()
 		_test_lifecycle()
 		await _test_input()
@@ -40,7 +41,10 @@ func _test_times() -> void:
 	_check(view.events[0].point!=view.events[1].point and view.events[2].point.y>view.events[1].point.y,"same and near times remain distinct points")
 	_check(not view.has("groups"),"no central grouped IDs")
 	for i in range(6):
-		_check(absf(view.events[i].get("wait_fraction",-1.0)-expected[i]/150.0)<0.000000001,"arc means remaining wait, not readiness "+str(i))
+		_check(absf(view.events[i].get("wait_fraction",-1.0)-expected[i]/150.0)<0.000000001,"gray share keeps actual remaining wait "+str(i))
+	var expected_progress=[1.0,1.0,1.0-0.01/150.0,2.0/3.0,1.0/3.0,0.0]
+	for i in range(6):
+		_check(absf(view.events[i].get("progress_fraction",-1.0)-expected_progress[i])<0.000000001,"white progress reverses remaining fraction "+str(i))
 	var links=view.get("links",[])
 	_check(links.size()==6,"exactly one leader per action")
 	for i in range(links.size()):
@@ -77,6 +81,33 @@ func _test_times() -> void:
 			_check(model.hit(view,view.events[i].point).rank==i+1,"dense points have disjoint input "+str(i))
 	else:
 		_check(false,"projection includes complete sequence through slowest unit")
+
+## REQ-019-S06
+func _test_progress() -> void:
+	var b=_battle()
+	for i in range(4):
+		b.units[i].next_time=[100.0,150.0,200.0,300.0][i]
+	b.next_actor()
+	var rows=[{"index":0,"time":100.0},{"index":1,"time":150.0},{"index":2,"time":200.0},{"index":3,"time":300.0}]
+	var initial=model.layout(b.units,0,rows)
+	_check(initial.events[1].get("progress_fraction",-1.0)==0.75,"wait50 with max200 gives white75 percent")
+	b.units[0].next_time=125.0
+	rows[0].time=125.0
+	var later=model.layout(b.units,0,rows)
+	_check(absf(later.events[1].get("progress_fraction",-1.0)-6.0/7.0)<0.000000001,"closer action has more white within same schedule")
+	b.units[0].next_time=100.0
+	rows[0].time=100.0
+	b.units[3].next_time=200.0
+	rows[3].time=200.0
+	var smaller=model.layout(b.units,0,rows)
+	_check(smaller.span==100.0 and smaller.events[1].remaining==50.0 and smaller.events[1].get("progress_fraction",-1.0)==0.5,"changed maximum recalculates relative white without changing remaining wait")
+	_check(model.caption(initial.events[1],0)=="2  +50" and model.caption(smaller.events[1],0)=="2  +50","precise waiting number stays truthful as range changes")
+	for i in range(4):
+		b.units[i].next_time=100.0
+		rows[i].time=100.0
+	var zero=model.layout(b.units,0,rows)
+	_check(zero.span==0.0 and zero.events.size()==4 and zero.events.all(func(e):return e.get("progress_fraction",-1.0)==1.0),"zero maximum gives full white without division by zero")
+	_check(model.caption(zero.events[0],0)=="1  0 / ACTING" and model.caption(zero.events[1],0)=="2  0 / QUEUED","full white still distinguishes actor and queued zero")
 
 ## REQ-019-S07
 func _test_current() -> void:
@@ -174,6 +205,10 @@ func _test_input() -> void:
 	_check(game.timeline_hover==-1 and game.battle.path==path,"window exit clears hover without changing route")
 	game._help()
 	await process_frame
+	var guide=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text.contains("白は相対進捗"))
+	_check(guide.size()==1 and guide[0].text.contains("表示最大の待ち量で再計算") and guide[0].text.contains("個別周期ではない"),"HELP defines relative progress and changing maximum")
+	if guide.size()==1:
+		_check(Array(guide[0].text.split("\n")).all(func(line):return game.font.get_string_size(line,HORIZONTAL_ALIGNMENT_LEFT,-1,18).x<=guide[0].size.x),"progress explanation stays within HELP column")
 	var click=InputEventMouseButton.new()
 	click.button_index=MOUSE_BUTTON_LEFT
 	click.pressed=true

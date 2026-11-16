@@ -55,6 +55,10 @@ func _run() -> void:
 		game.battle.units[i].next_time=[0.0,50.0,75.0,100.0][i]
 	game.battle.next_actor()
 	await _capture("wait-third")
+	game.battle.units[3].next_time=300.0
+	await _capture("range-expanded")
+	game.battle.units[3].next_time=100.0
+	await _capture("range-restored")
 	var view=game._timeline_view()
 	var future=view.events.filter(func(e):return e.repeated)[0]
 	_click(root.get_final_transform()*future.point)
@@ -118,7 +122,7 @@ func _run() -> void:
 	_check(game.build_open,"capture runner returns BUILD without save")
 	var times=game.draw_times.duplicate()
 	times.sort()
-	print("ORDER AXIS GPU: %d checks / %d failures" % [checks,failures])
+	print("TIMELINE PROGRESS GPU: %d checks / %d failures" % [checks,failures])
 	print("DRAW CPU MS median ",times[times.size()/2]," / max ",times[-1])
 	quit(0 if failures==0 else 1)
 ## REQ-019-S04、REQ-019-S06、REQ-019-S07
@@ -132,34 +136,48 @@ func _capture(suffix: String) -> void:
 	_check(view.links.size()==view.events.size(),"one unit association per point "+suffix)
 	var transform=Transform2D.IDENTITY.scaled(Vector2(picture.get_width()/1920.0,picture.get_height()/1080.0))
 	if suffix=="wait-third":
-		# 予定0、50、75、100、100、150の2番目は、残り50/150の円弧である。
+		# 予定0、50、75、100、100、150の2番目は、白2/3、灰1/3である。
 		var event=view.events[1]
-		var bright=_brightness(picture,Vector2i(transform*(event.point+Vector2(1,-1).normalized()*event.radius)))
-		var dim=_brightness(picture,Vector2i(transform*(event.point+Vector2(-1,1).normalized()*event.radius)))
-		_check(bright>dim+0.25 and dim<0.45,"actual arc pixels mean waiting amount, not reversed readiness")
+		var bright=_brightness(picture,Vector2i(transform*(event.point+Vector2(-1,1).normalized()*event.radius)))
+		var dim=_brightness(picture,Vector2i(transform*(event.point+Vector2(-1,-1).normalized()*event.radius)))
+		_check(bright>dim+0.25 and dim<0.45,"actual white arc means progressed share, gray means remaining")
+	if suffix!="result" and not view.events.is_empty() and view.events[0].radius>=8:
+		for event in view.events.filter(func(e):return e.remaining<=game.B.TIME_EPS):
+			var white=_peak_color(picture,Vector2i(transform*(event.point+Vector2(-1,1).normalized()*event.radius)))
+			_check(maxf(white.r,maxf(white.g,white.b))>0.6 and maxf(white.r,maxf(white.g,white.b))-minf(white.r,minf(white.g,white.b))<0.05,"zero wait ring is white even for queued or palette accent "+suffix+" / "+str(event.index))
+		var far=view.events[-1]
+		if far.remaining>0:
+			_check(_brightness(picture,Vector2i(transform*(far.point+Vector2(-1,1).normalized()*far.radius)))<0.45,"maximum wait stays gray "+suffix)
 	for card in view.cards:
 		_check(picture.get_pixelv(Vector2i(transform*card.rect.position))==game.BG,"no card background or frame "+suffix)
 		_check(game.mono.get_string_size(game._hp(card.unit.hp)+"/"+game._hp(card.unit.max_hp),HORIZONTAL_ALIGNMENT_LEFT,-1,game.T.TIMELINE_HP_FONT).x<=card.rect.size.x,"current HP fits state "+suffix)
 	var visible=Rect2(Vector2.ZERO,Vector2(root.size))
 	_check(game.drawn_text.all(func(t):return visible.encloses(root.get_final_transform()*Rect2(t.position-Vector2(0,t.font_size),Vector2(t.typeface.get_string_size(t.text,HORIZONTAL_ALIGNMENT_LEFT,-1,t.font_size).x,t.font_size+6)))),"GPU all text within window "+suffix)
 	if suffix=="battle":
-		var previous=Image.load_from_file("res://artifacts/ui-review/time-axis-battle.png")
+		var previous=Image.load_from_file("res://artifacts/ui-review/order-axis-battle.png")
 		var changed=0
 		for y in range(1080):
 			for x in range(384,1920):
 				if picture.get_pixel(x,y)!=previous.get_pixel(x,y):
 					changed+=1
 		_check(changed==0,"all pixels outside left action-order area unchanged: "+str(changed))
-	var path="res://artifacts/runtime/PHASE-order-axis-"+stamp+"-"+suffix+".png"
+	var path="res://artifacts/runtime/PHASE-timeline-progress-"+stamp+"-"+suffix+".png"
 	_check(not FileAccess.file_exists(path) and picture.save_png(path)==OK,"unique screenshot "+suffix)
 	print("CAPTURE ",ProjectSettings.globalize_path(path))
-func _brightness(picture: Image,point: Vector2i) -> float:
+func _peak_color(picture: Image,point: Vector2i) -> Color:
 	var maximum=0.0
+	var peak=Color.BLACK
 	for y in range(point.y-1,point.y+2):
 		for x in range(point.x-1,point.x+2):
 			var color=picture.get_pixel(x,y)
-			maximum=maxf(maximum,maxf(color.r,maxf(color.g,color.b)))
-	return maximum
+			var value=maxf(color.r,maxf(color.g,color.b))
+			if value>maximum:
+				maximum=value
+				peak=color
+	return peak
+func _brightness(picture: Image,point: Vector2i) -> float:
+	var color=_peak_color(picture,point)
+	return maxf(color.r,maxf(color.g,color.b))
 func _click(point: Vector2) -> void:
 	for pressed in [true,false]:
 		var event=InputEventMouseButton.new()

@@ -187,8 +187,8 @@ func _draw_timeline() -> void:
 func _timeline_node(event: Dictionary, color: Color, pixel_scale: float) -> void:
 	var width=maxf(T.TIMELINE_NODE_WIDTH,1.0/pixel_scale)
 	draw_arc(event.point,event.radius,-PI/2,PI*1.5,48,Color(MUTED,0.45),width,true)
-	if event.wait_fraction>0:
-		draw_arc(event.point,event.radius,-PI/2,-PI/2+TAU*event.wait_fraction,maxi(4,ceili(48*event.wait_fraction)),color,width,true)
+	if event.progress_fraction>0:
+		draw_arc(event.point,event.radius,-PI/2,-PI/2+TAU*event.progress_fraction,maxi(4,ceili(48*event.progress_fraction)),WHITE,width,true)
 	if event.rank==1:
 		draw_circle(event.point,minf(3.0,event.radius*0.4),color,true,-1.0,true)
 
@@ -654,7 +654,7 @@ func _help() -> void:
 		_label(panel,steps[i][2],Rect2(x,201,340,76),18,MUTED)
 	_separator(panel,Rect2(36,300,1048,1))
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
-	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\n縦間隔は順番。円弧は待ち量(表示内の最遠比)。\n長いほど待つ。準備率ではない。選択で実値。\n0でも順番待ち。秒ではなく、生存時の予定。",Rect2(36,377,500,174),18,WHITE)
+	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\n白は相対進捗、灰は残り。満周は待ち0。\n表示最大の待ち量で再計算。個別周期ではない。\n縦は順番。0も順番待ち。選択で実値。未来は生存時。",Rect2(36,377,500,174),18,WHITE)
 	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
 	_label(panel,"鮮明な所ほど同じステータスが一致。\nINF / RESはLUK補助後の最終補正(最大200%)。\nS+ ARMSの回転2倍 / L= GEAR固定\nR- ARMS逆回転 / 通常はGEAR ↶、ARMS ↷\n×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
 	_separator(panel,Rect2(36,560,1048,1))

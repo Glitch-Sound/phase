@@ -41,6 +41,7 @@ static func layout(units: Array, actor: int, rows: Array, finished: bool=false) 
 		var event=events[i]
 		event.point=Vector2(T.TIMELINE_AXIS_X,T.TIMELINE_TOP+i*spacing)
 		event.wait_fraction=event.remaining/span if span>0 else 0.0
+		event.progress_fraction=1.0-event.wait_fraction
 		event.radius=minf(T.TIMELINE_NODE_RADIUS,spacing*T.TIMELINE_NODE_RATIO)
 		var hit_size=minf(T.TIMELINE_HIT_RADIUS,spacing*T.TIMELINE_HIT_RATIO)
 		event.hit_rect=Rect2(event.point-Vector2(T.TIMELINE_HIT_RADIUS,hit_size),Vector2(T.TIMELINE_HIT_RADIUS*2,hit_size*2))
