@@ -15,7 +15,7 @@ func _run() -> void:
 		_test_lifecycle()
 		await _test_input()
 	else:
-		_check(false,"relative-time view model is implemented")
+		_check(false,"turn-order view model is implemented")
 	print("TIME AXIS: %d checks / %d failures" % [checks,failures])
 	quit(0 if failures==0 else 1)
 func _battle():
@@ -36,10 +36,16 @@ func _test_times() -> void:
 	for i in range(6):
 		var e=view.events[i]
 		_check(absf(e.remaining-expected[i])<0.000000001,"exact relative time "+str(i))
-		_check(absf(e.point.y-(T.TIMELINE_TOP+expected[i]/150.0*(T.TIMELINE_BOTTOM-T.TIMELINE_TOP)))<0.0001,"linear unshifted position "+str(i))
-	_check(view.events[0].point==view.events[1].point and view.events[2].point.y>view.events[1].point.y,"equal shared point, near distinct point")
-	_check(view.groups[0].events.map(func(e):return e.index)==[0,1,2],"near group preserves actual order")
-	_check(view.events[3].repeated and view.events[5].repeated,"future repeats have their own IDs")
+		_check(absf(e.point.y-(T.TIMELINE_TOP+i/5.0*(T.TIMELINE_BOTTOM-T.TIMELINE_TOP)))<0.0001,"equal ordered spacing independent of wait "+str(i))
+	_check(view.events[0].point!=view.events[1].point and view.events[2].point.y>view.events[1].point.y,"same and near times remain distinct points")
+	_check(not view.has("groups"),"no central grouped IDs")
+	for i in range(6):
+		_check(absf(view.events[i].get("wait_fraction",-1.0)-expected[i]/150.0)<0.000000001,"arc means remaining wait, not readiness "+str(i))
+	var links=view.get("links",[])
+	_check(links.size()==6,"exactly one leader per action")
+	for i in range(links.size()):
+		_check(links[i].index==rows[i].index and links[i].event==view.events[i],"each point connects only its own unit")
+	_check(view.events[3].repeated and view.events[5].repeated,"future repeats have their own action points")
 	_check(model.caption(view.events[0],0)=="1  0 / ACTING" and model.caption(view.events[1],0)=="2  0 / QUEUED","zero acting and queued are different")
 	_check(model.caption(view.events[2],0)=="A  +0.01","small relative wait is exact and compact")
 	_check(b.units==before and rows[0]=={"index":0,"time":100.0},"layout is pure")
@@ -48,13 +54,30 @@ func _test_times() -> void:
 	b.next_actor()
 	view=model.layout(b.units,b.actor,b.timeline(6))
 	_check(view.events.slice(0,4).map(func(e):return e.index)==[0,1,2,3],"same time processing order is 1 2 A B")
-	_check(view.groups[0].labels.map(func(l):return l.event.index)==[0,1,2,3],"group labels expose equal-time order")
-	for label in view.groups[0].labels:
-		_check(model.hit(view,label.rect.get_center()).index==label.event.index,"each grouped ID has distinct input")
-	b.units[3].next_time=2000.0
-	view=model.layout(b.units,0,b.timeline(6))
-	_check(view.events.size()==7 and view.events[-1].index==3 and view.events[-1].extra and view.events[-1].rank==-1,"slow missing unit gets truthful NEXT marker, not fake rank")
-	_check(view.events[-1].point.y==T.TIMELINE_BOTTOM,"slow unit extends shared range")
+	for i in range(4):
+		_check(absf(view.events[i].point.y-(T.TIMELINE_TOP+[0.0,0.2,0.4,0.6][i]*(T.TIMELINE_BOTTOM-T.TIMELINE_TOP)))<0.0001,"same-time actions have separate equally spaced slots "+str(i))
+	for event in view.events:
+		_check(model.hit(view,event.point).index==event.index and model.hit(view,event.point).time==event.time,"each action point has unambiguous input")
+	if model.has_method("rows"):
+		for i in range(4):
+			b.units[i].core=[1,1,1,96,1] if i<3 else [25,25,25,1,24]
+			b.units[i].next_time=50.0 if i<3 else 450.0
+			b.units[i].max_hp=b.M.max_hp(b.units[i])
+			b.units[i].hp=b.units[i].max_hp
+		b.next_actor()
+		var projected=model.rows(b)
+		view=model.layout(b.units,b.actor,projected)
+		var expected_indices=[]
+		for repeat in range(9):
+			expected_indices.append_array([0,1,2])
+		expected_indices.append(3)
+		_check(view.events.map(func(e):return e.index)==expected_indices,"slow unit keeps all 28 actual actions, with none skipped or appended as fake NEXT")
+		for i in range(view.events.size()):
+			_check(view.events[i].rank==i+1 and absf(view.events[i].point.y-(T.TIMELINE_TOP+i/27.0*(T.TIMELINE_BOTTOM-T.TIMELINE_TOP)))<0.0001,"dense exact ordinal position "+str(i))
+			_check(model.hit(view,view.events[i].point).rank==i+1,"dense points have disjoint input "+str(i))
+	else:
+		_check(false,"projection includes complete sequence through slowest unit")
+
 ## REQ-019-S07
 func _test_current() -> void:
 	var b=_battle()
@@ -89,10 +112,10 @@ func _test_lifecycle() -> void:
 	view=model.layout(b.units,b.actor,b.timeline(6))
 	_check(view.now>old_now and view.events[0].remaining==0.0,"reinsertion advances real schedule")
 	view=model.layout(b.units,b.actor,b.timeline(6),true)
-	_check(view.events.is_empty() and view.groups.is_empty() and view.cards.all(func(c):return c.event.is_empty()),"result contains no hypothetical future")
+	_check(view.events.is_empty() and view.get("links",[]).is_empty() and view.cards.all(func(c):return c.event.is_empty()),"result contains no hypothetical future")
 ## REQ-019-S07、REQ-027-S01、REQ-027-S02
 func _test_input() -> void:
-	var game=load("res://tests/phase_preview_audit.gd").new()
+	var game=load("res://tests/order_axis_audit.gd").new()
 	game.settings_path="res://artifacts/runtime/time-axis-no-settings-"+str(Time.get_ticks_usec())+".json"
 	root.add_child(game)
 	await process_frame
@@ -101,6 +124,7 @@ func _test_input() -> void:
 	game._cell_input(Vector2i(4,4))
 	game.selected=0
 	await create_timer(0.08).timeout
+	_check(not game.axis_centers.any(func(c):return Rect2(180,200,40,440).has_point(c.position)),"no unit names drawn on central timeline")
 	var before=game.battle.units.duplicate(true)
 	var path=game.battle.path.duplicate()
 	var generation=game.preview_generation

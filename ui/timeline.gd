@@ -1,47 +1,49 @@
-## 戦闘予定を変更せず、待ち量の実点と現在状態の配置を生成する。
+## 戦闘予定を変更せず、独立した行動順点と現在状態の配置を生成する。
 extends RefCounted
 const T=preload("res://game/tuning.gd")
 const B=preload("res://game/battle.gd")
 
-## unitsは現在状態、actorは行動番号、rowsは予定、finishedは終了。戻り値は純粋な配置辞書。入力を変更しない。
+## battleは戦闘。戻り値は直近の予定と全生存者の初回を含む連続した実行順。戦闘を変更しない。
+static func rows(battle: RefCounted) -> Array:
+	if battle.mode=="RESULT" or battle.actor<0:
+		return []
+	var horizon=float(battle.units[battle.actor].next_time)
+	for unit in battle.units:
+		if unit.hp>0:
+			horizon=maxf(horizon,unit.next_time)
+	var count=0
+	for unit in battle.units:
+		if unit.hp>0:
+			count+=maxi(1,floori((horizon+B.TIME_EPS-unit.next_time)/battle.M.delay(unit))+1)
+	return battle.timeline(maxi(T.TIMELINE_EVENTS,count))
+
+## unitsは現在状態、actorは行動番号、rowsは連続予定、finishedは終了。戻り値は純粋な配置辞書。入力を変更しない。
 static func layout(units: Array, actor: int, rows: Array, finished: bool=false) -> Dictionary:
 	var now=float(units[actor].next_time) if actor>=0 else 0.0
 	var events=[]
 	var seen=[]
+	var alive=units.filter(func(u):return u.hp>0).size()
 	if not finished:
 		for row in rows:
 			if units[row.index].hp<=0:
 				continue
-			events.append({"index":row.index,"time":row.time,"rank":events.size()+1,"extra":false,"repeated":seen.has(row.index)})
-			seen.append(row.index)
-		# 6件に入らない遅いユニットも、順位を捏造せず次回の実時刻をつなぐ。
-		var missing=[]
-		for i in range(units.size()):
-			if units[i].hp>0 and not seen.has(i):
-				missing.append({"index":i,"time":units[i].next_time,"rank":-1,"extra":true,"repeated":false})
-		while not missing.is_empty():
-			var best=0
-			for i in range(1,missing.size()):
-				if missing[i].time<missing[best].time-B.TIME_EPS:
-					best=i
-			events.append(missing.pop_at(best))
+			events.append({"index":row.index,"time":row.time,"rank":events.size()+1,"repeated":seen.has(row.index)})
+			if not seen.has(row.index):
+				seen.append(row.index)
+			if events.size()>=T.TIMELINE_EVENTS and seen.size()==alive:
+				break
 	var span=0.0
 	for event in events:
 		event.remaining=maxf(0.0,event.time-now)
 		span=maxf(span,event.remaining)
-	var groups=[]
-	for event in events:
-		event.point=Vector2(T.TIMELINE_AXIS_X,T.TIMELINE_TOP+(event.remaining/span if span>0 else 0.0)*(T.TIMELINE_BOTTOM-T.TIMELINE_TOP))
-		if groups.is_empty() or event.point.y-groups[-1].events[-1].point.y>=T.TIMELINE_GROUP_GAP:
-			groups.append({"events":[],"labels":[]})
-		groups[-1].events.append(event)
-	for group in groups:
-		for i in range(group.events.size()):
-			# 通常は最大4件。極端な外部データでもIDを省略せず折り返す。
-			var column=i%4
-			var count=mini(4,group.events.size()-int(i/4)*4)
-			var center=Vector2(T.TIMELINE_AXIS_X+(column-(count-1)/2.0)*T.TIMELINE_ID_STEP,group.events[0].point.y-10-int(i/4)*18)
-			group.labels.append({"event":group.events[i],"center":center,"rect":Rect2(center-Vector2(7,13),Vector2(14,17))})
+	var spacing=(T.TIMELINE_BOTTOM-T.TIMELINE_TOP)/maxi(1,events.size()-1)
+	for i in range(events.size()):
+		var event=events[i]
+		event.point=Vector2(T.TIMELINE_AXIS_X,T.TIMELINE_TOP+i*spacing)
+		event.wait_fraction=event.remaining/span if span>0 else 0.0
+		event.radius=minf(T.TIMELINE_NODE_RADIUS,spacing*T.TIMELINE_NODE_RATIO)
+		var hit_size=minf(T.TIMELINE_HIT_RADIUS,spacing*T.TIMELINE_HIT_RATIO)
+		event.hit_rect=Rect2(event.point-Vector2(T.TIMELINE_HIT_RADIUS,hit_size),Vector2(T.TIMELINE_HIT_RADIUS*2,hit_size*2))
 	var cards=[]
 	for i in range(units.size()):
 		var event={}
@@ -56,16 +58,17 @@ static func layout(units: Array, actor: int, rows: Array, finished: bool=false) 
 		cards[side[1]].center.y=maxf(cards[side[1]].center.y,cards[side[0]].center.y+T.TIMELINE_CARD_GAP)
 	for card in cards:
 		card.rect=Rect2(card.center-Vector2(T.TIMELINE_CARD_SIZE.x/2,26),T.TIMELINE_CARD_SIZE)
-	return {"now":now,"span":span,"events":events,"groups":groups,"cards":cards,"finished":finished}
+	var links=[]
+	for event in events:
+		var card=cards[event.index]
+		var sign=-1.0 if card.index<2 else 1.0
+		links.append({"index":card.index,"event":event,"points":PackedVector2Array([event.point+Vector2(sign*event.radius,0),Vector2(T.TIMELINE_AXIS_X+sign*20,event.point.y),Vector2(card.center.x-sign*44,card.center.y),Vector2(card.center.x-sign*24,card.center.y)])})
+	return {"now":now,"span":span,"events":events,"links":links,"cards":cards,"finished":finished}
 
 ## viewは配置、pointは論理座標。戻り値は対応節点か状態の番号と時刻、範囲外は空辞書。副作用なし。
 static func hit(view: Dictionary, point: Vector2) -> Dictionary:
-	for group in view.groups:
-		for label in group.labels:
-			if label.rect.has_point(point):
-				return label.event
 	for event in view.events:
-		if point.distance_to(event.point)<=7.0:
+		if event.hit_rect.has_point(point):
 			return event
 	for card in view.cards:
 		if card.rect.has_point(point):
@@ -82,4 +85,4 @@ static func caption(event: Dictionary, actor: int) -> String:
 	var number=("%.12f" % event.remaining).rstrip("0").rstrip(".")
 	if event.remaining<=B.TIME_EPS:
 		return name+"  "+number+" / "+("ACTING" if event.index==actor and not event.repeated else "QUEUED")
-	return name+"  +"+number+(" / NEXT" if event.extra else "")
+	return name+"  +"+number

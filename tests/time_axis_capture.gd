@@ -7,7 +7,7 @@ func _initialize() -> void:
 	_run.call_deferred()
 ## REQ-019-S06、REQ-019-S07、REQ-019-S08、NREQ-001-S01
 func _run() -> void:
-	game=load("res://tests/map_orbit_audit.gd").new()
+	game=load("res://tests/order_axis_audit.gd").new()
 	game.settings_path="res://artifacts/runtime/time-axis-capture-"+stamp+".json"
 	root.add_child(game)
 	await process_frame
@@ -49,19 +49,37 @@ func _run() -> void:
 	await _capture("equal-times")
 	game.battle.units[2].next_time=100.01
 	await _capture("near-times")
+	game._start_battle()
+	for i in range(4):
+		game.battle.units[i].core=[20,20,20,20,20]
+		game.battle.units[i].next_time=[0.0,50.0,75.0,100.0][i]
+	game.battle.next_actor()
+	await _capture("wait-third")
 	var view=game._timeline_view()
 	var future=view.events.filter(func(e):return e.repeated)[0]
-	var label
-	for group in view.groups:
-		for item in group.labels:
-			if item.event==future:
-				label=item
-	_click(root.get_final_transform()*label.rect.get_center())
+	_click(root.get_final_transform()*future.point)
 	await process_frame
 	_check(game.timeline_selected_event.time==future.time,"future event selection retains actual occurrence")
 	await _capture("future-selected")
 	game.battle.units[2].hp=0.0
 	await _capture("defeated-A")
+	game._start_battle()
+	for i in range(4):
+		game.battle.units[i].core=[1,1,1,96,1] if i<3 else [25,25,25,1,24]
+		game.battle.units[i].next_time=50.0 if i<3 else 450.0
+		game.battle.units[i].max_hp=game.M.max_hp(game.battle.units[i])
+		game.battle.units[i].hp=game.battle.units[i].max_hp
+	game.battle.next_actor()
+	for dimensions in [Vector2i(1152,648),Vector2i(1920,1080),Vector2i(2560,1440)]:
+		root.size=dimensions
+		root.grab_focus()
+		await process_frame
+		for event in game._timeline_view().events:
+			_click(root.get_final_transform()*event.point)
+			_check(game.selected==event.index and game.timeline_selected_event.time==event.time,"dense GPU input "+str(dimensions)+" / "+str(event.rank))
+		await _capture("dense-"+str(dimensions.x))
+	root.size=Vector2i(1920,1080)
+	await process_frame
 	game.battle.result="DEFEAT"
 	game.battle.mode="RESULT"
 	game._result()
@@ -100,7 +118,7 @@ func _run() -> void:
 	_check(game.build_open,"capture runner returns BUILD without save")
 	var times=game.draw_times.duplicate()
 	times.sort()
-	print("TIME AXIS GPU: %d checks / %d failures" % [checks,failures])
+	print("ORDER AXIS GPU: %d checks / %d failures" % [checks,failures])
 	print("DRAW CPU MS median ",times[times.size()/2]," / max ",times[-1])
 	quit(0 if failures==0 else 1)
 ## REQ-019-S04、REQ-019-S06、REQ-019-S07
@@ -110,23 +128,38 @@ func _capture(suffix: String) -> void:
 	await RenderingServer.frame_post_draw
 	var picture=root.get_texture().get_image()
 	var view=game._timeline_view()
+	_check(not game.axis_centers.any(func(c):return Rect2(180,200,40,440).has_point(c.position)),"no central unit names "+suffix)
+	_check(view.links.size()==view.events.size(),"one unit association per point "+suffix)
 	var transform=Transform2D.IDENTITY.scaled(Vector2(picture.get_width()/1920.0,picture.get_height()/1080.0))
+	if suffix=="wait-third":
+		# 予定0、50、75、100、100、150の2番目は、残り50/150の円弧である。
+		var event=view.events[1]
+		var bright=_brightness(picture,Vector2i(transform*(event.point+Vector2(1,-1).normalized()*event.radius)))
+		var dim=_brightness(picture,Vector2i(transform*(event.point+Vector2(-1,1).normalized()*event.radius)))
+		_check(bright>dim+0.25 and dim<0.45,"actual arc pixels mean waiting amount, not reversed readiness")
 	for card in view.cards:
 		_check(picture.get_pixelv(Vector2i(transform*card.rect.position))==game.BG,"no card background or frame "+suffix)
 		_check(game.mono.get_string_size(game._hp(card.unit.hp)+"/"+game._hp(card.unit.max_hp),HORIZONTAL_ALIGNMENT_LEFT,-1,game.T.TIMELINE_HP_FONT).x<=card.rect.size.x,"current HP fits state "+suffix)
 	var visible=Rect2(Vector2.ZERO,Vector2(root.size))
 	_check(game.drawn_text.all(func(t):return visible.encloses(root.get_final_transform()*Rect2(t.position-Vector2(0,t.font_size),Vector2(t.typeface.get_string_size(t.text,HORIZONTAL_ALIGNMENT_LEFT,-1,t.font_size).x,t.font_size+6)))),"GPU all text within window "+suffix)
 	if suffix=="battle":
-		var previous=Image.load_from_file("res://artifacts/ui-review/map-orbit-battle.png")
+		var previous=Image.load_from_file("res://artifacts/ui-review/time-axis-battle.png")
 		var changed=0
 		for y in range(1080):
 			for x in range(384,1920):
 				if picture.get_pixel(x,y)!=previous.get_pixel(x,y):
 					changed+=1
 		_check(changed==0,"all pixels outside left action-order area unchanged: "+str(changed))
-	var path="res://artifacts/runtime/PHASE-time-axis-"+stamp+"-"+suffix+".png"
+	var path="res://artifacts/runtime/PHASE-order-axis-"+stamp+"-"+suffix+".png"
 	_check(not FileAccess.file_exists(path) and picture.save_png(path)==OK,"unique screenshot "+suffix)
 	print("CAPTURE ",ProjectSettings.globalize_path(path))
+func _brightness(picture: Image,point: Vector2i) -> float:
+	var maximum=0.0
+	for y in range(point.y-1,point.y+2):
+		for x in range(point.x-1,point.x+2):
+			var color=picture.get_pixel(x,y)
+			maximum=maxf(maximum,maxf(color.r,maxf(color.g,color.b)))
+	return maximum
 func _click(point: Vector2) -> void:
 	for pressed in [true,false]:
 		var event=InputEventMouseButton.new()

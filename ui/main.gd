@@ -151,44 +151,31 @@ func _draw_left() -> void:
 	_draw_timeline()
 
 func _timeline_view() -> Dictionary:
-	return TL.layout(battle.units,battle.actor,battle.timeline(T.TIMELINE_EVENTS) if battle.mode!="RESULT" else [],battle.mode=="RESULT")
+	return TL.layout(battle.units,battle.actor,TL.rows(battle),battle.mode=="RESULT")
 
 func _draw_timeline() -> void:
 	var view=_timeline_view()
 	var pixel_scale=maxf(0.001,get_global_transform_with_canvas().get_scale().x*get_viewport().get_final_transform().get_scale().x)
 	var width=maxf(T.TIMELINE_LINE,1.0/pixel_scale)
-	draw_line(Vector2(T.TIMELINE_AXIS_X,T.TIMELINE_TOP),Vector2(T.TIMELINE_AXIS_X,T.TIMELINE_BOTTOM),Color(MUTED,0.55),width,true)
+	var inspected=timeline_hover_event if not timeline_hover_event.is_empty() else timeline_selected_event
+	for i in range(view.events.size()-1):
+		var first=view.events[i]
+		var next=view.events[i+1]
+		draw_line(first.point+Vector2(0,first.radius),next.point-Vector2(0,next.radius),Color(MUTED,0.55),width,true)
+	for link in view.links:
+		var event=link.event
+		var active=_timeline_matches(event,inspected) or (inspected.is_empty() and event.index==selected and not event.repeated)
+		draw_polyline(link.points,Color(CYAN if active else MUTED,0.95 if active else (0.18 if event.repeated else 0.40)),width,true)
 	for card in view.cards:
 		var active=card.index==selected or card.index==timeline_hover
 		var color=CYAN if active else MUTED
-		var connection=card.event
-		var inspected=timeline_hover_event if not timeline_hover_event.is_empty() else timeline_selected_event
-		if inspected.get("index",-1)==card.index and inspected.has("time"):
-			var matches=view.events.filter(func(e):return e.index==inspected.index and absf(e.time-inspected.time)<=B.TIME_EPS)
-			if not matches.is_empty():
-				connection=matches[0]
-		if not connection.is_empty():
-			var sign=-1.0 if card.index<2 else 1.0
-			var points=PackedVector2Array([connection.point,Vector2(T.TIMELINE_AXIS_X+sign*20,connection.point.y),Vector2(card.center.x-sign*44,card.center.y),Vector2(card.center.x-sign*24,card.center.y)])
-			draw_polyline(points,Color(color,0.95 if active else 0.40),width,true)
 		_ring(self,card.center,T.TIMELINE_RADIUS,card.unit,card.index==battle.actor)
 		_center(_hp(card.unit.hp)+"/"+_hp(card.unit.max_hp),card.center+Vector2(0,38),T.TIMELINE_HP_FONT,color if active else WHITE,mono)
 		_text("I %3.0f%%" % (M.sync(card.unit,1).factor*100),card.center+Vector2(-60,56),T.TIMELINE_FACTOR_FONT,status_colors[1],mono)
 		_text("R %3.0f%%" % (M.sync(card.unit,2).factor*100),card.center+Vector2(6,56),T.TIMELINE_FACTOR_FONT,status_colors[2],mono)
 	for event in view.events:
-		var active=event.index==selected or event.index==timeline_hover
-		var color=CYAN if active or event.rank==1 else WHITE
-		draw_circle(event.point,3.0,color,event.rank==1,-1.0 if event.rank==1 else width,true)
-	for group in view.groups:
-		for label in group.labels:
-			var event=label.event
-			var color=CYAN if event.index==selected or event.index==timeline_hover or event.rank==1 else MUTED
-			_center(V.unit_name(battle.units[event.index]),label.center,T.TIMELINE_LABEL_FONT,color,mono)
-		for i in range(group.labels.size()-1):
-			var a=group.labels[i].center
-			var b=group.labels[i+1].center
-			if a.y==b.y:
-				draw_line(a+Vector2(6,-3),b+Vector2(-6,-3),Color(MUTED,0.65),width,true)
+		var active=_timeline_matches(event,inspected) or (inspected.is_empty() and event.index==selected and not event.repeated)
+		_timeline_node(event,CYAN if active or event.rank==1 else WHITE,pixel_scale)
 	var event=timeline_hover_event if not timeline_hover_event.is_empty() else timeline_selected_event
 	if event.has("time"):
 		var matches=view.events.filter(func(e):return e.index==event.index and absf(e.time-event.time)<=B.TIME_EPS)
@@ -196,6 +183,17 @@ func _draw_timeline() -> void:
 	if event.is_empty() and not view.events.is_empty():
 		event=view.events[0]
 	_text(TL.caption(event,battle.actor),T.TIMELINE_READOUT,T.TIMELINE_READOUT_FONT,WHITE,mono)
+
+func _timeline_node(event: Dictionary, color: Color, pixel_scale: float) -> void:
+	var width=maxf(T.TIMELINE_NODE_WIDTH,1.0/pixel_scale)
+	draw_arc(event.point,event.radius,-PI/2,PI*1.5,48,Color(MUTED,0.45),width,true)
+	if event.wait_fraction>0:
+		draw_arc(event.point,event.radius,-PI/2,-PI/2+TAU*event.wait_fraction,maxi(4,ceili(48*event.wait_fraction)),color,width,true)
+	if event.rank==1:
+		draw_circle(event.point,minf(3.0,event.radius*0.4),color,true,-1.0,true)
+
+func _timeline_matches(event: Dictionary, inspected: Dictionary) -> bool:
+	return inspected.has("time") and event.index==inspected.index and absf(event.time-inspected.time)<=B.TIME_EPS
 
 
 func _draw_board() -> void:
@@ -656,7 +654,7 @@ func _help() -> void:
 		_label(panel,steps[i][2],Rect2(x,201,340,76),18,MUTED)
 	_separator(panel,Rect2(36,300,1048,1))
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
-	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\n軸か状態を選択して詳細。待ち量は秒ではない。\n0でも同時刻の順番待ち。未来は生存時の予定。",Rect2(36,377,500,152),18,WHITE)
+	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\n縦間隔は順番。円弧は待ち量(表示内の最遠比)。\n長いほど待つ。準備率ではない。選択で実値。\n0でも順番待ち。秒ではなく、生存時の予定。",Rect2(36,377,500,174),18,WHITE)
 	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
 	_label(panel,"鮮明な所ほど同じステータスが一致。\nINF / RESはLUK補助後の最終補正(最大200%)。\nS+ ARMSの回転2倍 / L= GEAR固定\nR- ARMS逆回転 / 通常はGEAR ↶、ARMS ↷\n×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
 	_separator(panel,Rect2(36,560,1048,1))
