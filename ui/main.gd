@@ -146,12 +146,6 @@ func _draw_left() -> void:
 		var row: Dictionary=rows[k]
 		var u: Dictionary=battle.units[row.index]
 		y=345+k*64
-		var rect=Rect2(164,y,342,58)
-		if k==0:
-			# 外側のパネルがなくても手番強調の合成色を維持する。
-			draw_rect(rect,PANEL)
-			draw_rect(rect,Color(CYAN,0.09))
-			draw_rect(rect,CYAN,false,1)
 		_text("%02d" % (k+1),Vector2(174,y+34),15,CYAN if k==0 else MUTED,mono)
 		_ring(self,Vector2(223,y+29),22,u,k==0)
 		_text("I %3.0f%%" % (M.sync(u,1).factor*100),Vector2(331,y+23),13,status_colors[1],mono)
