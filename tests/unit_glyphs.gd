@@ -82,7 +82,7 @@ func _test_screens() -> void:
 	game.message_time=0
 	await create_timer(0.08).timeout
 	var contexts=game.rings.map(func(r):return r.center)
-	_check(contexts.has(T.BATTLE_TIMELINE_RECT.position+Vector2(59,29)) and contexts.has(T.BATTLE_BOARD_ORIGIN+Vector2(3.5,4.5)*T.BATTLE_CELL) and contexts.has(Vector2(1535,245)+T.BATTLE_INFO_OFFSET) and contexts.has(T.PREVIEW_CENTER),"timeline, board, details, preview share the glyph")
+	_check(contexts.has(Vector2(T.TIMELINE_CARD_X.x,T.TIMELINE_CARD_MIN)) and contexts.has(T.BATTLE_BOARD_ORIGIN+Vector2(3.5,4.5)*T.BATTLE_CELL) and contexts.has(Vector2(1535,245)+T.BATTLE_INFO_OFFSET) and contexts.has(T.PREVIEW_CENTER),"timeline, board, details, preview share the glyph")
 	await _test_board_fit(game)
 	game._cell_input(Vector2i(4,4))
 	game._cell_input(Vector2i(5,4))

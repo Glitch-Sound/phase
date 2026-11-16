@@ -4,6 +4,7 @@ const M = preload("res://game/phase_math.gd")
 const C = preload("res://game/catalog.gd")
 const T = preload("res://game/tuning.gd")
 const DIRS = [Vector2i.UP,Vector2i.RIGHT,Vector2i.DOWN,Vector2i.LEFT]
+const TIME_EPS := 0.00000001
 var units: Array=[]
 var panels: Dictionary={}
 var path: Array=[]
@@ -44,7 +45,7 @@ func movement(u: Dictionary) -> int:
 func next_actor() -> void:
 	var best=-1
 	for i in range(units.size()):
-		if units[i].hp>0 and (best<0 or units[i].next_time<units[best].next_time-0.00000001):
+		if units[i].hp>0 and (best<0 or units[i].next_time<units[best].next_time-TIME_EPS):
 			best=i
 	actor=best
 	mode="MOVE"
@@ -62,7 +63,7 @@ func timeline(count: int=7) -> Array:
 	for k in range(count):
 		var best=0
 		for i in range(1,times.size()):
-			if times[i]<times[best]-0.00000001:
+			if times[i]<times[best]-TIME_EPS:
 				best=i
 		if is_inf(times[best]):
 			break

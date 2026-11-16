@@ -3,6 +3,7 @@ extends Control
 const C = preload("res://game/catalog.gd")
 const M = preload("res://game/phase_math.gd")
 const B = preload("res://game/battle.gd")
+const TL = preload("res://ui/timeline.gd")
 const L = preload("res://game/collection.gd")
 const V = preload("res://ui/visuals.gd")
 const T = preload("res://game/tuning.gd")
@@ -49,6 +50,9 @@ var overlay: Control
 var auxiliary: Control
 var hud: Control
 var selected := -1
+var timeline_hover := -1
+var timeline_hover_event: Dictionary={}
+var timeline_selected_event: Dictionary={}
 var edit_unit := 0
 var build_open := true
 var clock := 0.0
@@ -76,6 +80,7 @@ var window_focused := true
 func _ready() -> void:
 	get_window().focus_exited.connect(_window_focus_exited)
 	get_window().focus_entered.connect(_window_focus_entered)
+	get_window().mouse_exited.connect(_timeline_mouse_exited)
 	loot_rng.randomize()
 	font=SystemFont.new()
 	font.font_names=PackedStringArray(["Helvetica Neue","Hiragino Sans","Arial"])
@@ -143,15 +148,54 @@ func _draw_left() -> void:
 		_text(value,Vector2(T.BATTLE_HP_VALUE_X,y),T.BATTLE_HP_FONT_SIZE,WHITE,mono)
 		_bar(Rect2(Vector2(bar_start,y+T.BATTLE_HP_BAR.position.y),Vector2(T.BATTLE_HP_BAR.end.x-bar_start,T.BATTLE_HP_BAR.size.y)),hp/maxf(1,max_hp),color)
 		y+=T.BATTLE_HP_STEP
-	var rows=battle.timeline(6)
-	for k in range(rows.size()):
-		var row: Dictionary=rows[k]
-		var u: Dictionary=battle.units[row.index]
-		var origin=_timeline_rect(k).position
-		_text("%02d" % (k+1),origin+Vector2(10,34),15,CYAN if k==0 else MUTED,mono)
-		_ring(self,origin+Vector2(59,29),22,u,k==0)
-		_text("I %3.0f%%" % (M.sync(u,1).factor*100),origin+Vector2(167,23),13,status_colors[1],mono)
-		_text("R %3.0f%%" % (M.sync(u,2).factor*100),origin+Vector2(167,43),13,status_colors[2],mono)
+	_draw_timeline()
+
+func _timeline_view() -> Dictionary:
+	return TL.layout(battle.units,battle.actor,battle.timeline(T.TIMELINE_EVENTS) if battle.mode!="RESULT" else [],battle.mode=="RESULT")
+
+func _draw_timeline() -> void:
+	var view=_timeline_view()
+	var pixel_scale=maxf(0.001,get_global_transform_with_canvas().get_scale().x*get_viewport().get_final_transform().get_scale().x)
+	var width=maxf(T.TIMELINE_LINE,1.0/pixel_scale)
+	draw_line(Vector2(T.TIMELINE_AXIS_X,T.TIMELINE_TOP),Vector2(T.TIMELINE_AXIS_X,T.TIMELINE_BOTTOM),Color(MUTED,0.55),width,true)
+	for card in view.cards:
+		var active=card.index==selected or card.index==timeline_hover
+		var color=CYAN if active else MUTED
+		var connection=card.event
+		var inspected=timeline_hover_event if not timeline_hover_event.is_empty() else timeline_selected_event
+		if inspected.get("index",-1)==card.index and inspected.has("time"):
+			var matches=view.events.filter(func(e):return e.index==inspected.index and absf(e.time-inspected.time)<=B.TIME_EPS)
+			if not matches.is_empty():
+				connection=matches[0]
+		if not connection.is_empty():
+			var sign=-1.0 if card.index<2 else 1.0
+			var points=PackedVector2Array([connection.point,Vector2(T.TIMELINE_AXIS_X+sign*20,connection.point.y),Vector2(card.center.x-sign*44,card.center.y),Vector2(card.center.x-sign*24,card.center.y)])
+			draw_polyline(points,Color(color,0.95 if active else 0.40),width,true)
+		_ring(self,card.center,T.TIMELINE_RADIUS,card.unit,card.index==battle.actor)
+		_center(_hp(card.unit.hp)+"/"+_hp(card.unit.max_hp),card.center+Vector2(0,38),T.TIMELINE_HP_FONT,color if active else WHITE,mono)
+		_text("I %3.0f%%" % (M.sync(card.unit,1).factor*100),card.center+Vector2(-60,56),T.TIMELINE_FACTOR_FONT,status_colors[1],mono)
+		_text("R %3.0f%%" % (M.sync(card.unit,2).factor*100),card.center+Vector2(6,56),T.TIMELINE_FACTOR_FONT,status_colors[2],mono)
+	for event in view.events:
+		var active=event.index==selected or event.index==timeline_hover
+		var color=CYAN if active or event.rank==1 else WHITE
+		draw_circle(event.point,3.0,color,event.rank==1,-1.0 if event.rank==1 else width,true)
+	for group in view.groups:
+		for label in group.labels:
+			var event=label.event
+			var color=CYAN if event.index==selected or event.index==timeline_hover or event.rank==1 else MUTED
+			_center(V.unit_name(battle.units[event.index]),label.center,T.TIMELINE_LABEL_FONT,color,mono)
+		for i in range(group.labels.size()-1):
+			var a=group.labels[i].center
+			var b=group.labels[i+1].center
+			if a.y==b.y:
+				draw_line(a+Vector2(6,-3),b+Vector2(-6,-3),Color(MUTED,0.65),width,true)
+	var event=timeline_hover_event if not timeline_hover_event.is_empty() else timeline_selected_event
+	if event.has("time"):
+		var matches=view.events.filter(func(e):return e.index==event.index and absf(e.time-event.time)<=B.TIME_EPS)
+		event=matches[0] if not matches.is_empty() else {}
+	if event.is_empty() and not view.events.is_empty():
+		event=view.events[0]
+	_text(TL.caption(event,battle.actor),T.TIMELINE_READOUT,T.TIMELINE_READOUT_FONT,WHITE,mono)
 
 
 func _draw_board() -> void:
@@ -189,7 +233,7 @@ func _draw_board() -> void:
 				var u: Dictionary=battle.units[i]
 				var center=pos+T.UNIT_BOARD_CENTER*BOARD_SCALE
 				_ring(self,center,T.UNIT_BOARD_RADIUS*BOARD_SCALE,u,i==battle.actor)
-				if i==selected:
+				if i==selected or i==timeline_hover:
 					_brackets(Rect2(pos+Vector2(5,5)*BOARD_SCALE,Vector2(60,60)*BOARD_SCALE),MAGENTA)
 				if battle.mode=="TARGET" and battle.valid_target(battle.actor,i,battle.selected_skill):
 					var tc=status_colors[1] if battle.selected_skill==C.DAMAGE else status_colors[2]
@@ -223,9 +267,6 @@ func _effect_chip_rect(cell: Vector2i) -> Rect2:
 
 func _board_point(cell: Vector2i, offset: Vector2=Vector2.ZERO) -> Vector2:
 	return BOARD+Vector2(cell)*CELL+offset*BOARD_SCALE
-
-func _timeline_rect(index: int) -> Rect2:
-	return Rect2(T.BATTLE_TIMELINE_RECT.position+Vector2(0,index*T.BATTLE_TIMELINE_STEP),T.BATTLE_TIMELINE_RECT.size)
 
 func _draw_info() -> void:
 	var offset=T.BATTLE_INFO_OFFSET
@@ -270,6 +311,18 @@ func _draw_preview() -> void:
 	if M.singularity(u):
 		_text("×5",Vector2(T.PREVIEW_PANEL.position.x+286,T.PREVIEW_SYNC_BASELINE),15,MAGENTA,mono)
 
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		if build_open or not window_focused or is_instance_valid(auxiliary) or is_instance_valid(overlay):
+			_timeline_mouse_exited()
+		else:
+			timeline_hover_event=TL.hit(_timeline_view(),event.position)
+			timeline_hover=timeline_hover_event.get("index",-1)
+
+func _timeline_mouse_exited() -> void:
+	timeline_hover=-1
+	timeline_hover_event={}
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not window_focused:
 		return
@@ -285,7 +338,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif battle.mode=="MOVE" and not build_open:
 				battle.path=[]
 		return
-	if is_instance_valid(auxiliary) or is_instance_valid(overlay):
+	if build_open or is_instance_valid(auxiliary) or is_instance_valid(overlay):
+		timeline_hover=-1
+		timeline_hover_event={}
 		return
 	if event is InputEventMouseMotion:
 		var p=event.position-BOARD
@@ -296,12 +351,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		if Rect2(BOARD,Vector2.ONE*CELL*10).has_point(p):
 			_cell_input(Vector2i(floori((p.x-BOARD.x)/CELL),floori((p.y-BOARD.y)/CELL)),event.double_click)
 		else:
-			for k in range(6):
-				if _timeline_rect(k).has_point(p):
-					selected=battle.timeline(6)[k].index
+			var hit=TL.hit(_timeline_view(),p)
+			if not hit.is_empty():
+				selected=hit.index
+				timeline_selected_event=hit.duplicate(true)
 
 func _window_focus_exited() -> void:
 	window_focused=false
+	timeline_hover=-1
+	timeline_hover_event={}
 	hover_cell=Vector2i(-1,-1)
 	get_viewport().gui_release_focus()
 	queue_redraw()
@@ -314,6 +372,9 @@ func _window_focus_entered() -> void:
 		_focus_modal.call_deferred(overlay)
 
 func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
+	timeline_selected_event={}
+	timeline_hover=-1
+	timeline_hover_event={}
 	var index=battle.at(cell)
 	if battle.mode=="TARGET":
 		if index>=0 and battle.act(index):
@@ -338,6 +399,9 @@ func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 	queue_redraw()
 
 func _after_action() -> void:
+	timeline_hover=-1
+	timeline_hover_event={}
+	timeline_selected_event={}
 	selected=-1
 	_clear_overlay()
 	if battle.mode=="RESULT":
@@ -536,6 +600,10 @@ func _start_battle() -> void:
 			_notify("Invalid build. Check unlocked elements and the CORE total.")
 			return
 	build_open=false
+	selected=-1
+	timeline_hover=-1
+	timeline_hover_event={}
+	timeline_selected_event={}
 	result_awarded=false
 	battle.start(collection.stage_index,collection.builds)
 	_clear_overlay()
@@ -588,7 +656,7 @@ func _help() -> void:
 		_label(panel,steps[i][2],Rect2(x,201,340,76),18,MUTED)
 	_separator(panel,Rect2(36,300,1048,1))
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
-	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\nユニットか手番一覧をクリックして詳細を調べる。",Rect2(36,377,500,152),18,WHITE)
+	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\n軸か状態を選択して詳細。待ち量は秒ではない。\n0でも同時刻の順番待ち。未来は生存時の予定。",Rect2(36,377,500,152),18,WHITE)
 	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
 	_label(panel,"鮮明な所ほど同じステータスが一致。\nINF / RESはLUK補助後の最終補正(最大200%)。\nS+ ARMSの回転2倍 / L= GEAR固定\nR- ARMS逆回転 / 通常はGEAR ↶、ARMS ↷\n×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
 	_separator(panel,Rect2(36,560,1048,1))
@@ -748,6 +816,8 @@ func _clear_overlay() -> void:
 	build_preview=null
 
 func _modal(rect: Rect2, is_aux: bool, keep_context: bool=false) -> Control:
+	timeline_hover=-1
+	timeline_hover_event={}
 	var layer=Control.new()
 	layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	layer.mouse_filter=Control.MOUSE_FILTER_STOP

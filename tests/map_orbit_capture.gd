@@ -12,8 +12,8 @@ func _capture(suffix: String) -> void:
 	var points=[Vector2(40,90),Vector2(1400,40),Vector2(1870,800),game.T.PREVIEW_PANEL.position+Vector2(2,2),game.T.PREVIEW_PANEL.end-Vector2(2,2)]
 	for row in range(2):
 		points.append(Vector2(1740,654+row*43)+game.T.BATTLE_INFO_OFFSET)
-	for row in range(6):
-		var rect=Rect2(game.T.BATTLE_TIMELINE_RECT.position+Vector2(0,row*game.T.BATTLE_TIMELINE_STEP),game.T.BATTLE_TIMELINE_RECT.size)
+	for card in game._timeline_view().cards:
+		var rect: Rect2=card.rect
 		points.append(rect.position)
 		points.append(rect.end-Vector2(4,4))
 	for point in points:

@@ -273,9 +273,9 @@ func _test_compact_layout() -> void:
 		var event=InputEventMouseButton.new()
 		event.button_index=MOUSE_BUTTON_LEFT
 		event.pressed=true
-		event.position=root.get_final_transform()*(T.BATTLE_TIMELINE_RECT.position+Vector2(T.BATTLE_TIMELINE_RECT.size.x/2,row*T.BATTLE_TIMELINE_STEP+T.BATTLE_TIMELINE_RECT.size.y/2))
+		event.position=root.get_final_transform()*(game._timeline_view().cards[row].center)
 		root.push_input(event,false)
-		_check(game.selected==row,"scaled timeline row selects its original unit: "+str(row))
+		_check(game.selected==row,"scaled current state selects its original unit: "+str(row))
 	game._cell_input(Vector2i(4,4))
 	game._cell_input(Vector2i(5,4))
 	game._cell_input(Vector2i(5,4),true)
