@@ -176,13 +176,6 @@ func _draw_timeline() -> void:
 	for event in view.events:
 		var active=_timeline_matches(event,inspected) or (inspected.is_empty() and event.index==selected and not event.repeated)
 		_timeline_node(event,CYAN if active or event.rank==1 else WHITE,pixel_scale)
-	var event=timeline_hover_event if not timeline_hover_event.is_empty() else timeline_selected_event
-	if event.has("time"):
-		var matches=view.events.filter(func(e):return e.index==event.index and absf(e.time-event.time)<=B.TIME_EPS)
-		event=matches[0] if not matches.is_empty() else {}
-	if event.is_empty() and not view.events.is_empty():
-		event=view.events[0]
-	_text(TL.caption(event,battle.actor),T.TIMELINE_READOUT,T.TIMELINE_READOUT_FONT,WHITE,mono)
 
 func _timeline_node(event: Dictionary, color: Color, pixel_scale: float) -> void:
 	var width=maxf(T.TIMELINE_NODE_WIDTH,1.0/pixel_scale)
@@ -267,33 +260,23 @@ func _board_point(cell: Vector2i, offset: Vector2=Vector2.ZERO) -> Vector2:
 	return BOARD+Vector2(cell)*CELL+offset*BOARD_SCALE
 
 func _draw_info() -> void:
-	var offset=T.BATTLE_INFO_OFFSET
 	var index=selected if selected>=0 else battle.actor
 	var u: Dictionary=battle.units[index]
 	var camp_color=CYAN if u.camp=="PLAYER" else status_colors[1]
-	_text(u.camp+" / "+u.class_name,(Vector2(1420,140)+offset),17,camp_color,mono)
-	_ring(self,(Vector2(1535,245)+offset),81,u,index==battle.actor)
-	_text("HP",(Vector2(1324,385)+offset),15,MUTED,mono)
-	_text("%s / %s" % [_hp(u.hp),_hp(u.max_hp)],(Vector2(1390,385)+offset),21,WHITE,mono)
-	_text("MOVE %d / %d" % [u.moved,battle.movement(u)],(Vector2(1588,385)+offset),16,CYAN,mono)
-	for k in range(5):
-		_text(["VIT","INF","RES","SPD","LUK"][k],(Vector2(1410+k*68,432)+offset),14,status_colors[k],mono)
-	for r in range(3):
-		var y=461+r*27
-		_text(["CORE","GEAR","ARMS"][r],(Vector2(1324,y)+offset),14,MUTED,mono)
-		for k in range(5):
-			_text("%02d" % u[M.KEYS[r]][k],(Vector2(1415+k*68,y)+offset),17,WHITE,mono)
-			_bar(Rect2(Vector2(1410+k*68,y+5)+offset,Vector2(42,2)),u[M.KEYS[r]][k]/100.0,status_colors[k])
-	_text(C.serial("ARMS",u.arms),(Vector2(1324,558)+offset),15,WHITE,mono)
-	_text("MUTATION / "+u.arms_mutation,(Vector2(1324,580)+offset),12,MUTED,mono)
-	_text(C.serial("GEAR",u.gear),(Vector2(1324,611)+offset),15,WHITE,mono)
-	_text("MUTATION / "+u.gear_mutation,(Vector2(1324,633)+offset),12,MUTED,mono)
-	for k in range(u.skills.size()):
-		var skill: Dictionary=C.SKILLS[u.skills[k]]
-		var y=648+k*43
-		draw_rect(Rect2(Vector2(1324,y)+offset,Vector2(2,37)),CYAN if skill.type=="ACTIVE" else MAGENTA)
-		_text(skill.type,(Vector2(1335,y+24)+offset),12,MUTED,mono)
-		_text(skill.effect+" / "+skill.area,(Vector2(1418,y+24)+offset),15,WHITE,mono)
+	_text(u.class_name,T.BATTLE_INFO_CLASS,17,camp_color,mono)
+	_ring(self,T.BATTLE_INFO_RING,81,u,index==battle.actor)
+	_text("MOVE %d" % battle.movement(u),T.BATTLE_INFO_MOVE,16,CYAN,mono)
+	var position_px=T.BATTLE_INFO_DETAILS
+	for part in ["GEAR","ARMS"]:
+		var mutation: String=u[part.to_lower()+"_mutation"]
+		if mutation!="NORMAL":
+			_text(part+" / "+mutation,position_px,15,MUTED,mono)
+			position_px.y+=T.BATTLE_MUTATION_STEP
+	if position_px!=T.BATTLE_INFO_DETAILS:
+		position_px.y+=T.BATTLE_MUTATION_GAP
+	for id in u.skills:
+		_text(C.SKILLS[id].label,position_px,15,WHITE,mono)
+		position_px.y+=T.BATTLE_SKILL_STEP
 
 func _draw_preview() -> void:
 	var u=battle.preview()
@@ -304,8 +287,6 @@ func _draw_preview() -> void:
 		preview_generation+=1
 	V.phase_orbit(self,T.PREVIEW_CENTER,preview_contours)
 	_ring(self,T.PREVIEW_CENTER,T.PREVIEW_RADIUS,u)
-	_text("INF %.1f%%" % (M.sync(u,1).factor*100),Vector2(T.PREVIEW_PANEL.position.x,T.PREVIEW_SYNC_BASELINE),15,status_colors[1],mono)
-	_text("RES %.1f%%" % (M.sync(u,2).factor*100),Vector2(T.PREVIEW_PANEL.position.x+166,T.PREVIEW_SYNC_BASELINE),15,status_colors[2],mono)
 	if M.singularity(u):
 		_text("×5",Vector2(T.PREVIEW_PANEL.position.x+286,T.PREVIEW_SYNC_BASELINE),15,MAGENTA,mono)
 
@@ -420,8 +401,11 @@ func _hud() -> void:
 	hud=Control.new()
 	hud.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	add_child(hud)
-	for row in [["HELP",1218,_help],["SETTINGS",1346,_settings],["RESTART",1492,_restart],["QUIT",1640,_quit]]:
-		_button(hud,row[0],Rect2(row[1],1025,118,40),row[2])
+	var rows=[["HELP",1218,_help],["SETTINGS",1346,_settings],["RESTART",1492,_restart],["QUIT",1640,_quit]]
+	for i in range(rows.size()):
+		var row=rows[i]
+		var rect=Rect2(row[1],1025,118,40) if build_open else Rect2(T.BATTLE_MENU_ORIGIN+Vector2(i%2,floori(i/2.0))*(T.BATTLE_MENU_SIZE+T.BATTLE_MENU_GAP),T.BATTLE_MENU_SIZE)
+		_button(hud,row[0],rect,row[2])
 	if battle.mode=="TARGET":
 		_button(hud,"BACK",T.BATTLE_CONTEXT_BUTTON,func():battle.back();_action_dialog())
 	elif battle.mode=="MOVE" and battle.trapped():
@@ -654,7 +638,7 @@ func _help() -> void:
 		_label(panel,steps[i][2],Rect2(x,201,340,76),18,MUTED)
 	_separator(panel,Rect2(36,300,1048,1))
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
-	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\n白は相対進捗、灰は残り。満周は待ち0。\n表示最大の待ち量で再計算。個別周期ではない。\n縦は順番。0も順番待ち。選択で実値。未来は生存時。",Rect2(36,377,500,174),18,WHITE)
+	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\n白は相対進捗、灰は残り。満周は待ち0。\n表示最大の待ち量で再計算。個別周期ではない。\n縦は順番。中心点が手番。満周でも順番待ち。",Rect2(36,377,500,174),18,WHITE)
 	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
 	_label(panel,"鮮明な所ほど同じステータスが一致。\nINF / RESはLUK補助後の最終補正(最大200%)。\nS+ ARMSの回転2倍 / L= GEAR固定\nR- ARMS逆回転 / 通常はGEAR ↶、ARMS ↷\n×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
 	_separator(panel,Rect2(36,560,1048,1))

@@ -34,7 +34,7 @@ const UNIT_ARC_ERROR_PIXELS := 0.03
 # 色相とVを維持し、既存プリセットの判読性を保つリング用の彩度強調。
 const UNIT_RING_SATURATION_POWER := 2.0
 
-# フッターを残して高さを使い、周囲の情報を盤面へ近接配置する。
+# 高さを盤面に使い、右下のメニューと盤面の下端を揃える。
 const BATTLE_BOARD_ORIGIN := Vector2(384,16)
 const BATTLE_CELL := 100.0
 const BATTLE_LEFT_ORIGIN := Vector2(40,0)
@@ -67,7 +67,18 @@ const BATTLE_HP_VALUE_X := 126.0
 const BATTLE_HP_FONT_SIZE := 17
 const BATTLE_HP_BAR := Rect2(240,-6,120,5)
 const BATTLE_HP_GAP := 16.0
-const BATTLE_CONTEXT_BUTTON := Rect2(1400,950,360,37)
+# 右情報を盤面から56px離し、識別と行動判断に必要な内容へ絞る。
+const BATTLE_INFO_CLASS := Vector2(1440,96)
+const BATTLE_INFO_RING := Vector2(1640,201)
+const BATTLE_INFO_MOVE := Vector2(1440,341)
+const BATTLE_INFO_DETAILS := Vector2(1440,385)
+const BATTLE_MUTATION_STEP := 27.0
+const BATTLE_MUTATION_GAP := 16.0
+const BATTLE_SKILL_STEP := 43.0
+const BATTLE_MENU_ORIGIN := Vector2(1440,928)
+const BATTLE_MENU_SIZE := Vector2(190,40)
+const BATTLE_MENU_GAP := Vector2(20,8)
+const BATTLE_CONTEXT_BUTTON := Rect2(1440,872,400,40)
 const PREVIEW_PANEL := Rect2(40,680,320,280)
 const PREVIEW_CENTER := Vector2(200,804)
 const PREVIEW_RADIUS := 60.0

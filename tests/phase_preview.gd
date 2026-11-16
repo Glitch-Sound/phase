@@ -89,7 +89,7 @@ func _test_ui() -> void:
 	var texts=game.preview_text.map(func(t):return t.text)
 	_check(not texts.any(func(s):return s.begins_with("G ") or s.begins_with("A ") or s in ["0°","180°","360°","INF SYNC","RES SYNC","SINGULARITY ×5"]),"obsolete angles and wide resonance labels removed")
 	_check(not game.drawn_text.any(func(t):return t.text=="ROUTE → PHASE → EFFECT"),"bottom route phase effect removed")
-	_check(texts.has("INF 200.0%") and texts.has("RES 200.0%"),"compact final factors use original model")
+	_check(not texts.any(func(text):return text.begins_with("INF ") or text.begins_with("RES ")),"final numerical factors have no replacement")
 	var curves=game.get("preview_contours")
 	if curves==null:
 		_check(false,"preview connects and caches the actual contours")
@@ -187,7 +187,7 @@ func _test_notifications() -> void:
 			continue
 		var bounds=_text_bounds(messages[0])
 		var metrics=game.drawn_text.filter(func(item):return item.text.begins_with("INF ") or item.text.begins_with("RES "))
-		_check(metrics.size()==2 and metrics.all(func(item):return not bounds.intersects(_text_bounds(item))),"notification does not obscure either final sync rate: "+state)
+		_check(metrics.is_empty(),"removed sync text stays absent during notifications: "+state)
 		_check(not bounds.intersects(game.T.PREVIEW_PANEL) and not bounds.intersects(Rect2(game.BOARD,Vector2.ONE*game.CELL*10)),"notification is separate from rings and map: "+state)
 		var buttons=game.hud.find_children("*","Button",true,false)
 		_check(buttons.all(func(button):return not bounds.intersects(button.get_global_rect())),"notification does not obscure actions or footer: "+state)
@@ -197,7 +197,7 @@ func _test_notifications() -> void:
 				await process_frame
 				var transform=root.get_final_transform()
 				var visible=Rect2(Vector2.ZERO,Vector2(dimensions))
-				_check(visible.encloses(transform*bounds) and metrics.all(func(item):return not (transform*bounds).intersects(transform*_text_bounds(item))),"longest notification and metrics stay visible at "+str(dimensions))
+				_check(visible.encloses(transform*bounds),"longest notification stays visible at "+str(dimensions))
 	game._process(8.0)
 	await create_timer(0.08).timeout
 	_check(not game.drawn_text.any(func(item):return item.text==game.message),"expired notification no longer draws")
@@ -236,8 +236,7 @@ func _test_compact_layout() -> void:
 	await create_timer(0.08).timeout
 	var board=Rect2(game.BOARD,Vector2.ONE*game.CELL*10)
 	var buttons=game.hud.find_children("*","Button",true,false)
-	var footer_y=buttons.map(func(b):return b.position.y).min()
-	_check(footer_y-board.end.y<=board.position.y and board.end.y<footer_y,"square map uses the available height above footer")
+	_check(buttons.map(func(b):return b.get_rect().end.y).max()==board.end.y and buttons.all(func(b):return b.position.x>board.end.x),"square map retains height with menu aligned on right")
 	_check(game.drawn_text.filter(func(t):return not t.in_board).all(func(t):return not _text_bounds(t).intersects(board)),"all peripheral text stays outside the expanded map")
 	_check(not game.T.PREVIEW_PANEL.intersects(board) and buttons.all(func(b):return not b.get_global_rect().intersects(board)),"preview and system buttons stay outside map")
 	for i in range(2):

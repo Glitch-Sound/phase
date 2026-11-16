@@ -59,17 +59,17 @@ func _check_scene(game, title: String) -> void:
 		var hits=game.drawn_text.filter(func(item):return (i in [1,4,9] and LABEL_AREAS[i].has_point(Vector2i(item.position)) and (RegEx.create_from_string("^[0-9]+([.][0-9]+)?$").search(item.text)!=null or item.text.contains("DESTINATION"))) or (item.text.begins_with(label) if label in ["PATH ","T / ","TURN "] else item.text==label)).map(func(item):return item.text)
 		_check(hits.is_empty(),"only requested labels absent: "+title+" / "+label+" / "+str(hits))
 	var displayed=game.battle.units[game.selected if game.selected>=0 else game.battle.actor]
-	var expected_count=47+2*displayed.skills.size()+game.battle.panels.values().filter(func(p):return p!="NORMAL").size()
+	var expected_count=15+displayed.skills.size()+int(displayed.gear_mutation!="NORMAL")+int(displayed.arms_mutation!="NORMAL")+int(game.M.singularity(game.battle.preview()))+game.battle.panels.values().filter(func(p):return p!="NORMAL").size()
 	for goal in [game.battle.stage.goal,game.battle.stage.enemy_goal]:
 		if Rect2i(0,0,10,10).has_point(goal):
 			expected_count+=1
 	expected_count+=1 if game.message_time>0 else 0
 	_check(game.drawn_text.size()==expected_count,"complete text set excludes any extra caption fragment: "+title+" / "+str(game.drawn_text.size())+" / "+str(expected_count))
-	var required=["PHASE","PLAYER","ENEMY","HP","VIT","INF","RES","SPD","LUK","CORE","GEAR","ARMS","MUTATION / NORMAL","DAMAGE / ADJACENT","HEAL / ADJACENT"]
+	var required=["PHASE","PLAYER","ENEMY",displayed.class_name,"MOVE %d" % game.battle.movement(displayed),"DAMAGE / ADJACENT","HEAL / ADJACENT"]
 	_check(required.all(func(text):return texts.has(text)),"keep headers and complete details: "+title)
 	_check(texts.filter(func(text):return text.begins_with("I ")).size()==4 and texts.filter(func(text):return text.begins_with("R ")).size()==4,"keep four current states and their factors: "+title)
 	var prediction=game.preview_text.map(func(item):return item.text)
-	_check(prediction.filter(func(text):return text.begins_with("INF ")).size()==1 and prediction.filter(func(text):return text.begins_with("RES ")).size()==1 and game.preview_rings.size()==1 and game.preview_contours.size()==4,"keep predicted rings, factors and four contours: "+title)
+	_check(prediction.filter(func(text):return text.begins_with("INF ") or text.begins_with("RES ")).is_empty() and game.preview_rings.size()==1 and game.preview_contours.size()==4,"keep predicted rings and four contours without numeric factors: "+title)
 	_check(game.battle.units==units and game.battle.path==path,"label display preserves battle and pending route: "+title)
 ## REQ-019-S03
 func _test_header_input(game) -> void:

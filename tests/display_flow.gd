@@ -98,7 +98,7 @@ func _test_focus(game: Control) -> void:
 	root.focus_entered.emit()
 	game._unhandled_input(event)
 	_check(game.battle.path==[Vector2i(4,4),Vector2i(5,4)],"focus return resumes the preserved route")
-	_push_click(root.get_final_transform()*Vector2(1277,1045))
+	_push_click(root.get_final_transform()*(T.BATTLE_MENU_ORIGIN+T.BATTLE_MENU_SIZE/2))
 	await process_frame
 	_check(is_instance_valid(game.auxiliary),"GUI remains usable after focus return")
 	game._close_aux()
