@@ -1,5 +1,5 @@
 extends "res://tests/notification_capture.gd"
-const LABEL_AREAS=[Rect2i(172,832,160,22),Rect2i(528,882,450,30),Rect2i(172,136,270,22),Rect2i(172,310,150,24),Rect2i(365,310,145,24),Rect2i(1322,78,110,24),Rect2i(1436,330,205,26)]
+const LABEL_AREAS=[Rect2i(172,832,160,22),Rect2i(528,882,450,30),Rect2i(172,136,270,22),Rect2i(172,310,150,24),Rect2i(365,310,145,24),Rect2i(1322,78,110,24),Rect2i(1436,330,205,26),Rect2i(148,18,230,28),Rect2i(1388,18,230,28)]
 ## REQ-019-S01、REQ-019-S03
 func _capture(suffix: String) -> void:
 	game.queue_redraw()
@@ -12,7 +12,9 @@ func _capture(suffix: String) -> void:
 			failed=true
 			printerr("FAIL: comparison dimensions differ")
 			return
-		var counts=[0,0,0,0,0,0,0]
+		var counts=[]
+		counts.resize(LABEL_AREAS.size())
+		counts.fill(0)
 		var outside=0
 		for y in range(image.get_height()):
 			for x in range(image.get_width()):
@@ -29,7 +31,7 @@ func _capture(suffix: String) -> void:
 		print("LABEL PIXEL AUDIT regions ",counts," / outside ",outside)
 		if outside!=0 or not counts.all(func(count):return count>0):
 			failed=true
-			printerr("FAIL: exactly seven text regions must change")
+			printerr("FAIL: exactly the requested text regions must change")
 	var path="res://artifacts/runtime/PHASE-labels-"+stamp+"-"+suffix+".png"
 	if FileAccess.file_exists(path) or image.save_png(path)!=OK:
 		failed=true

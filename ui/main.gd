@@ -114,8 +114,6 @@ func _draw() -> void:
 	draw_rect(Rect2(0,0,1920,1080),BG)
 	if build_open:
 		return
-	_text("PHASE / TACTICAL STUDY",Vector2(150,38),14,MUTED,mono)
-	_text("BOTH SIDES / HUMAN",Vector2(1390,38),14,MUTED,mono)
 	_panel(Rect2(150,64,370,740))
 	_panel(Rect2(1300,64,470,740))
 	_draw_left()

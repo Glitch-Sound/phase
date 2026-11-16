@@ -51,6 +51,8 @@
 | T / 現在時刻 | 数値を含む表示全体 |
 | INSPECT | 見出し |
 | INNER / MIDDLE / OUTER | 補助見出し |
+| PHASE / TACTICAL STUDY | 左上の説明文字 |
+| BOTH SIDES / HUMAN | 右上の説明文字 |
 
 ### Requirement: REQ-020 - システム操作
 
