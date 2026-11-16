@@ -17,6 +17,7 @@ const UNIT_SECTOR_GAP := 1.2
 const UNIT_SECTOR_GAP_RATIO := 0.06
 const UNIT_GAP_MAX_FRACTION := 0.30
 const UNIT_MIN_LINE := 1.0
+const UNIT_HP_COLOR := Color.WHITE
 const UNIT_HP_RADIUS := 0.41
 const UNIT_HP_WIDTH := 0.022
 const UNIT_HP_MIN_LINE := 0.65
@@ -31,6 +32,10 @@ const UNIT_BOARD_RADIUS := 31.0
 const UNIT_HP_PIXEL_MIN := 0.9
 const UNIT_COLOR_PIXEL_MIN := 1.1
 const UNIT_ARC_ERROR_PIXELS := 0.03
+# AAと線端がリングや目盛りに接触しない物理余白。
+const ROUTE_RING_GAP_PIXELS := 2.5
+const ROUTE_LINE_WIDTH := 2.0
+const ROUTE_NODE_RADIUS := 14.0
 # 色相とVを維持し、既存プリセットの判読性を保つリング用の彩度強調。
 const UNIT_RING_SATURATION_POWER := 2.0
 
@@ -95,8 +100,8 @@ const PREVIEW_LINE := 0.9
 # 結果の輪郭を通常の縮小表示でも追えるよう、他の細線より少し太くする。
 const PREVIEW_RESULT_LINE := 2.0
 const PREVIEW_PIXEL_MIN := 0.9
-# 通常の縮小表示でも色状態を読めるよう、不一致時の細線を残す。
-const PREVIEW_BASE_ALPHA := 0.55
+# 暗い不一致の輪郭も読み取りやすくし、一致時の鮮明さとの差を残す。
+const PREVIEW_BASE_ALPHA := 0.72
 const PREVIEW_CLEAR_ALPHA := 0.92
-const PREVIEW_RESULT_BASE_ALPHA := 0.25
+const PREVIEW_RESULT_BASE_ALPHA := 0.45
 const PREVIEW_RESULT_CLEAR_ALPHA := 1.0

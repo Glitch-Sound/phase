@@ -234,15 +234,11 @@ func _draw_board() -> void:
 						amount=mini(amount,ceili(u.max_hp-u.hp))
 					effect_chips.append({"cell":cell,"text":("-" if battle.selected_skill==C.DAMAGE else "+")+str(amount),"color":tc})
 	if battle.mode=="MOVE":
-		var prev: Vector2=_board_point(battle.units[battle.actor].pos,Vector2(35,35))
-		for cell in battle.path:
-			var now=_board_point(cell,Vector2(35,35))
-			var direction=(now-prev).normalized()
-			draw_line(prev+direction*15*BOARD_SCALE,now-direction*15*BOARD_SCALE,CYAN,2*BOARD_SCALE,true)
-			prev=now
+		for segment in _route_segments():
+			draw_line(segment[0],segment[1],CYAN,T.ROUTE_LINE_WIDTH*BOARD_SCALE,true)
 		for i in range(battle.path.size()):
 			var center=_board_point(battle.path[i],Vector2(35,35))
-			draw_circle(center,14*BOARD_SCALE,WHITE)
+			draw_circle(center,T.ROUTE_NODE_RADIUS*BOARD_SCALE,WHITE)
 			_center(str(i+1),center+Vector2(0,6)*BOARD_SCALE,roundi(17*BOARD_SCALE),BG,mono)
 		if not battle.path.is_empty():
 			_brackets(Rect2(_board_point(battle.path.back(),Vector2(3,3)),Vector2(64,64)*BOARD_SCALE),CYAN)
@@ -252,6 +248,21 @@ func _draw_board() -> void:
 		draw_rect(rect,BG)
 		draw_rect(rect,chip.color,false,1)
 		_center(chip.text,rect.position+Vector2(rect.size.x/2,16*BOARD_SCALE),roundi(16*BOARD_SCALE),chip.color,mono)
+
+func _route_segments() -> Array:
+	var segments=[]
+	var pixel_scale=maxf(0.001,get_viewport_transform().get_scale().x*get_global_transform().get_scale().x)
+	var unit_clear=V.route_unit_clearance(T.UNIT_BOARD_RADIUS*BOARD_SCALE,T.ROUTE_LINE_WIDTH*BOARD_SCALE,pixel_scale)
+	var node_clear=(T.ROUTE_NODE_RADIUS+T.ROUTE_LINE_WIDTH/2)*BOARD_SCALE
+	var prev: Vector2i=battle.units[battle.actor].pos
+	for cell in battle.path:
+		var start_clear=unit_clear if battle.at(prev)>=0 else node_clear
+		var end_clear=unit_clear if battle.at(cell)>=0 else node_clear
+		var segment=V.route_segment(_board_point(prev,Vector2(35,35)),_board_point(cell,Vector2(35,35)),start_clear,end_clear)
+		if not segment.is_empty():
+			segments.append(segment)
+		prev=cell
+	return segments
 
 func _effect_chip_rect(cell: Vector2i) -> Rect2:
 	return Rect2(_board_point(cell,Vector2(25,2)),Vector2(43,22)*BOARD_SCALE)

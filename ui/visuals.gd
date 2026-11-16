@@ -22,7 +22,7 @@ static func glyph(radius: float, u: Dictionary, selected: bool, colors: Array, a
 			arcs.append({"role":["CORE","GEAR","ARMS"][r],"radius":rad,"start":start+gap/2,"end":end-gap/2,"color":colors[status],"width":maxf(T.UNIT_MIN_LINE,radius*T.UNIT_RING_WIDTH)})
 	var health=clampf(u.hp/maxf(1.0,u.max_hp),0.0,1.0)
 	if health>0:
-		arcs.append({"role":"HP","radius":radius*T.UNIT_HP_RADIUS,"start":-PI/2,"end":-PI/2+TAU*health,"color":TEXT,"width":maxf(T.UNIT_HP_MIN_LINE,radius*T.UNIT_HP_WIDTH)})
+		arcs.append({"role":"HP","radius":radius*T.UNIT_HP_RADIUS,"start":-PI/2,"end":-PI/2+TAU*health,"color":T.UNIT_HP_COLOR,"width":maxf(T.UNIT_HP_MIN_LINE,radius*T.UNIT_HP_WIDTH)})
 	return {"arcs":arcs,"tick":{"from":Vector2(0,-radius*T.UNIT_TICK_RADII.x),"to":Vector2(0,-radius*T.UNIT_TICK_RADII.y),"color":accent if selected else TEXT,"width":maxf(T.UNIT_MIN_LINE,radius*T.UNIT_TICK_WIDTH)},"name":unit_name(u),"font_size":maxi(T.UNIT_NAME_MIN,roundi(radius*T.UNIT_NAME_SIZE))}
 
 ## 記号を描く。canvasは描画先、centerは中心、radiusは基準半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色、typefaceは名前のフォント。戻り値なし。副作用は描画。
@@ -144,3 +144,20 @@ static func phase_orbit(canvas: CanvasItem, center: Vector2, curves: Array) -> v
 		for point in curve.points:
 			points.append(point+center)
 		canvas.draw_polyline_colors(points,curve.colors,maxf(curve.width,T.PREVIEW_PIXEL_MIN/scale_px),true)
+
+## ユニット外周の非描画距離を返す。radiusは記号半径、line_widthは経路線幅、pixel_scaleは物理倍率。戻り値は線の半幅と物理余白を含む距離。副作用なし。
+static func route_unit_clearance(radius: float, line_width: float, pixel_scale: float) -> float:
+	var scale=maxf(0.001,pixel_scale)
+	var color_width=maxf(maxf(T.UNIT_MIN_LINE,radius*T.UNIT_RING_WIDTH),T.UNIT_COLOR_PIXEL_MIN/scale)
+	var hp_width=maxf(maxf(T.UNIT_HP_MIN_LINE,radius*T.UNIT_HP_WIDTH),T.UNIT_HP_PIXEL_MIN/scale)
+	var extent=maxf(radius*T.UNIT_RING_RADII.max()+color_width/2,radius*T.UNIT_HP_RADIUS+hp_width/2)
+	extent=maxf(extent,radius*T.UNIT_TICK_RADII.y+maxf(T.UNIT_MIN_LINE,radius*T.UNIT_TICK_WIDTH)/2)
+	return extent+line_width/2+T.ROUTE_RING_GAP_PIXELS/scale
+
+## 線の両端を外周の外へ切る。fromとtoは中心、start_clearとend_clearは非描画距離。戻り値は両端の配列、余白がなければ空。副作用なし。
+static func route_segment(from: Vector2, to: Vector2, start_clear: float, end_clear: float) -> PackedVector2Array:
+	var distance=from.distance_to(to)
+	if distance<=start_clear+end_clear or distance<=0:
+		return PackedVector2Array()
+	var direction=(to-from)/distance
+	return PackedVector2Array([from+direction*start_clear,to-direction*end_clear])

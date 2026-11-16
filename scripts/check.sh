@@ -33,7 +33,7 @@ if rg 'SCRIPT ERROR|FAIL:|Failed to load script' artifacts/runtime/ui-output.txt
 fi
 rg 'UI CONNECTIONS: [0-9]+ checks / 0 failures' artifacts/runtime/ui-output.txt
 
-for suite in review_regressions contested_play display_flow design_flow restored_interface map_chrome unit_glyphs arc_strokes ring_palette phase_preview battle_labels time_axis side_information; do
+for suite in review_regressions contested_play display_flow design_flow restored_interface map_chrome unit_glyphs arc_strokes ring_palette phase_preview battle_labels time_axis side_information route_clearance; do
   godot --headless --path . --script "tests/$suite.gd" --log-file "$PWD/artifacts/runtime/$suite.log" > "artifacts/runtime/$suite-output.txt" 2>&1
   cat "artifacts/runtime/$suite-output.txt"
   if rg 'SCRIPT ERROR|FAIL:|Failed to load script' "artifacts/runtime/$suite-output.txt"; then
@@ -56,8 +56,10 @@ rg 'TIME AXIS: [0-9]+ checks / 0 failures' artifacts/runtime/time_axis-output.tx
 
 rg 'SIDE INFORMATION: [0-9]+ checks / 0 failures' artifacts/runtime/side_information-output.txt
 
+rg 'ROUTE CLEARANCE: [0-9]+ checks / 0 failures' artifacts/runtime/route_clearance-output.txt
+
 # macOS sandboxの証明書初期化警告を除き、エンジンの描画エラー等も失敗にする。
-for log in test-output smoke-output replay-output ui-output review_regressions-output contested_play-output display_flow-output design_flow-output restored_interface-output map_chrome-output unit_glyphs-output arc_strokes-output ring_palette-output phase_preview-output battle_labels-output time_axis-output side_information-output; do
+for log in test-output smoke-output replay-output ui-output review_regressions-output contested_play-output display_flow-output design_flow-output restored_interface-output map_chrome-output unit_glyphs-output arc_strokes-output ring_palette-output phase_preview-output battle_labels-output time_axis-output side_information-output route_clearance-output; do
   if rg '^ERROR:' "artifacts/runtime/$log.txt" | rg -v '^ERROR: Condition "ret != noErr" is true. Returning: ""$'; then
     exit 1
   fi
