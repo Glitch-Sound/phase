@@ -315,7 +315,9 @@ func test_partial_interference() -> void:
 	_check(is_equal_approx(info.raw,1.0/6.0),"raw overlap independently derived")
 	_check(is_equal_approx(info.wave,25.0/72.0),"triple and pair weighted wave")
 	var expected_assisted=0.1+1.9*pow(25.0/72.0,1.5)
-	var expected_factor=0.1+1.9*exp(-pow(1.0-expected_assisted,2)/(2*0.6*0.6))
+	# 承認された補正幅の調整を、独立した重なり計算へ適用する。
+	var sigma=0.6*T.SYNC_SIGMA_SCALE
+	var expected_factor=0.1+1.9*exp(-pow(1.0-expected_assisted,2)/(2*sigma*sigma))
 	_check(is_equal_approx(info.assisted,expected_assisted),"assisted power")
 	_check(is_equal_approx(info.factor,expected_factor),"bell input ordering")
 	u.core[4]=80

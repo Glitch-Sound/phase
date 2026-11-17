@@ -33,11 +33,13 @@ func _run() -> void:
 	var names=[]
 	for button in game.overlay.find_children("*","Button",true,false):
 		names.append(button.text)
-	_check(names==["WAIT","DAMAGE / ADJACENT","HEAL / ADJACENT"],"restore action labels")
+	_check(names==["WAIT","DAMAGE / ADJACENT","HEAL / ADJACENT","BACK"],"original actions plus the authorized movement BACK")
+	# 効果量の式はモデルで検査し、この層は実行とHP更新の接続を確かめる。
+	var expected_hp=game.battle.units[2].hp-game.M.effect(game.battle.units[0],game.battle.units[2],"DAMAGE")
 	game.battle.choose_skill(game.C.DAMAGE)
 	game._clear_overlay()
 	game._cell_input(Vector2i(6,4))
-	_check(game.battle.actor==1 and game.battle.units[2].hp==90,"real attack reaches comparison state")
+	_check(game.battle.actor==1 and game.battle.units[2].hp==expected_hp,"real attack applies the current exact model effect once and reaches comparison state")
 	game._cell_input(Vector2i(4,6))
 	game._cell_input(Vector2i(5,6))
 	_check(game.battle.path==[Vector2i(4,6),Vector2i(5,6)] and game.battle.preview().id=="02","restore comparison route without changing actor")

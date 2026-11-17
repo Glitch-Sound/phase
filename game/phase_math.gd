@@ -79,6 +79,7 @@ static func sync(u: Dictionary, status: int) -> Dictionary:
 	var assisted=clampf(0.1+1.9*pow(wave,1.5),0.1,2)
 	var luk_factor=tol/3.0
 	var sigma=(0.45+0.25*luk_factor) if status==2 else (0.40+0.20*luk_factor)
+	sigma*=T.SYNC_SIGMA_SCALE
 	var input=clampf(assisted,0,1)
 	var factor=clampf(0.1+1.9*exp(-pow(1-input,2)/(2*sigma*sigma)),0.1,2)
 	return {"raw":clampf(overlap(sectors)/minimum,0,1),"assisted":assisted,"wave":wave,"factor":factor}

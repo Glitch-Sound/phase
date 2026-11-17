@@ -18,6 +18,7 @@ var result := ""
 var turn := 1
 var last_effect: Dictionary={}
 var history: Array=[]
+var _movement_undo: Dictionary={}
 
 ## 戦闘を初期化する。stage_indexは0から3、buildsはPLAYER2体の構成、layout_seedは配置の再現用整数。既存戦闘を置換する。
 func start(stage_index: int, builds: Array, layout_seed: int=0) -> void:
@@ -45,6 +46,7 @@ func movement(u: Dictionary) -> int:
 
 ## 次のユニットを選ぶ。固定順を維持し、経路と選択スキルを初期化する。
 func next_actor() -> void:
+	_movement_undo={}
 	var best=-1
 	for i in range(units.size()):
 		if units[i].hp>0 and (best<0 or units[i].next_time<units[best].next_time-TIME_EPS):
@@ -102,6 +104,7 @@ func preview() -> Dictionary:
 func commit_path() -> bool:
 	if mode!="MOVE" or path.is_empty():
 		return false
+	_movement_undo={"actor":actor,"turn":turn,"unit":units[actor].duplicate(true),"path":path.duplicate(),"history_size":history.size()}
 	var u=preview()
 	u.moved=path.size()
 	units[actor]=u
@@ -109,6 +112,20 @@ func commit_path() -> bool:
 	path=[]
 	mode="CHOICE"
 	check_result("MOVE")
+	if not result.is_empty():
+		_movement_undo={}
+	return true
+
+## 確定移動を選び直す。戻り値は同じ手番の行動選択から復元できたか。位置、角度と移動履歴を戻し、経路を予測用に保持する。実行済みの行動と終局は変更しない。
+func reselect_path() -> bool:
+	if mode!="CHOICE" or not result.is_empty() or _movement_undo.is_empty() or actor!=_movement_undo.actor or turn!=_movement_undo.turn:
+		return false
+	units[actor]=_movement_undo.unit.duplicate(true)
+	path=_movement_undo.path.duplicate()
+	history.resize(_movement_undo.history_size)
+	selected_skill=""
+	mode="MOVE"
+	_movement_undo={}
 	return true
 
 ## 移動不能を返す。戻り値は上下左右に空きセルがないか。
@@ -212,6 +229,7 @@ static func _matches_condition(u: Dictionary, condition: Dictionary) -> bool:
 	return u.camp==condition.camp and (not condition.has("unit") or u.id==condition.unit)
 
 func _end_turn() -> void:
+	_movement_undo={}
 	check_result("END")
 	if not result.is_empty():
 		return

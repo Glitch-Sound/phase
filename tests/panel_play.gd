@@ -52,6 +52,16 @@ func _initialize() -> void:
 				_check(trial.commit_path() and trial.result.is_empty(),"no immediate victory from generated opening")
 				_check(trial.wait_turn() and trial.result.is_empty(),"no reward by ending first move")
 				report.first_turn_routes+=1
+	# 補正幅の承認済み調整で既存3配置の敵は回復を選ばなくなった。
+	# 既存の攻防と配置検査を残し、回復の判断だけを別の代表シードで確かめる。
+	var recovery=_mutual(1.1,160,true,3)
+	recovery.seed=3
+	report.mutual.append(recovery)
+	if not recovery.result.is_empty():
+		terminal+=1
+	if recovery.actions.PLAYER.HEAL>0 and recovery.actions.ENEMY.HEAL>0:
+		both_heal+=1
+	_check(not recovery.result.is_empty() and recovery.actions.PLAYER.HEAL>0 and recovery.actions.ENEMY.HEAL>0,"representative generated recovery match includes both camps healing and terminates")
 	_check(terminal>0 and both_heal>0,"generated games reach terminal and include both camps healing")
 	_check(wins[2]>0 and wins[3]>0,"both guarded objective stages have contested wins on generated maps")
 	var file=FileAccess.open("res://artifacts/panel-play.json",FileAccess.WRITE)

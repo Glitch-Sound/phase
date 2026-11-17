@@ -20,6 +20,7 @@ func _run() -> void:
 		root.grab_focus()
 		await create_timer(0.02).timeout
 	_check(root.has_focus() and game.window_focused,"actual game window has input focus")
+	var expected_hp=game.battle.units.map(func(u):return u.hp)
 	for command in [{"path":[Vector2i(4,4),Vector2i(5,4)],"target":2},{"path":[Vector2i(4,6),Vector2i(5,6)],"target":3}]:
 		for cell in command.path:
 			await _focus_input()
@@ -33,10 +34,11 @@ func _run() -> void:
 		await _focus_input()
 		_click_button(game.overlay,"DAMAGE / ADJACENT")
 		await process_frame
+		expected_hp[command.target]-=game.M.effect(game.battle.units[game.battle.actor],game.battle.units[command.target],"DAMAGE")
 		await _focus_input()
 		_click_cell(game.battle.units[command.target].pos)
 		await process_frame
-	_check(game.battle.turn==3 and game.battle.actor==2 and game.battle.units.map(func(u):return u.hp)==[100.0,100.0,90.0,83.0],"capture begins after two actual human route/attack inputs")
+	_check(game.battle.turn==3 and game.battle.actor==2 and game.battle.units.map(func(u):return u.hp)==expected_hp,"capture begins after two exact current-rule human attacks")
 	game._cpu_tick(0)
 	game.cpu_paused=true
 	var palette=game.palette_colors.duplicate()

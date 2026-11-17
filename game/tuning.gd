@@ -6,6 +6,8 @@ const BASE_DAMAGE := 45.0
 const BASE_HEAL := 24.0
 const BASE_MOVE := 3
 const BASE_DELAY := 100.0
+# 完全同期の上限を保ち、低一致の攻撃、回復と抵抗との差だけを控えめに広げる。
+const SYNC_SIGMA_SCALE := 0.90
 # CPUの評価は実効量を基準とし、終局を最優先する。戦闘式には使わない。
 const CPU_DAMAGE_WEIGHT := 1.2
 const CPU_HEAL_WEIGHT := 0.85
@@ -44,6 +46,8 @@ const UNIT_TICK_WIDTH := 0.025
 # 盤面だけを中央に揃え、外径を約13%広げる。
 const UNIT_BOARD_CENTER := Vector2(35,35)
 const UNIT_BOARD_RADIUS := 31.0
+# 色に依存しない手番の印。リング、軸方向の経路とセルの角枠から離す。
+const UNIT_ACTOR_MARKER := [Vector2(56,57),Vector2(56,65),Vector2(64,61)]
 # 細線が物理1px未満で途切れない下限と、円弧の物理的な弦誤差。
 const UNIT_HP_PIXEL_MIN := 0.9
 const UNIT_COLOR_PIXEL_MIN := 1.1

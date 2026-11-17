@@ -295,12 +295,27 @@ func _draw_board() -> void:
 			_center(str(i+1),center+Vector2(0,6)*BOARD_SCALE,roundi(17*BOARD_SCALE),BG,mono)
 		if not battle.path.is_empty():
 			_draw_cell_focus(_cell_rect(battle.path.back()),CYAN)
+	var marker=_acting_marker()
+	if not marker.is_empty():
+		draw_colored_polygon(marker.points,Color.WHITE)
+		var outline: PackedVector2Array=marker.points.duplicate()
+		outline.append(outline[0])
+		draw_polyline(outline,Color.WHITE,0.75*BOARD_SCALE,true)
 	# 全セルの描画後に重ね、次の行の背景で数字を隠さない。
 	for chip in effect_chips:
 		var rect=_effect_chip_rect(chip.cell)
 		draw_rect(rect,BG)
 		draw_rect(rect,chip.color,false,1)
 		_center(chip.text,rect.position+Vector2(rect.size.x/2,16*BOARD_SCALE),roundi(16*BOARD_SCALE),chip.color,mono)
+
+func _acting_marker() -> Dictionary:
+	if build_open or not battle.result.is_empty() or battle.actor<0 or battle.units[battle.actor].hp<=0:
+		return {}
+	var cell: Vector2i=battle.units[battle.actor].pos
+	var points=PackedVector2Array()
+	for point in T.UNIT_ACTOR_MARKER:
+		points.append(_board_point(cell)+point*BOARD_SCALE)
+	return {"index":battle.actor,"cell":cell,"points":points}
 
 func _cell_rect(cell: Vector2i) -> Rect2:
 	var inset=T.CELL_BORDER_INSET*BOARD_SCALE
@@ -408,6 +423,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_close_aux()
 			elif _cpu_locked():
 				return
+			elif battle.mode=="CHOICE" and not build_open:
+				_reselect_path()
 			elif battle.mode=="TARGET":
 				battle.back()
 				_action_dialog()
@@ -538,7 +555,7 @@ func _action_dialog() -> void:
 	for skill in battle.units[battle.actor].skills:
 		if C.SKILLS[skill].type=="ACTIVE":
 			active.append(skill)
-	var height=122+active.size()*63
+	var height=185+active.size()*63
 	var panel=_modal(Rect2(700,330,420,height),false,true)
 	_label(panel,"UNIT "+V.unit_name(battle.units[battle.actor])+" / ACTION",Rect2(25,16,370,32),18,WHITE)
 	_button(panel,"WAIT",Rect2(25,63,370,48),func():battle.wait_turn();_after_action())
@@ -551,6 +568,18 @@ func _action_dialog() -> void:
 				available=true
 		button.disabled=not available
 		button.tooltip_text="No valid adjacent target." if not available else ""
+	_button(panel,"BACK",Rect2(25,126+active.size()*63,370,48),_reselect_path)
+
+func _reselect_path() -> void:
+	if _cpu_locked() or not battle.reselect_path():
+		return
+	selected=-1
+	timeline_hover=-1
+	timeline_hover_event={}
+	timeline_selected_event={}
+	_clear_overlay()
+	_hud()
+	queue_redraw()
 
 func _build() -> void:
 	build_open=true
@@ -780,7 +809,7 @@ func _help() -> void:
 	_label(panel,"HELP",Rect2(36,25,1048,48),32,WHITE)
 	_wrapped_label(panel,"BUILDのENEMY CPUで敵を自動操作。OFFは両陣営手動。\nSPEEDで早送り、PAUSEで停止。HELP中と非アクティブは自動停止。",Rect2(36,85,1048,56),17,MUTED)
 	var steps=[
-		["move","01 / ROUTE","隣接する空きマスを順番にクリック。\n経路上をクリックすると後続を取消。"],
+		["move","01 / ROUTE","白い三角が手番。空きマスを選択。\n経路上のクリックで後続を取消。"],
 		["target","02 / ALIGN","3波は各SPDで揺れ、全体へ合成。\n色は実位相。戦闘角度は不変。"],
 		["check","03 / ACT","終点をダブルクリックして確定。\nWAITかスキルを選び、対象をクリック。"]
 	]
@@ -791,7 +820,7 @@ func _help() -> void:
 		_label(panel,steps[i][2],Rect2(x,201,340,76),18,MUTED)
 	_separator(panel,Rect2(36,300,1048,1))
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
-	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\n白は相対進捗、灰は残り。満周は待ち0。\n表示最大の待ち量で再計算。個別周期ではない。\n縦は順番。中心点が手番。満周でも順番待ち。",Rect2(36,377,500,174),18,WHITE)
+	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\n行動BACK/Escは経路へ。対象BACKは移動保持。\n白は相対進捗、灰は残り。満周は待ち0。\n表示最大の待ち量で再計算。個別周期ではない。\n縦は順番。中心点が手番。満周でも順番待ち。",Rect2(36,377,500,174),18,WHITE)
 	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
 	_label(panel,"一致ほど振幅大。最終補正とは別。\nINF / RESはLUK補助後の最終補正(最大200%)。\n全セルでGEAR ↶、ARMS ↷\nCORE回転はSPD × 1.5度、リセットは戦闘開始角。\n×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
 	var panel_kinds=["CLOCKWISE","RESET","COUNTERCLOCKWISE"]
