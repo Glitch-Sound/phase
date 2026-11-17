@@ -171,6 +171,32 @@ func _test_readouts(game) -> void:
 		var step=game.mono.get_string_size("I:000% ",HORIZONTAL_ALIGNMENT_LEFT,-1,game.T.TIMELINE_FACTOR_FONT).x+game.T.TIMELINE_FACTOR_EXTRA_GAP
 		_check(absf(right.position.x-left.position.x-step)<0.001 and left.position.y==right.position.y,"fixed fields keep the configured gap after their separator")
 	game.battle.turn=1
+## REQ-019-S05、REQ-019-S07、REQ-019-S10
+func _test_balance(game) -> void:
+	var hp_bottom=T.BATTLE_HP_BASELINE+T.BATTLE_HP_STEP+game.mono.get_height(T.BATTLE_HP_FONT_SIZE)-game.mono.get_ascent(T.BATTLE_HP_FONT_SIZE)
+	var heading_top=T.TIMELINE_TURN_CENTER.y-game.mono.get_ascent(T.TIMELINE_TURN_FONT)
+	var before=heading_top-hp_bottom
+	var orbit_radius=0.0
+	for i in range(T.PREVIEW_RADII.size()):
+		orbit_radius=maxf(orbit_radius,T.PREVIEW_RADII[i]+T.PREVIEW_AMPLITUDES[i])
+	var preview_top=T.PREVIEW_CENTER.y-orbit_radius
+	var first_factor=game.drawn_text.filter(func(item):return item.text.begins_with("I:"))[0]
+	var factor_offset=first_factor.position.y-game._timeline_view().cards[0].center.y
+	var state_bottom=T.TIMELINE_CARD_MAX+factor_offset+game.mono.get_height(T.TIMELINE_FACTOR_FONT)-game.mono.get_ascent(T.TIMELINE_FACTOR_FONT)
+	var node_bottom=T.TIMELINE_BOTTOM+T.TIMELINE_NODE_RADIUS+T.TIMELINE_NODE_WIDTH/2
+	var after=preview_top-maxf(state_bottom,node_bottom)
+	_check(before>0 and after>0 and absf(before-after)<=game.mono.get_height(T.TIMELINE_TURN_FONT),"visible HP-to-TURN and timeline-to-preview gaps balance within one heading height: "+str([before,after]))
+	var b=_battle()
+	for times in [[100.0,100.0,100.0,100.0],[100.0,800.0,100.0,100.0],[800.0,100.0,100.0,800.0]]:
+		for i in range(4):
+			b.units[i].next_time=times[i]
+		b.next_actor()
+		var view=model.layout(b.units,b.actor,model.rows(b))
+		for card in view.cards:
+			_check(card.rect.position.y>T.TIMELINE_TURN_CENTER.y and card.rect.end.y<T.PREVIEW_PANEL.position.y,"state and full input area fit between TURN and preview for "+str(times))
+			_check(not card.rect.intersects(Rect2(T.BATTLE_BOARD_ORIGIN,Vector2.ONE*10*T.BATTLE_CELL)),"shifted state input never overlaps map")
+		for event in view.events:
+			_check(model.hit(view,event.point)==event,"each shifted node remains individually clickable")
 ## REQ-019-S07、REQ-027-S01、REQ-027-S02
 func _test_input() -> void:
 	var game=load("res://tests/order_axis_audit.gd").new()
@@ -179,6 +205,7 @@ func _test_input() -> void:
 	await process_frame
 	game._start_battle()
 	await _test_readouts(game)
+	_test_balance(game)
 	_check(game.mono.get_string_size("11059.2/11059.2",HORIZONTAL_ALIGNMENT_LEFT,-1,T.TIMELINE_HP_FONT).x<=T.TIMELINE_CARD_SIZE.x,"maximum legal HP fits without reducing the state font")
 	game._cell_input(Vector2i(4,4))
 	game.selected=0

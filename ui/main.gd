@@ -323,7 +323,7 @@ func _draw_info() -> void:
 	_text("CLASS: "+u.class_name,T.BATTLE_INFO_CLASS,17,camp_color,mono)
 	_ring(self,T.BATTLE_INFO_RING,81,u,index==battle.actor)
 	var icon_rect=T.BATTLE_EQUIPMENT_ICON
-	for part in ["GEAR","ARMS"]:
+	for part in ["ARMS","GEAR"]:
 		var mutation: String=u[part.to_lower()+"_mutation"]
 		_equipment_icon(part.to_lower(),icon_rect,MUTED)
 		_text(C.serial(part,u[part.to_lower()],mutation),Vector2(icon_rect.end.x+T.BATTLE_EQUIPMENT_NAME_GAP,icon_rect.position.y+T.BATTLE_EQUIPMENT_BASELINE),15,WHITE,mono)

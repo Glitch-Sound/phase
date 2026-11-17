@@ -49,12 +49,13 @@ const BATTLE_CELL := 100.0
 const BATTLE_LEFT_ORIGIN := Vector2(40,0)
 const BATTLE_TITLE_BASELINE := 76.0
 # 縦間隔は行動順だけを表し、待ち量は各点の円弧へ分離する。
+# HPからTURNと、状態下端から予測の見える余白を揃える。
 const TIMELINE_AXIS_X := 200.0
-const TIMELINE_TOP := 242.0
-const TIMELINE_BOTTOM := 624.0
+const TIMELINE_TOP := 270.0
+const TIMELINE_BOTTOM := 652.0
 const TIMELINE_CARD_X := Vector2(100,300)
-const TIMELINE_CARD_MIN := 254.0
-const TIMELINE_CARD_MAX := 586.0
+const TIMELINE_CARD_MIN := 282.0
+const TIMELINE_CARD_MAX := 602.0
 const TIMELINE_CARD_GAP := 100.0
 const TIMELINE_CARD_SIZE := Vector2(120,88)
 const TIMELINE_RADIUS := 22.0
@@ -70,7 +71,7 @@ const TIMELINE_HP_FONT := 13
 const TIMELINE_FACTOR_FONT := 13
 # 固定3桁とIの位置を保ったまま、既存の1文字分の空白へ加えるR側の余白。
 const TIMELINE_FACTOR_EXTRA_GAP := 4.0
-const TIMELINE_TURN_CENTER := Vector2(200,204)
+const TIMELINE_TURN_CENTER := Vector2(200,232)
 const TIMELINE_TURN_FONT := 15
 const TIMELINE_READOUT_FONT := 15
 const BATTLE_INFO_OFFSET := Vector2(76,-44)

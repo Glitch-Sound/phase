@@ -11,7 +11,7 @@ func _run() -> void:
 	await process_frame
 	game._start_battle()
 	await _redraw(game)
-	_check(game.info_text==["CLASS: STANDARD","GEAR-1414141414","ARMS-1414141414","MOVE %d" % game.T.BASE_MOVE,"Move up to %d cells per turn." % game.T.BASE_MOVE,"DAMAGE / ADJACENT","Damage one adjacent enemy.","HEAL / ADJACENT","Heal one adjacent wounded ally."],"exact default right information: "+str(game.info_text))
+	_check(game.info_text==["CLASS: STANDARD","ARMS-1414141414","GEAR-1414141414","MOVE %d" % game.T.BASE_MOVE,"Move up to %d cells per turn." % game.T.BASE_MOVE,"DAMAGE / ADJACENT","Damage one adjacent enemy.","HEAL / ADJACENT","Heal one adjacent wounded ally."],"exact default right information: "+str(game.info_text))
 	_check(game.info_bars.is_empty(),"no allocation bars remain")
 	_check(game.info_rings.size()==1 and game.info_rings[0].center==game.T.BATTLE_INFO_RING and game.info_rings[0].unit==game.battle.units[0],"keep current selected ring at spaced position")
 	for state in ["MOVE","CHOICE","TARGET","RESULT"]:
@@ -22,7 +22,8 @@ func _run() -> void:
 			game.timeline_hover_event=view.events[-1] if not view.events.is_empty() else {}
 			await _redraw(game)
 			var remnants=game.drawn_text.filter(func(t):return Rect2(36,646,328,30).has_point(t.position) or Rect2(36,914,290,35).has_point(t.position))
-			_check(remnants.is_empty(),"no caption, synchronization values or substitutes in "+state+" / "+str(index)+" / "+str(remnants))
+			var expected_lower=["I:200%","R:200%","I:200%","R:200%"] if state=="RESULT" else []
+			_check(remnants.map(func(item):return item.text)==expected_lower,"exact lower region contains only relocated current-state fields, no captions or substitutes in "+state+" / "+str(index)+" / "+str(remnants))
 	game._start_battle()
 	game.selected=2
 	var u=game.battle.units[2]
@@ -33,7 +34,7 @@ func _run() -> void:
 	var before=game.battle.units.duplicate(true)
 	var path=game.battle.path.duplicate()
 	await _redraw(game)
-	_check(game.info_text==["CLASS: REVERSE","GEAR-1414141414-M-LSRIV","ARMS-1414141414-M-IVRSL","MOVE %d" % (game.T.BASE_MOVE+1),"Move up to %d cells per turn." % (game.T.BASE_MOVE+1),"DAMAGE / ADJACENT","Damage one adjacent enemy.","HEAL / ADJACENT","Heal one adjacent wounded ally.","MOVE +1 / SELF","Adds 1 cell to movement."],"mutation and passive skill remain with accurate descriptions: "+str(game.info_text))
+	_check(game.info_text==["CLASS: REVERSE","ARMS-1414141414-M-IVRSL","GEAR-1414141414-M-LSRIV","MOVE %d" % (game.T.BASE_MOVE+1),"Move up to %d cells per turn." % (game.T.BASE_MOVE+1),"DAMAGE / ADJACENT","Damage one adjacent enemy.","HEAL / ADJACENT","Heal one adjacent wounded ally.","MOVE +1 / SELF","Adds 1 cell to movement."],"mutation and passive skill remain with accurate descriptions: "+str(game.info_text))
 	_check(game.info_rings[0].unit==u and game.battle.units==before and game.battle.path==path,"inspection preserves selected state and pending route")
 	await _test_details(game)
 	_test_equipment_layout(game)
@@ -53,7 +54,7 @@ func _test_details(game) -> void:
 		unit.gear=item[0].duplicate()
 		unit.arms=item[0].duplicate()
 		await _redraw(game)
-		_check(game.info_text==["CLASS: REVERSE","GEAR-"+item[1],"ARMS-"+item[1],"MOVE %d" % game.T.BASE_MOVE,"Move up to %d cells per turn." % game.T.BASE_MOVE],"all actual equipment identifiers and no invented skill "+item[1])
+		_check(game.info_text==["CLASS: REVERSE","ARMS-"+item[1],"GEAR-"+item[1],"MOVE %d" % game.T.BASE_MOVE,"Move up to %d cells per turn." % game.T.BASE_MOVE],"all actual equipment identifiers and no invented skill "+item[1])
 	unit.skills=[game.C.MOVE]
 	await _redraw(game)
 	_check(game.info_text.slice(-2)==["MOVE +1 / SELF","Adds 1 cell to movement."] and game.info_text[3]=="MOVE %d" % (game.T.BASE_MOVE+1) and game.info_text[4]=="Move up to %d cells per turn." % (game.T.BASE_MOVE+1),"passive-only description and movement use actual cap")
@@ -95,7 +96,7 @@ func _test_equipment_layout(game) -> void:
 	if game.info_icons.size()!=2:
 		return
 	var icons=game.info_icons
-	_check(icons.map(func(item):return item.texture)==["res://assets/lucide/shield.svg","res://assets/lucide/sword.svg"],"shield is GEAR and single sword is ARMS")
+	_check(icons.map(func(item):return item.texture)==["res://assets/lucide/sword.svg","res://assets/lucide/shield.svg"],"ARMS sword precedes GEAR shield without exchanging their meaning")
 	_check(icons.all(func(item):return item.color==game.MUTED and item.color.a==1),"neutral equipment icons stay fully opaque")
 	for i in range(2):
 		var name_rect=_bounds(game.info_records[i+1])
