@@ -354,7 +354,7 @@ func _test_motion_ui() -> void:
 		_check(game.battle.units==units and game.battle.path==route and game.battle.turn==turn,"thinking time never changes actual phase turn or route")
 	game.queue_free()
 	await process_frame
-## REQ-019-S05、NREQ-001-S04
+## REQ-019-S05、REQ-019-S12、NREQ-001-S04
 func _test_compact_layout() -> void:
 	var game=load("res://tests/map_orbit_audit.gd").new()
 	game.settings_path="res://artifacts/runtime/map-layout-no-settings-"+str(Time.get_ticks_usec())+".json"
@@ -372,7 +372,7 @@ func _test_compact_layout() -> void:
 		var value=game.drawn_text.filter(func(t):return t.text=="200 / 200")[i]
 		var bar=game.drawn_bars[i].rect
 		_check(label.position.y==value.position.y and _text_bounds(value).position.y<=bar.get_center().y and bar.get_center().y<=_text_bounds(value).end.y,"camp, HP value and bar share one row: "+str(i))
-		_check(_text_bounds(label).end.x<_text_bounds(value).position.x and _text_bounds(value).end.x<bar.position.x and bar.end.x<board.position.x,"one-row HP fields do not overlap: "+str(i))
+		_check(_text_bounds(label).end.x<bar.position.x and bar.end.x<_text_bounds(value).position.x and _text_bounds(value).end.x<board.position.x,"one-row HP fields do not overlap: "+str(i))
 	var original=game.battle.units.duplicate(true)
 	# VIT96の3係数から各11059.2、陣営合計22118.4となる表示境界を確認する。
 	for i in range(2):
@@ -387,7 +387,7 @@ func _test_compact_layout() -> void:
 		var expected="0 / 22118.4" if empty else "22118.4 / 22118.4"
 		var value=game.drawn_text.filter(func(t):return t.text==expected)[0]
 		var bar=game.drawn_bars[0]
-		_check(_text_bounds(value).end.x<bar.rect.position.x and bar.rect.size.x>0 and bar.rect.end.x<board.position.x and value.font_size==T.BATTLE_HP_FONT_SIZE and bar.ratio==(0.0 if empty else 1.0),"maximum valid HP digits remain readable with a valid proportional bar: "+str(empty))
+		_check(bar.rect.end.x<_text_bounds(value).position.x and bar.rect.size.x>0 and _text_bounds(value).end.x<board.position.x and value.font_size==T.BATTLE_HP_FONT_SIZE and bar.ratio==(0.0 if empty else 1.0),"maximum valid HP digits remain readable with a valid proportional bar: "+str(empty))
 	for dimensions in [Vector2i(1152,648),Vector2i(1440,810),Vector2i(1920,1080),Vector2i(2560,1440),Vector2i(1200,1600)]:
 		root.size=dimensions
 		await process_frame

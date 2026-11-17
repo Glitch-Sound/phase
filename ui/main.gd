@@ -54,6 +54,8 @@ const BOARD = T.BATTLE_BOARD_ORIGIN
 const CELL = T.BATTLE_CELL
 const BOARD_SCALE = CELL/70.0
 const SAVE_PATH = "res://artifacts/runtime/phase-save.json"
+# 検証では実ユーザー保存へ触れず、専用の保存先を注入する。
+var save_path=SAVE_PATH
 var battle=B.new()
 var collection=L.new()
 var font: SystemFont
@@ -170,10 +172,11 @@ func _draw_left() -> void:
 				max_hp+=u.max_hp
 		var color=CYAN if camp=="PLAYER" else status_colors[1]
 		var value="%s / %s" % [_hp(hp),_hp(max_hp)]
-		var bar_start=maxf(T.BATTLE_HP_BAR.position.x,T.BATTLE_HP_VALUE_X+mono.get_string_size(value,HORIZONTAL_ALIGNMENT_LEFT,-1,T.BATTLE_HP_FONT_SIZE).x+T.BATTLE_HP_GAP)
+		var value_x=minf(T.BATTLE_HP_VALUE_X,T.BATTLE_HP_RIGHT-mono.get_string_size(value,HORIZONTAL_ALIGNMENT_LEFT,-1,T.BATTLE_HP_FONT_SIZE).x)
+		var bar_end=value_x-T.BATTLE_HP_GAP
 		_text(camp,Vector2(T.BATTLE_LEFT_ORIGIN.x,y),T.BATTLE_HP_FONT_SIZE,color,mono)
-		_text(value,Vector2(T.BATTLE_HP_VALUE_X,y),T.BATTLE_HP_FONT_SIZE,WHITE,mono)
-		_bar(Rect2(Vector2(bar_start,y+T.BATTLE_HP_BAR.position.y),Vector2(T.BATTLE_HP_BAR.end.x-bar_start,T.BATTLE_HP_BAR.size.y)),hp/maxf(1,max_hp),color)
+		_bar(Rect2(Vector2(T.BATTLE_HP_BAR.position.x,y+T.BATTLE_HP_BAR.position.y),Vector2(bar_end-T.BATTLE_HP_BAR.position.x,T.BATTLE_HP_BAR.size.y)),hp/maxf(1,max_hp),color)
+		_text(value,Vector2(value_x,y),T.BATTLE_HP_FONT_SIZE,WHITE,mono)
 		y+=T.BATTLE_HP_STEP
 	_draw_timeline()
 
@@ -473,12 +476,24 @@ func _hud() -> void:
 		hud.queue_free()
 	hud=Control.new()
 	hud.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	hud.visible=not build_open
 	add_child(hud)
 	var rows=[["HELP",1218,_help],["SETTINGS",1346,_settings],["RESTART",1492,_restart],["QUIT",1640,_quit]]
 	for i in range(rows.size()):
 		var row=rows[i]
 		var rect=Rect2(row[1],1025,118,40) if build_open else Rect2(T.BATTLE_MENU_ORIGIN+Vector2(i%2,floori(i/2.0))*(T.BATTLE_MENU_SIZE+T.BATTLE_MENU_GAP),T.BATTLE_MENU_SIZE)
-		_button(hud,row[0],rect,row[2])
+		var button=_button(hud,row[0],rect,row[2])
+		# 盤面のシステムメニューは今回の変更対象外であり、既存の面と囲いを保つ。
+		for state in ["normal","hover","pressed","focus","disabled"]:
+			var style=StyleBoxFlat.new()
+			style.bg_color=PANEL if state in ["normal","disabled"] else P.INTERACTIVE
+			style.border_color=CYAN if state in ["pressed","focus"] else EDGE
+			style.set_border_width_all(2 if state=="focus" else 1)
+			style.content_margin_left=12
+			style.content_margin_right=12
+			style.content_margin_top=4
+			style.content_margin_bottom=4
+			button.add_theme_stylebox_override(state,style)
 	if battle.mode=="TARGET":
 		_button(hud,"BACK",T.BATTLE_CONTEXT_BUTTON,func():battle.back();_action_dialog())
 	elif battle.mode=="MOVE" and battle.trapped():
@@ -493,7 +508,7 @@ func _action_dialog() -> void:
 			active.append(skill)
 	var height=122+active.size()*63
 	var panel=_modal(Rect2(700,330,420,height),false,true)
-	_label(panel,"UNIT "+V.unit_name(battle.units[battle.actor])+" / ACTION",Rect2(25,16,370,32),22,CYAN)
+	_label(panel,"UNIT "+V.unit_name(battle.units[battle.actor])+" / ACTION",Rect2(25,16,370,32),18,WHITE)
 	_button(panel,"WAIT",Rect2(25,63,370,48),func():battle.wait_turn();_after_action())
 	for i in range(active.size()):
 		var skill: String=active[i]
@@ -507,26 +522,33 @@ func _action_dialog() -> void:
 
 func _build() -> void:
 	build_open=true
+	if is_instance_valid(hud):
+		hud.visible=false
 	selected=-1
 	battle.start(collection.stage_index,collection.builds)
 	_clear_overlay()
-	var panel=_modal(Rect2(300,115,1320,810),false)
-	_label(panel,"BUILD",Rect2(36,25,920,45),32,WHITE)
-	_label(panel,"1 / 2     SHARED ARCHIVE     BOTH SIDES: HUMAN",Rect2(36,78,1100,29),19,MUTED)
+	var panel=_modal(T.BUILD_RECT,false)
+	var left=T.BUILD_COLUMNS[0]
+	var middle=T.BUILD_COLUMNS[1]
+	var right=T.BUILD_COLUMNS[2]
+	_label(panel,"BUILD",Rect2(left,20,200,45),32,WHITE)
 	for i in range(2):
-		_button(panel,"UNIT %d" % (i+1),Rect2(36+i*200,126,185,43),func():edit_unit=i;_build(),"",i==edit_unit)
-	_label(panel,"ARCHIVE   %d ARMS / %d GEAR / %d MUTATIONS" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size()],Rect2(36,187,1150,22),14,CYAN)
+		_button(panel,"UNIT %d" % (i+1),Rect2(260+i*156,22,140,43),func():edit_unit=i;_build(),"",i==edit_unit)
+	_label(panel,"SHARED ARCHIVE   %d ARMS / %d GEAR / %d MUTATIONS     BOTH SIDES: HUMAN" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size()],Rect2(left,83,1240,26),14,MUTED)
 	var b: Dictionary=collection.builds[edit_unit]
-	_label(panel,"CLASS",Rect2(36,237,160,30),16,MUTED)
-	_option(panel,["STANDARD","REVERSE"],b.class_name,Rect2(210,230,390,43),func(value):b.class_name=value;_refresh_build())
-	_label(panel,"CORE / TOTAL 100",Rect2(36,292,560,27),16,MUTED)
+	_label(panel,"CORE / TOTAL 100",Rect2(left,136,400,28),17,WHITE)
+	_label(panel,"CLASS",Rect2(left,184,96,28),14,MUTED)
+	_option(panel,["STANDARD","REVERSE"],b.class_name,Rect2(left+100,176,300,43),func(value):b.class_name=value;_refresh_build())
 	core_controls=[]
 	equipment_views={}
 	for k in range(5):
-		_label(panel,["VIT","INF","RES","SPD","LUK"][k],Rect2(36+k*116,326,100,25),17,status_colors[k])
+		var x=left+k*T.BUILD_STAT_STEP
+		_label(panel,["VIT","INF","RES","SPD","LUK"][k],Rect2(x,248,70,25),15,status_colors[k])
 		var spin=SpinBox.new()
-		spin.position=Vector2(36+k*116,359)
-		spin.size=Vector2(102,46)
+		spin.position=Vector2(x,280)
+		spin.size=Vector2(70,46)
+		spin.add_theme_font_size_override("font_size",22)
+		spin.get_line_edit().add_theme_constant_override("minimum_character_width",2)
 		spin.min_value=1
 		spin.max_value=96
 		spin.step=1
@@ -534,28 +556,28 @@ func _build() -> void:
 		panel.add_child(spin)
 		core_controls.append(spin)
 		spin.value_changed.connect(func(value):_core_change(k,int(value)))
-	_label(panel,"Σ 100   /   MIN 1   /   AUTOMATIC REDISTRIBUTION",Rect2(36,414,570,27),14,MUTED)
+	_label(panel,"MIN 1 / AUTOMATIC REDISTRIBUTION",Rect2(left,344,400,27),14,MUTED)
 	for r in range(2):
 		var key="arms" if r==0 else "gear"
-		var y=454+r*128
-		_label(panel,key.to_upper(),Rect2(36,y,170,28),17,WHITE)
+		var y=T.BUILD_EQUIPMENT_ROWS[r]
+		_icon(panel,key,Rect2(middle,y+3,20,20),MUTED)
+		_label(panel,key.to_upper(),Rect2(middle+32,y,T.BUILD_EQUIPMENT_WIDTH-32,28),17,WHITE)
 		var choices: Array=collection.items[key.to_upper()].keys()
 		var view=Control.new()
-		view.position=Vector2(36,y+40)
-		view.size=Vector2(564,27)
+		view.position=Vector2(middle,y+99)
+		view.size=Vector2(T.BUILD_EQUIPMENT_WIDTH,62)
 		view.mouse_filter=Control.MOUSE_FILTER_IGNORE
 		view.set_meta("before",b[key].duplicate())
 		panel.add_child(view)
 		equipment_views[key]=view
 		view.draw.connect(func():
+			var values=_equipment_values(b[key],view.get_meta("before"))
 			for status in range(5):
-				var delta=int(b[key][status])-int(view.get_meta("before")[status])
-				view.draw_line(Vector2(status*112,24),Vector2(status*112+minf(b[key][status],100)*0.85,24),status_colors[status],2)
-				var text="%s %d" % [["VIT","INF","RES","SPD","LUK"][status],b[key][status]]
-				if delta!=0:
-					text+=" (%+d)" % delta
-				view.draw_string(font,Vector2(status*112,20),text,HORIZONTAL_ALIGNMENT_LEFT,-1,14,status_colors[status]))
-		var option=_option(panel,choices,C.serial(key.to_upper(),b[key]),Rect2(210,y-5,390,40),func(value):
+				var x=status*T.BUILD_EQUIPMENT_STAT_STEP
+				view.draw_string(font,Vector2(x,16),["VIT","INF","RES","SPD","LUK"][status],HORIZONTAL_ALIGNMENT_LEFT,-1,T.BUILD_EQUIPMENT_LABEL_FONT,status_colors[status])
+				view.draw_string(mono,Vector2(x,40),values[status],HORIZONTAL_ALIGNMENT_LEFT,-1,T.BUILD_EQUIPMENT_VALUE_FONT,WHITE)
+				view.draw_line(Vector2(x,54),Vector2(x+minf(b[key][status],100)*0.6,54),status_colors[status],2))
+		var option=_option(panel,choices,C.serial(key.to_upper(),b[key]),Rect2(middle,y+39,T.BUILD_EQUIPMENT_WIDTH,44),func(value):
 			view.set_meta("before",b[key].duplicate())
 			b[key]=collection.items[key.to_upper()][value].duplicate()
 			_refresh_build())
@@ -564,35 +586,37 @@ func _build() -> void:
 		option.item_selected.connect(func(_index):
 			for index in range(choices.size()):
 				option.get_popup().set_item_tooltip(index,_equipment_comparison(collection.items[key.to_upper()][choices[index]],b[key])))
-		_label(panel,"MUTATION",Rect2(36,y+77,170,24),14,MUTED)
-		_option(panel,collection.mutations,b[key+"_mutation"],Rect2(210,y+70,390,34),func(value):b[key+"_mutation"]=value;_refresh_build())
-	_label(panel,"MODEL: hover to compare   /   Δ: previous equipment",Rect2(36,695,600,24),12,MUTED)
-	_label(panel,"SKILLS / 3 SLOTS",Rect2(688,328,580,30),15,MUTED)
+		_label(panel,"MUTATION",Rect2(middle,y+184,100,24),14,MUTED)
+		_option(panel,collection.mutations,b[key+"_mutation"],Rect2(middle+116,y+176,T.BUILD_EQUIPMENT_WIDTH-116,40),func(value):b[key+"_mutation"]=value;_refresh_build())
+	_wrapped_label(panel,"MODEL: hover to compare / Δ: previous equipment",Rect2(middle,656,T.BUILD_EQUIPMENT_WIDTH,42),13,MUTED)
+	_label(panel,"SKILLS / 3 SLOTS",Rect2(right,136,342,30),15,MUTED)
 	for i in range(3):
 		var choices=["NONE"]
 		choices.append_array(collection.skills)
 		var current: String=b.skills[i] if i<b.skills.size() else "NONE"
-		_option(panel,choices,current,Rect2(688,368+i*49,588,41),func(value):_skill_change(i,value))
-	_label(panel,"OPERATION",Rect2(688,536,570,26),16,MUTED)
+		_option(panel,choices,current,Rect2(right,176+i*53,342,43),func(value):_skill_change(i,value))
+	_label(panel,"OPERATION",Rect2(right,390,342,26),15,MUTED)
 	var stages=[]
-	for s in C.stages():
-		stages.append(s.name)
-	_option(panel,stages,C.stages()[collection.stage_index].name,Rect2(688,573,588,42),func(value):collection.stage_index=stages.find(value);_build())
-	_label(panel,_unit_references(C.stages()[collection.stage_index].brief),Rect2(688,626,588,27),17,MAGENTA)
-	_label(panel,_unit_references(C.stages()[collection.stage_index].hint),Rect2(688,660,588,48),16,MUTED)
+	for stage in C.stages():
+		stages.append(stage.name)
+	_option(panel,stages,C.stages()[collection.stage_index].name,Rect2(right,432,342,44),func(value):collection.stage_index=stages.find(value);_build())
+	_wrapped_label(panel,_unit_references(C.stages()[collection.stage_index].brief),Rect2(right,496,342,52),17,WHITE)
+	_wrapped_label(panel,_unit_references(C.stages()[collection.stage_index].hint),Rect2(right,564,342,120),16,MUTED)
 	build_preview=Control.new()
-	build_preview.position=Vector2(688,115)
-	build_preview.size=Vector2(588,196)
+	build_preview.position=Vector2(left,400)
+	build_preview.size=Vector2(400,220)
 	build_preview.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	panel.add_child(build_preview)
 	var preview=build_preview
 	preview.draw.connect(func():
 		var u=C.unit("%02d" % (edit_unit+1),"PLAYER",Vector2i.ZERO,collection.builds[edit_unit])
-		_ring(preview,Vector2(100,103),79,u,true)
-		preview.draw_string(mono,Vector2(220,84),"HP %s / MOVE %d" % [_hp(u.max_hp),battle.movement(u)],HORIZONTAL_ALIGNMENT_LEFT,-1,20,WHITE)
-		preview.draw_string(mono,Vector2(220,119),"DELAY %.1f / INF %.1f%%" % [M.delay(u),M.sync(u,1).factor*100],HORIZONTAL_ALIGNMENT_LEFT,-1,16,CYAN))
-	for row in [["SAVE",36,_save],["LOAD",151,_load],["HELP",266,_help],["SETTINGS",381,_settings],["QUIT",526,_quit]]:
-		_button(panel,row[0],Rect2(row[1],730,106 if row[0]!="SETTINGS" else 136,44),row[2])
+		_ring(preview,Vector2(90,100),79,u,true)
+		preview.draw_string(mono,Vector2(205,55),"HP %s" % _hp(u.max_hp),HORIZONTAL_ALIGNMENT_LEFT,-1,20,WHITE)
+		preview.draw_string(mono,Vector2(205,92),"MOVE %d" % battle.movement(u),HORIZONTAL_ALIGNMENT_LEFT,-1,18,WHITE)
+		preview.draw_string(mono,Vector2(205,140),"DELAY %.1f" % M.delay(u),HORIZONTAL_ALIGNMENT_LEFT,-1,16,MUTED)
+		preview.draw_string(mono,Vector2(205,173),"INF %.1f%%" % (M.sync(u,1).factor*100),HORIZONTAL_ALIGNMENT_LEFT,-1,16,MUTED))
+	for row in [["SAVE",36,108,_save],["LOAD",158,108,_load],["HELP",280,108,_help],["SETTINGS",402,150,_settings],["QUIT",566,108,_quit]]:
+		_button(panel,row[0],Rect2(row[1],730,row[2],44),row[3])
 	_button(panel,"START",Rect2(934,730,342,48),_start_battle)
 	_refresh_build()
 
@@ -640,6 +664,13 @@ func _refresh_build() -> void:
 	for view in equipment_views.values():
 		if is_instance_valid(view):
 			view.queue_redraw()
+
+func _equipment_values(candidate: Array, previous: Array) -> Array:
+	var values=[]
+	for status in range(5):
+		var delta=int(candidate[status])-int(previous[status])
+		values.append(str(int(candidate[status]))+(" (%+d)" % delta if delta!=0 else ""))
+	return values
 
 func _equipment_comparison(candidate: Array, equipped: Array) -> String:
 	var lines=[]
@@ -821,9 +852,13 @@ func _set_theme() -> void:
 			continue
 		for state in ["normal","hover","pressed","focus","disabled","panel"]:
 			var style=StyleBoxFlat.new()
-			style.bg_color=PANEL if state in ["normal","panel","disabled"] else P.INTERACTIVE
-			style.border_color=CYAN if state in ["pressed","focus"] else EDGE
-			style.set_border_width_all(2 if state=="focus" else 1)
+			style.bg_color=PANEL if state=="panel" else (P.INTERACTIVE if state in ["hover","pressed"] else Color.TRANSPARENT)
+			style.border_color=WHITE if state=="focus" else EDGE
+			style.set_border_width_all(0)
+			if state=="focus":
+				style.border_width_bottom=T.UI_FOCUS_LINE
+			elif type in ["OptionButton","LineEdit"]:
+				style.border_width_bottom=T.UI_FIELD_LINE
 			style.content_margin_left=12
 			style.content_margin_right=12
 			style.content_margin_top=4
@@ -833,7 +868,7 @@ func _set_theme() -> void:
 		var surface=StyleBoxFlat.new()
 		surface.bg_color=PANEL
 		surface.border_color=EDGE
-		surface.set_border_width_all(1)
+		surface.set_border_width_all(0)
 		surface.content_margin_left=10
 		surface.content_margin_right=10
 		surface.content_margin_top=10
@@ -855,11 +890,11 @@ func _restart() -> void:
 	_hud()
 
 func _save() -> void:
-	var error=collection.save_to(SAVE_PATH)
+	var error=collection.save_to(save_path)
 	_notify("SAVED / Previous save is backed up." if error.is_empty() else error)
 
 func _load() -> void:
-	var error=collection.load_from(SAVE_PATH)
+	var error=collection.load_from(save_path)
 	if error.is_empty():
 		_build()
 	_notify("LOADED / Builds and shared archive restored." if error.is_empty() else error)
@@ -900,9 +935,8 @@ func _modal(rect: Rect2, is_aux: bool, keep_context: bool=false) -> Control:
 	panel.position=rect.position
 	panel.size=rect.size
 	var style=StyleBoxFlat.new()
-	style.bg_color=PANEL
-	style.border_color=CYAN if keep_context else EDGE
-	style.set_border_width_all(1)
+	style.bg_color=BG
+	style.set_border_width_all(0)
 	style.shadow_color=Color(0,0,0,0.5)
 	style.shadow_size=0
 	panel.add_theme_stylebox_override("panel",style)
@@ -934,10 +968,10 @@ func _button(parent: Control, text: String, rect: Rect2, callback: Callable, ico
 	if active:
 		button.add_theme_color_override("font_color",CYAN)
 		var selected_style=StyleBoxFlat.new()
-		selected_style.bg_color=P.INTERACTIVE
+		selected_style.bg_color=Color.TRANSPARENT
 		selected_style.border_color=CYAN
-		selected_style.set_border_width_all(1)
-		selected_style.border_width_bottom=3
+		selected_style.set_border_width_all(0)
+		selected_style.border_width_bottom=T.UI_FOCUS_LINE
 		button.add_theme_stylebox_override("normal",selected_style)
 	button.position=rect.position
 	button.size=rect.size
@@ -959,8 +993,10 @@ func _option(parent: Control, values: Array, current: String, rect: Rect2, callb
 	parent.add_child(option)
 	return option
 
-func _label(parent: Control, text: String, rect: Rect2, size_px: int=20, color: Color=WHITE) -> Label:
+func _label(parent: Control, text: String, rect: Rect2, size_px: int=20, color: Color=WHITE, wrap: bool=false) -> Label:
 	var label=Label.new()
+	if wrap:
+		label.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	label.text=text
 	label.position=rect.position
 	label.size=rect.size
@@ -969,6 +1005,9 @@ func _label(parent: Control, text: String, rect: Rect2, size_px: int=20, color: 
 	label.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	parent.add_child(label)
 	return label
+
+func _wrapped_label(parent: Control, text: String, rect: Rect2, size_px: int, color: Color) -> Label:
+	return _label(parent,text,rect,size_px,color,true)
 
 func _notify(text: String) -> void:
 	message=text
