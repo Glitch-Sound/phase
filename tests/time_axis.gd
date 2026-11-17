@@ -168,8 +168,8 @@ func _test_readouts(game) -> void:
 	for i in range(0,factors.size(),2):
 		var left=factors[i]
 		var right=factors[i+1]
-		var step=game.mono.get_string_size("I:000% ",HORIZONTAL_ALIGNMENT_LEFT,-1,game.T.TIMELINE_FACTOR_FONT).x
-		_check(absf(right.position.x-left.position.x-step)<0.001 and left.position.y==right.position.y,"fixed fields have one exact space between factors")
+		var step=game.mono.get_string_size("I:000% ",HORIZONTAL_ALIGNMENT_LEFT,-1,game.T.TIMELINE_FACTOR_FONT).x+game.T.TIMELINE_FACTOR_EXTRA_GAP
+		_check(absf(right.position.x-left.position.x-step)<0.001 and left.position.y==right.position.y,"fixed fields keep the configured gap after their separator")
 	game.battle.turn=1
 ## REQ-019-S07、REQ-027-S01、REQ-027-S02
 func _test_input() -> void:

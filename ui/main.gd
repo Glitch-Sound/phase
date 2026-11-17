@@ -193,7 +193,7 @@ func _draw_timeline() -> void:
 		# 接続線は選択やホバーでも通常の灰色を保ち、再登場の弱い線を維持する。
 		draw_polyline(link.points,Color(MUTED,0.18 if event.repeated else 0.40),width,true)
 	var factor_width=mono.get_string_size("I:000% R:000%",HORIZONTAL_ALIGNMENT_LEFT,-1,T.TIMELINE_FACTOR_FONT).x
-	var factor_step=mono.get_string_size("I:000% ",HORIZONTAL_ALIGNMENT_LEFT,-1,T.TIMELINE_FACTOR_FONT).x
+	var factor_step=mono.get_string_size("I:000% ",HORIZONTAL_ALIGNMENT_LEFT,-1,T.TIMELINE_FACTOR_FONT).x+T.TIMELINE_FACTOR_EXTRA_GAP
 	for card in view.cards:
 		var active=card.index==selected or card.index==timeline_hover
 		var color=CYAN if active else MUTED
