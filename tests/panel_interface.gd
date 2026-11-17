@@ -23,7 +23,7 @@ func _run() -> void:
 	quit(0 if failures==0 else 1)
 ## REQ-018-S03、NREQ-002-S02
 func _test_icons(game) -> void:
-	var paths={"CLOCKWISE":"rotate-cw.svg","RESET":"undo-2.svg","COUNTERCLOCKWISE":"rotate-ccw.svg"}
+	var paths={"CLOCKWISE":"rotate-cw.svg","RESET":"diamond.svg","COUNTERCLOCKWISE":"rotate-ccw.svg"}
 	var meanings={"CLOCKWISE":"CLOCKWISE / COREをSPD × 1.5度、時計回り","RESET":"RESET / COREを戦闘開始角へ戻す","COUNTERCLOCKWISE":"COUNTERCLOCKWISE / COREをSPD × 1.5度、反時計回り"}
 	_check(game.drawn_icons.size()==game.battle.panels.size(),"exactly one icon per effect cell")
 	var current_kinds=game.battle.panels.values().all(func(kind):return paths.has(kind))
@@ -50,10 +50,13 @@ func _test_icons(game) -> void:
 	var labels=game.auxiliary.find_children("*","Label",true,false)
 	_check(["CORE ↷","CORE開始角へ","CORE ↶"].all(func(s):return labels.any(func(l):return l.text==s)),"HELP maps all three icon meanings")
 	_check(labels.any(func(l):return l.text=="%s / SEED 128" % game.battle.stage.name),"HELP discloses exact seed")
+	var legend_icons=game.auxiliary.find_children("*","TextureRect",true,false).map(func(icon):return icon.texture.resource_path.get_file()).filter(func(name):return name in ["diamond.svg","undo-2.svg","rotate-cw.svg","rotate-ccw.svg"])
+	legend_icons.sort()
+	_check(legend_icons==["diamond.svg","rotate-ccw.svg","rotate-cw.svg"],"HELP uses exactly the same three distinct panel glyphs")
 	_check(game.panel_probe._get_tooltip(Vector2(450,450))=="" and game.battle.path==before,"modal suppresses tooltip without changing route")
 	game._close_aux()
 	var notice=FileAccess.get_file_as_string("res://assets/lucide/NOTICE.md")
-	_check(notice.contains("undo-2") and notice.contains("rotate-cw") and FileAccess.get_file_as_string("res://assets/lucide/LICENSE").contains("ISC License"),"bundled icon sources and licenses retained")
+	_check(notice.contains("diamond") and notice.contains("rotate-cw") and FileAccess.get_file_as_string("res://assets/lucide/LICENSE").contains("ISC License"),"bundled icon sources and licenses retained")
 ## REQ-034-S06
 func _test_seed(game) -> void:
 	game.panel_seed_override=null

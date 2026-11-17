@@ -104,6 +104,8 @@ func _capture(suffix: String) -> void:
 	await create_timer(0.12).timeout
 	await RenderingServer.frame_post_draw
 	var picture=root.get_texture().get_image()
+	if suffix=="battle":
+		_compare_reset_only(picture)
 	var transform=Transform2D.IDENTITY.scaled(Vector2(picture.get_width()/1920.0,picture.get_height()/1080.0))
 	_check(game.drawn_icons.size()==game.battle.panels.size() and game.drawn_icons.size()==20,"all twenty actual icons rendered "+suffix)
 	_check(not game.drawn_text.any(func(t):return t.text in ["S+","L=","R-"]),"no letter substitute "+suffix)
@@ -125,6 +127,23 @@ func _capture(suffix: String) -> void:
 	var path="res://artifacts/runtime/PHASE-core-panels-"+stamp+"-"+suffix+".png"
 	_check(not FileAccess.file_exists(path) and picture.save_png(path)==OK,"unique capture "+suffix)
 	print("CAPTURE ",ProjectSettings.globalize_path(path))
+## REQ-018-S03
+func _compare_reset_only(picture: Image) -> void:
+	var before=Image.load_from_file("res://artifacts/ui-review/core-panel-effects-battle.png")
+	var masks=game.drawn_icons.filter(func(icon):return icon.kind=="RESET").map(func(icon):return Rect2i(icon.rect.grow(1)))
+	var outside=0
+	var changed=0
+	for y in range(picture.get_height()):
+		for x in range(picture.get_width()):
+			if picture.get_pixel(x,y)==before.get_pixel(x,y):
+				continue
+			if masks.any(func(rect):return rect.has_point(Vector2i(x,y))):
+				changed+=1
+			else:
+				outside+=1
+	_check(changed>0,"RESET glyph pixels actually changed")
+	_check(outside==0,"all pixels outside RESET glyphs exactly match previous capture")
+	print("DIAMOND PIXEL COMPARISON: reset ",changed," / outside ",outside)
 func _click(point: Vector2,double_click: bool=false) -> void:
 	for pressed in [true,false]:
 		var event=InputEventMouseButton.new()

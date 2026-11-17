@@ -15,10 +15,11 @@ const PANEL = P.SURFACE
 const EDGE = P.EDGE
 const PANEL_VIEWS = {
  "CLOCKWISE":{"icon":"rotate_cw","text":"CLOCKWISE / COREをSPD × 1.5度、時計回り","short":"CORE ↷"},
- "RESET":{"icon":"undo","text":"RESET / COREを戦闘開始角へ戻す","short":"CORE開始角へ"},
+ "RESET":{"icon":"diamond","text":"RESET / COREを戦闘開始角へ戻す","short":"CORE開始角へ"},
  "COUNTERCLOCKWISE":{"icon":"restart","text":"COUNTERCLOCKWISE / COREをSPD × 1.5度、反時計回り","short":"CORE ↶"}
 }
 const ICONS = {
+ "diamond":preload("res://assets/lucide/diamond.svg"),
  "rotate_cw":preload("res://assets/lucide/rotate-cw.svg"),
  "undo":preload("res://assets/lucide/undo-2.svg"),
  "fast_forward":preload("res://assets/lucide/fast-forward.svg"),
