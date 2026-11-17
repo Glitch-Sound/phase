@@ -29,7 +29,7 @@ func _build_inventory() -> void:
 	var buttons=panel.find_children("*","Button",true,false).filter(func(c):return not c is OptionButton).map(func(c):return c.text)
 	_check(options.size()==9 and spins.size()==5,"class, two equipment, two mutation, three skills and stage remain editable")
 	buttons.sort()
-	_check(buttons==["HELP","LOAD","QUIT","SAVE","SETTINGS","START","UNIT 1","UNIT 2"],"complete exact BUILD operation set remains")
+	_check(buttons==["ENEMY CPU","HELP","LOAD","QUIT","SAVE","SETTINGS","START","UNIT 1","UNIT 2"],"complete exact BUILD operation set includes the authorized CPU choice")
 	_check(["CLASS","CORE / TOTAL 100","ARMS","GEAR","MUTATION","SKILLS / 3 SLOTS","OPERATION"].all(func(s):return labels.has(s)),"necessary build labels remain visible")
 	_check(labels.any(func(s):return s.contains("MIN 1") and s.contains("AUTOMATIC REDISTRIBUTION")) and labels.any(func(s):return s.contains("SHARED ARCHIVE") and s.contains("BOTH SIDES: HUMAN")),"allocation and shared archive rules remain available")
 	_check(game.equipment_views.size()==2 and is_instance_valid(game.build_preview),"five equipment values, differences and resulting build preview remain connected")

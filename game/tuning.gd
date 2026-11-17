@@ -6,6 +6,17 @@ const BASE_DAMAGE := 45.0
 const BASE_HEAL := 24.0
 const BASE_MOVE := 3
 const BASE_DELAY := 100.0
+# CPUの評価は実効量を基準とし、終局を最優先する。戦闘式には使わない。
+const CPU_DAMAGE_WEIGHT := 1.2
+const CPU_HEAL_WEIGHT := 0.85
+const CPU_KILL_BONUS := 120.0
+const CPU_DANGER_WEIGHT := 0.7
+const CPU_REPEAT_PENALTY := 18.0
+const CPU_MEMORY_LIMIT := 8
+const CPU_TERMINAL_SCORE := 1000000.0
+const CPU_TIMES := {"THINK":0.30,"ROUTE":0.16,"COMMIT":0.14,"ACTION":0.18,"TARGET":0.20,"RESULT":0.40}
+const CPU_FAST_SPEED := 4.0
+const CPU_CONTROL_ORIGIN := Vector2(1440,772)
 const MUTANT_CHANCE := 0.10
 const SAVE_VERSION := 1
 # 密度の母数は除外前の全100セル。

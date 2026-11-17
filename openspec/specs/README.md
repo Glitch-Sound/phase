@@ -8,6 +8,7 @@
 | [tactical-battle](tactical-battle/spec.md) | 経路、手番、対象、勝敗 |
 | [build-collection](build-collection/spec.md) | ビルド、共有開放、保存 |
 | [battle-interface](battle-interface/spec.md) | 画面、入力、オーバーレイ |
+| [enemy-cpu](enemy-cpu/spec.md) | 敵CPUの判断、モード、操作過程と中断 |
 
 ## 関係
 

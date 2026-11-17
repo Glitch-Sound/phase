@@ -8,6 +8,8 @@ const L = preload("res://game/collection.gd")
 const V = preload("res://ui/visuals.gd")
 const T = preload("res://game/tuning.gd")
 const P = preload("res://ui/palette.gd")
+const CPU = preload("res://game/cpu_policy.gd")
+const CPU_TURN = preload("res://ui/cpu_turn.gd")
 const WHITE = P.TEXT
 const MUTED = P.MUTED
 const BG = P.BG
@@ -95,6 +97,12 @@ var preview_generation := 0
 var result_awarded := false
 var equipment_views: Dictionary={}
 var window_focused := true
+var cpu_enabled := false
+var cpu_fast := false
+var cpu_paused := false
+var cpu_policy=CPU.new()
+var cpu_turn=CPU_TURN.new()
+var cpu_memory: Array=[]
 
 func _ready() -> void:
 	get_window().focus_exited.connect(_window_focus_exited)
@@ -130,6 +138,7 @@ func _ready() -> void:
 	_build()
 
 func _process(delta: float) -> void:
+	_cpu_tick(delta)
 	panel_probe.visible=not build_open
 	clock+=delta if not reduced_motion else 0.0
 	message_time=maxf(0,message_time-delta)
@@ -275,6 +284,8 @@ func _draw_board() -> void:
 					if battle.selected_skill==C.HEAL:
 						amount=mini(amount,ceili(u.max_hp-u.hp))
 					effect_chips.append({"cell":cell,"text":("-" if battle.selected_skill==C.DAMAGE else "+")+str(amount),"color":tc})
+				if cpu_turn.active and cpu_turn.phase=="TARGET" and cpu_turn.command.target==i:
+					_draw_cell_focus(rect,WHITE)
 	if battle.mode=="MOVE":
 		for segment in _route_segments():
 			draw_line(segment[0],segment[1],CYAN,T.ROUTE_LINE_WIDTH*BOARD_SCALE,true)
@@ -349,6 +360,14 @@ func _draw_info() -> void:
 		_text(C.SKILLS[id].label,position_px,15,WHITE,mono)
 		_text(C.SKILLS[id].description,position_px+T.BATTLE_INFO_DESCRIPTION_OFFSET,T.BATTLE_INFO_DESCRIPTION_FONT,MUTED)
 		position_px.y+=T.BATTLE_SKILL_STEP
+	if cpu_enabled and battle.result.is_empty():
+		var phase=cpu_turn.phase if cpu_turn.active else "READY"
+		var name=V.unit_name(battle.units[cpu_turn.actor]) if cpu_turn.active else ""
+		var stopped=cpu_paused or not window_focused or is_instance_valid(auxiliary)
+		_text("CPU %s / %s" % [name,"PAUSED" if stopped else phase],T.CPU_CONTROL_ORIGIN+Vector2(0,14),14,MUTED,mono)
+		if cpu_turn.active and cpu_turn.phase in ["ACTION","TARGET"]:
+			var action="WAIT" if cpu_turn.command.skill.is_empty() else C.SKILLS[cpu_turn.command.skill].label+" → "+V.unit_name(battle.units[cpu_turn.command.target])
+			_text(action,T.CPU_CONTROL_ORIGIN+Vector2(0,-12),13,WHITE,mono)
 
 func _equipment_icon(key: String, rect: Rect2, tint: Color) -> void:
 	draw_texture_rect(ICONS[key],rect,false,tint)
@@ -387,6 +406,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode==KEY_ESCAPE:
 			if is_instance_valid(auxiliary):
 				_close_aux()
+			elif _cpu_locked():
+				return
 			elif battle.mode=="TARGET":
 				battle.back()
 				_action_dialog()
@@ -427,6 +448,12 @@ func _window_focus_entered() -> void:
 		_focus_modal.call_deferred(overlay)
 
 func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
+	if _cpu_locked():
+		var occupant=battle.at(cell)
+		if occupant>=0:
+			selected=occupant
+		queue_redraw()
+		return
 	timeline_selected_event={}
 	timeline_hover=-1
 	timeline_hover_event={}
@@ -494,6 +521,11 @@ func _hud() -> void:
 			style.content_margin_top=4
 			style.content_margin_bottom=4
 			button.add_theme_stylebox_override(state,style)
+	if cpu_enabled and not build_open and battle.result.is_empty():
+		_button(hud,"SPEED 4x" if cpu_fast else "SPEED 1x",Rect2(T.CPU_CONTROL_ORIGIN+Vector2(0,38),Vector2(190,40)),func():cpu_fast=not cpu_fast;_hud(),"fast_forward")
+		_button(hud,"RESUME" if cpu_paused else "PAUSE",Rect2(T.CPU_CONTROL_ORIGIN+Vector2(210,38),Vector2(190,40)),func():cpu_paused=not cpu_paused;_hud(),"play" if cpu_paused else "wait")
+	if _cpu_locked():
+		return
 	if battle.mode=="TARGET":
 		_button(hud,"BACK",T.BATTLE_CONTEXT_BUTTON,func():battle.back();_action_dialog())
 	elif battle.mode=="MOVE" and battle.trapped():
@@ -534,7 +566,14 @@ func _build() -> void:
 	_label(panel,"BUILD",Rect2(left,20,200,45),32,WHITE)
 	for i in range(2):
 		_button(panel,"UNIT %d" % (i+1),Rect2(260+i*156,22,140,43),func():edit_unit=i;_build(),"",i==edit_unit)
-	_label(panel,"SHARED ARCHIVE   %d ARMS / %d GEAR / %d MUTATIONS     BOTH SIDES: HUMAN" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size()],Rect2(left,83,1240,26),14,MUTED)
+	var cpu_choice=CheckButton.new()
+	cpu_choice.text="ENEMY CPU"
+	cpu_choice.position=Vector2(right,22)
+	cpu_choice.size=Vector2(342,43)
+	cpu_choice.button_pressed=cpu_enabled
+	panel.add_child(cpu_choice)
+	cpu_choice.toggled.connect(func(value):cpu_enabled=value;_build())
+	_label(panel,"SHARED ARCHIVE   %d ARMS / %d GEAR / %d MUTATIONS     %s" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size(),"PLAYER: HUMAN / ENEMY: CPU" if cpu_enabled else "BOTH SIDES: HUMAN"],Rect2(left,83,1240,26),14,MUTED)
 	var b: Dictionary=collection.builds[edit_unit]
 	_label(panel,"CORE / TOTAL 100",Rect2(left,136,400,28),17,WHITE)
 	_label(panel,"CLASS",Rect2(left,184,96,28),14,MUTED)
@@ -601,7 +640,10 @@ func _build() -> void:
 		stages.append(stage.name)
 	_option(panel,stages,C.stages()[collection.stage_index].name,Rect2(right,432,342,44),func(value):collection.stage_index=stages.find(value);_build())
 	_wrapped_label(panel,_unit_references(C.stages()[collection.stage_index].brief),Rect2(right,496,342,52),17,WHITE)
-	_wrapped_label(panel,_unit_references(C.stages()[collection.stage_index].hint),Rect2(right,564,342,120),16,MUTED)
+	var stage_hint=C.stages()[collection.stage_index].hint
+	if cpu_enabled and collection.stage_index==0:
+		stage_hint="Compare routes. The CPU controls A and B."
+	_wrapped_label(panel,_unit_references(stage_hint),Rect2(right,564,342,120),16,MUTED)
 	build_preview=Control.new()
 	build_preview.position=Vector2(left,400)
 	build_preview.size=Vector2(400,220)
@@ -686,6 +728,9 @@ func _start_battle() -> void:
 			_notify("Invalid build. Check unlocked elements and the CORE total.")
 			return
 	build_open=false
+	cpu_turn.reset()
+	cpu_memory=[]
+	cpu_paused=false
 	selected=-1
 	timeline_hover=-1
 	timeline_hover_event={}
@@ -733,7 +778,7 @@ func _help() -> void:
 	_close_aux()
 	var panel=_modal(Rect2(400,135,1120,810),true)
 	_label(panel,"HELP",Rect2(36,25,1048,48),32,WHITE)
-	_label(panel,"両陣営を手動で操作する。敵CPUはない。",Rect2(36,85,1048,30),19,MUTED)
+	_wrapped_label(panel,"BUILDのENEMY CPUで敵を自動操作。OFFは両陣営手動。\nSPEEDで早送り、PAUSEで停止。HELP中と非アクティブは自動停止。",Rect2(36,85,1048,56),17,MUTED)
 	var steps=[
 		["move","01 / ROUTE","隣接する空きマスを順番にクリック。\n経路上をクリックすると後続を取消。"],
 		["target","02 / ALIGN","3波は各SPDで揺れ、全体へ合成。\n色は実位相。戦闘角度は不変。"],
@@ -885,9 +930,49 @@ func _ring(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,active
 	V.ring(canvas,center,radius,u,active,ring_colors,CYAN,mono)
 
 func _restart() -> void:
+	cpu_turn.reset()
+	cpu_memory=[]
+	cpu_paused=false
 	_close_aux()
 	_build()
 	_hud()
+
+func _cpu_locked() -> bool:
+	return cpu_enabled and not build_open and battle.result.is_empty() and (cpu_turn.active or (battle.actor>=0 and battle.units[battle.actor].camp=="ENEMY"))
+
+func _cpu_tick(delta: float) -> void:
+	if not cpu_enabled or build_open or is_instance_valid(auxiliary) or not window_focused or cpu_paused:
+		return
+	if not battle.result.is_empty():
+		cpu_turn.reset()
+		return
+	if not cpu_turn.active:
+		if battle.actor<0 or battle.units[battle.actor].camp!="ENEMY":
+			return
+		var plan=cpu_policy.choose(battle,cpu_memory)
+		if plan.is_empty():
+			cpu_paused=true
+			_notify("CPU paused / No legal plan. RESTART returns to BUILD.")
+			return
+		cpu_turn.begin(battle,plan)
+		_hud()
+	var actor=cpu_turn.actor
+	var command=cpu_turn.command.duplicate(true)
+	var event=cpu_turn.advance(battle,delta,false,T.CPU_FAST_SPEED if cpu_fast else 1.0)
+	if event=="act":
+		_feedback()
+	if event in ["act","wait"] or (event=="commit" and not battle.result.is_empty()):
+		cpu_memory.append({"actor":actor,"pos":battle.units[actor].pos,"skill":command.skill,"target":command.target})
+		cpu_memory=cpu_memory.slice(-T.CPU_MEMORY_LIMIT)
+	if not battle.result.is_empty():
+		cpu_turn.reset()
+		_result()
+		_hud()
+	elif event in ["done","cancel"]:
+		if event=="cancel":
+			cpu_paused=true
+			_notify("CPU paused / State changed. RESTART returns to BUILD.")
+		_hud()
 
 func _save() -> void:
 	var error=collection.save_to(save_path)
