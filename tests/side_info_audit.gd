@@ -1,6 +1,7 @@
 extends "res://tests/order_axis_audit.gd"
 var info_text=[]
 var info_records=[]
+var info_icons=[]
 var info_rings=[]
 var info_bars=[]
 var in_info=false
@@ -19,11 +20,15 @@ func _factor_field(value: float) -> String:
 func _draw_info() -> void:
 	info_text=[]
 	info_records=[]
+	info_icons=[]
 	info_rings=[]
 	info_bars=[]
 	in_info=true
 	super._draw_info()
 	in_info=false
+func _equipment_icon(key: String,rect: Rect2,tint: Color) -> void:
+	info_icons.append({"key":key,"rect":rect,"color":tint,"texture":ICONS[key].resource_path})
+	super._equipment_icon(key,rect,tint)
 func _text(text: String,position_px: Vector2,font_size: int,color: Color=WHITE,typeface: Font=null) -> void:
 	if in_info:
 		info_text.append(text)

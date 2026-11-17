@@ -19,6 +19,8 @@ const PANEL_VIEWS = {
  "COUNTERCLOCKWISE":{"icon":"restart","text":"COUNTERCLOCKWISE / COREをSPD × 1.5度、反時計回り","short":"CORE ↶"}
 }
 const ICONS = {
+ "gear":preload("res://assets/lucide/shield.svg"),
+ "arms":preload("res://assets/lucide/sword.svg"),
  "diamond":preload("res://assets/lucide/diamond.svg"),
  "rotate_cw":preload("res://assets/lucide/rotate-cw.svg"),
  "undo":preload("res://assets/lucide/undo-2.svg"),
@@ -320,12 +322,12 @@ func _draw_info() -> void:
 	var camp_color=CYAN if u.camp=="PLAYER" else status_colors[1]
 	_text("CLASS: "+u.class_name,T.BATTLE_INFO_CLASS,17,camp_color,mono)
 	_ring(self,T.BATTLE_INFO_RING,81,u,index==battle.actor)
-	var frame=T.BATTLE_EQUIPMENT_FRAME
+	var icon_rect=T.BATTLE_EQUIPMENT_ICON
 	for part in ["GEAR","ARMS"]:
 		var mutation: String=u[part.to_lower()+"_mutation"]
-		_equipment_frame(frame)
-		_text(C.serial(part,u[part.to_lower()],mutation),frame.position+T.BATTLE_EQUIPMENT_LABEL_OFFSET,15,WHITE,mono)
-		frame.position.y+=T.BATTLE_EQUIPMENT_FRAME_STEP
+		_equipment_icon(part.to_lower(),icon_rect,MUTED)
+		_text(C.serial(part,u[part.to_lower()],mutation),Vector2(icon_rect.end.x+T.BATTLE_EQUIPMENT_NAME_GAP,icon_rect.position.y+T.BATTLE_EQUIPMENT_BASELINE),15,WHITE,mono)
+		icon_rect.position.y+=T.BATTLE_EQUIPMENT_STEP
 	_text("MOVE %d" % battle.movement(u),T.BATTLE_INFO_MOVE,16,CYAN,mono)
 	_text("Move up to %d cells per turn." % battle.movement(u),T.BATTLE_INFO_MOVE+T.BATTLE_INFO_DESCRIPTION_OFFSET,T.BATTLE_INFO_DESCRIPTION_FONT,MUTED)
 	var position_px=T.BATTLE_INFO_SKILLS
@@ -334,10 +336,8 @@ func _draw_info() -> void:
 		_text(C.SKILLS[id].description,position_px+T.BATTLE_INFO_DESCRIPTION_OFFSET,T.BATTLE_INFO_DESCRIPTION_FONT,MUTED)
 		position_px.y+=T.BATTLE_SKILL_STEP
 
-func _equipment_frame(rect: Rect2) -> void:
-	var scale=maxf(0.001,get_global_transform_with_canvas().get_scale().x*get_viewport().get_final_transform().get_scale().x)
-	var points=PackedVector2Array([rect.position,Vector2(rect.end.x,rect.position.y),rect.end,Vector2(rect.position.x,rect.end.y),rect.position])
-	draw_polyline(points,Color(MUTED,T.BATTLE_EQUIPMENT_FRAME_OPACITY),maxf(T.BATTLE_EQUIPMENT_FRAME_LINE,1.0/scale),true)
+func _equipment_icon(key: String, rect: Rect2, tint: Color) -> void:
+	draw_texture_rect(ICONS[key],rect,false,tint)
 
 func _draw_preview() -> void:
 	var u=battle.preview()

@@ -85,22 +85,26 @@ func _test_details(game) -> void:
 	await process_frame
 ## REQ-019-S04、REQ-019-S09、NREQ-001-S04
 func _test_equipment_layout(game) -> void:
-	var constants=game.T.get_script_constant_map()
-	_check(constants.has("BATTLE_EQUIPMENT_FRAME"),"equipment frame tuning is defined")
-	if not constants.has("BATTLE_EQUIPMENT_FRAME"):
+	# 固定した公式SVGのcurrentColor置換後の内容であり、実装から期待値を作らない。
+	for item in [["shield","4df706831d2592ca059eb5c9bcfa3078c1f3f4d6e953d0d813eccfdcd1138d6a"],["sword","9a4358a1a79ad7b3f692c00271c08391a759eb18d46d8366ce4fc0b01b61de0d"]]:
+		var path="res://assets/lucide/"+item[0]+".svg"
+		_check(FileAccess.file_exists(path) and FileAccess.get_sha256(path)==item[1],"official unchanged icon with white currentColor "+item[0])
+	_check(FileAccess.get_file_as_string("res://assets/lucide/NOTICE.md").contains("shield, sword"),"equipment icons included in provenance notice")
+	_check(FileAccess.get_sha256("res://assets/lucide/LICENSE")=="b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57","pinned official ISC and MIT license preserved")
+	_check(game.info_icons.size()==2,"exactly two equipment icons")
+	if game.info_icons.size()!=2:
 		return
-	var frames=[]
+	var icons=game.info_icons
+	_check(icons.map(func(item):return item.texture)==["res://assets/lucide/shield.svg","res://assets/lucide/sword.svg"],"shield is GEAR and single sword is ARMS")
+	_check(icons.all(func(item):return item.color==game.MUTED and item.color.a==1),"neutral equipment icons stay fully opaque")
 	for i in range(2):
-		var rect: Rect2=constants.BATTLE_EQUIPMENT_FRAME
-		rect.position.y+=i*constants.BATTLE_EQUIPMENT_FRAME_STEP
-		frames.append(rect)
-		_check(rect.encloses(_bounds(game.info_records[i+1])),"full equipment identifier fits inside its own outline")
-		_check(rect.size.x<=_bounds(game.info_records[i+1]).size.x+2*constants.BATTLE_EQUIPMENT_LABEL_OFFSET.x+1,"frame has only configured padding around longest mutation name")
-		_check(rect.position.x>game.BOARD.x+10*game.CELL and rect.end.x<=game.T.BATTLE_CONTEXT_BUTTON.end.x,"equipment frame stays inside right region")
-	_check(not frames[0].intersects(frames[1]),"two separate equipment outlines")
-	_check(game.info_rings[0].center.y+81<frames[0].position.y and frames[1].end.y<_bounds(game.info_records[3]).position.y,"class ring equipment movement order is spatial")
+		var name_rect=_bounds(game.info_records[i+1])
+		_check(name_rect.position.x-icons[i].rect.end.x==game.T.BATTLE_EQUIPMENT_NAME_GAP and game.T.BATTLE_EQUIPMENT_NAME_GAP>0,"equipment name has positive configured separation")
+		_check(name_rect.position.y>=icons[i].rect.position.y and name_rect.end.y<=icons[i].rect.end.y,"icon and full name are vertically aligned")
+		_check(icons[i].rect.position.x>game.BOARD.x+10*game.CELL and name_rect.end.x<=game.T.BATTLE_CONTEXT_BUTTON.end.x,"icon and long name stay inside right region")
+	_check(game.info_rings[0].center.y+81<icons[0].rect.position.y and icons[1].rect.end.y<_bounds(game.info_records[3]).position.y,"class ring equipment movement order is spatial")
 	_check(_bounds(game.info_records[4]).end.y<_bounds(game.info_records[5]).position.y,"movement explanation precedes skills")
-	_check(not game.hud.get_children().any(func(child):return child is Button and frames.any(func(rect):return rect.intersects(child.get_rect()))),"equipment is not a button")
+	_check(not game.hud.get_children().any(func(child):return child is Button and icons.any(func(item):return item.rect.intersects(child.get_rect()))),"equipment adds no buttons")
 func _bounds(record: Dictionary) -> Rect2:
 	var face: Font=record.typeface
 	return Rect2(record.position-Vector2(0,face.get_ascent(record.font_size)),Vector2(face.get_string_size(record.text,HORIZONTAL_ALIGNMENT_LEFT,-1,record.font_size).x,face.get_height(record.font_size)))

@@ -88,13 +88,11 @@ const BATTLE_INFO_SKILLS := Vector2(1440,563)
 # 説明は低い不透明度ではなく既存MUTED色で読みやすさを保つ。
 const BATTLE_INFO_DESCRIPTION_OFFSET := Vector2(0,24)
 const BATTLE_INFO_DESCRIPTION_FONT := 15
-# 背景と入力部品を持たない装備の輪郭だけをリングの直下へ置く。
-const BATTLE_EQUIPMENT_FRAME := Rect2(1440,330,224,28)
-const BATTLE_EQUIPMENT_FRAME_STEP := 56.0
-# 最長の突然変異名23文字(208px)へ左右8pxを残し、名前のbaselineを維持する。
-const BATTLE_EQUIPMENT_LABEL_OFFSET := Vector2(8,20)
-const BATTLE_EQUIPMENT_FRAME_LINE := 0.8
-const BATTLE_EQUIPMENT_FRAME_OPACITY := 0.28
+# 背景と枠を持たない種別記号と名称。最長の突然変異名でも省略しない。
+const BATTLE_EQUIPMENT_ICON := Rect2(1440,334,20,20)
+const BATTLE_EQUIPMENT_STEP := 56.0
+const BATTLE_EQUIPMENT_NAME_GAP := 12.0
+const BATTLE_EQUIPMENT_BASELINE := 16.0
 const BATTLE_SKILL_STEP := 62.0
 const BATTLE_MENU_ORIGIN := Vector2(1440,928)
 const BATTLE_MENU_SIZE := Vector2(190,40)
