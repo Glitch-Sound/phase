@@ -179,6 +179,8 @@ func _timeline_view() -> Dictionary:
 
 func _draw_timeline() -> void:
 	var view=_timeline_view()
+	var turn_text=_turn_label(battle.turn)
+	_text(turn_text,T.TIMELINE_TURN_CENTER-Vector2(mono.get_string_size(turn_text,HORIZONTAL_ALIGNMENT_LEFT,-1,T.TIMELINE_TURN_FONT).x/2,0),T.TIMELINE_TURN_FONT,MUTED,mono)
 	var pixel_scale=maxf(0.001,get_global_transform_with_canvas().get_scale().x*get_viewport().get_final_transform().get_scale().x)
 	var width=maxf(T.TIMELINE_LINE,1.0/pixel_scale)
 	var inspected=timeline_hover_event if not timeline_hover_event.is_empty() else timeline_selected_event
@@ -190,16 +192,26 @@ func _draw_timeline() -> void:
 		var event=link.event
 		# 接続線は選択やホバーでも通常の灰色を保ち、再登場の弱い線を維持する。
 		draw_polyline(link.points,Color(MUTED,0.18 if event.repeated else 0.40),width,true)
+	var factor_width=mono.get_string_size("I:000% R:000%",HORIZONTAL_ALIGNMENT_LEFT,-1,T.TIMELINE_FACTOR_FONT).x
+	var factor_step=mono.get_string_size("I:000% ",HORIZONTAL_ALIGNMENT_LEFT,-1,T.TIMELINE_FACTOR_FONT).x
 	for card in view.cards:
 		var active=card.index==selected or card.index==timeline_hover
 		var color=CYAN if active else MUTED
 		_ring(self,card.center,T.TIMELINE_RADIUS,card.unit,card.index==battle.actor)
 		_center(_hp(card.unit.hp)+"/"+_hp(card.unit.max_hp),card.center+Vector2(0,38),T.TIMELINE_HP_FONT,color if active else WHITE,mono)
-		_text("I %3.0f%%" % (M.sync(card.unit,1).factor*100),card.center+Vector2(-60,56),T.TIMELINE_FACTOR_FONT,status_colors[1],mono)
-		_text("R %3.0f%%" % (M.sync(card.unit,2).factor*100),card.center+Vector2(6,56),T.TIMELINE_FACTOR_FONT,status_colors[2],mono)
+		var factor_origin=card.center+Vector2(-factor_width/2,56)
+		_text("I:"+_factor_field(M.sync(card.unit,1).factor*100)+"%",factor_origin,T.TIMELINE_FACTOR_FONT,status_colors[1],mono)
+		_text("R:"+_factor_field(M.sync(card.unit,2).factor*100)+"%",factor_origin+Vector2(factor_step,0),T.TIMELINE_FACTOR_FONT,status_colors[2],mono)
 	for event in view.events:
 		var active=_timeline_matches(event,inspected) or (inspected.is_empty() and event.index==selected and not event.repeated)
 		_timeline_node(event,CYAN if active or event.rank==1 else WHITE,pixel_scale)
+
+func _factor_field(value: float) -> String:
+	# 表示幅を超える値を偽の999%へ丸めず、不正な表示入力を明示する。
+	return "%3d" % roundi(value) if is_finite(value) and value>=0 and value<=999 else "---"
+
+func _turn_label(value: int) -> String:
+	return "TURN %02d" % value if value>0 else "TURN --"
 
 func _timeline_node(event: Dictionary, color: Color, pixel_scale: float) -> void:
 	var width=maxf(T.TIMELINE_NODE_WIDTH,1.0/pixel_scale)

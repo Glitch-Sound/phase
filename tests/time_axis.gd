@@ -144,6 +144,33 @@ func _test_lifecycle() -> void:
 	_check(view.now>old_now and view.events[0].remaining==0.0,"reinsertion advances real schedule")
 	view=model.layout(b.units,b.actor,b.timeline(6),true)
 	_check(view.events.is_empty() and view.get("links",[]).is_empty() and view.cards.all(func(c):return c.event.is_empty()),"result contains no hypothetical future")
+## REQ-019-S10、REQ-019-S11
+func _test_readouts(game) -> void:
+	_check(game.has_method("_factor_field") and game.has_method("_turn_label"),"compact readout formatters are implemented")
+	if not game.has_method("_factor_field") or not game.has_method("_turn_label"):
+		return
+	for pair in [[0.0,"  0"],[1.0,"  1"],[9.0,"  9"],[10.0," 10"],[83.0," 83"],[99.0," 99"],[100.0,"100"],[200.0,"200"],[999.0,"999"],[0.49,"  0"],[0.5,"  1"],[99.5,"100"],[-0.01,"---"],[999.01,"---"],[INF,"---"],[-INF,"---"],[NAN,"---"]]:
+		_check(game._factor_field(pair[0])==pair[1],"exact three-character percentage field "+str(pair[0]))
+	for pair in [[1,"TURN 01"],[9,"TURN 09"],[10,"TURN 10"],[99,"TURN 99"],[100,"TURN 100"],[999,"TURN 999"],[1000,"TURN 1000"],[9223372036854775807,"TURN 9223372036854775807"],[0,"TURN --"],[-1,"TURN --"]]:
+		_check(game._turn_label(pair[0])==pair[1],"minimum two digits and full turn value "+str(pair[0]))
+	game.battle.turn=123
+	game.queue_redraw()
+	await create_timer(0.06).timeout
+	var headings=game.drawn_text.filter(func(item):return item.text.begins_with("TURN "))
+	_check(headings.size()==1 and headings[0].text=="TURN 123","actual counter is drawn once")
+	if headings.size()==1:
+		var item=headings[0]
+		var height=game.mono.get_height(item.font_size)
+		var width=game.mono.get_string_size("TURN 9223372036854775807",HORIZONTAL_ALIGNMENT_LEFT,-1,item.font_size).x
+		_check(width<=game.T.PREVIEW_PANEL.size.x and item.position.y-height>game.T.BATTLE_HP_BASELINE+game.T.BATTLE_HP_STEP and item.position.y+height<game.T.TIMELINE_TOP-game.T.TIMELINE_NODE_RADIUS,"even maximum turn fits between HP and nodes")
+	var factors=game.drawn_text.filter(func(item):return item.text.begins_with("I:") or item.text.begins_with("R:"))
+	_check(factors.map(func(item):return item.text)==["I:200%","R:200%","I:200%","R:200%","I:200%","R:200%","I:200%","R:200%"],"current factors use compact labels")
+	for i in range(0,factors.size(),2):
+		var left=factors[i]
+		var right=factors[i+1]
+		var step=game.mono.get_string_size("I:000% ",HORIZONTAL_ALIGNMENT_LEFT,-1,game.T.TIMELINE_FACTOR_FONT).x
+		_check(absf(right.position.x-left.position.x-step)<0.001 and left.position.y==right.position.y,"fixed fields have one exact space between factors")
+	game.battle.turn=1
 ## REQ-019-S07、REQ-027-S01、REQ-027-S02
 func _test_input() -> void:
 	var game=load("res://tests/order_axis_audit.gd").new()
@@ -151,11 +178,12 @@ func _test_input() -> void:
 	root.add_child(game)
 	await process_frame
 	game._start_battle()
+	await _test_readouts(game)
 	_check(game.mono.get_string_size("11059.2/11059.2",HORIZONTAL_ALIGNMENT_LEFT,-1,T.TIMELINE_HP_FONT).x<=T.TIMELINE_CARD_SIZE.x,"maximum legal HP fits without reducing the state font")
 	game._cell_input(Vector2i(4,4))
 	game.selected=0
 	await create_timer(0.08).timeout
-	_check(not game.axis_centers.any(func(c):return Rect2(180,200,40,440).has_point(c.position)),"no unit names drawn on central timeline")
+	_check(not game.axis_centers.any(func(c):return Rect2(180,200,40,440).has_point(c.position)),"no unit names drawn on central timeline; TURN is checked by the text audit")
 	var before=game.battle.units.duplicate(true)
 	var path=game.battle.path.duplicate()
 	var generation=game.preview_generation

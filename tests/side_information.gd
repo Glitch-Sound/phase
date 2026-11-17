@@ -95,6 +95,7 @@ func _test_equipment_layout(game) -> void:
 		rect.position.y+=i*constants.BATTLE_EQUIPMENT_FRAME_STEP
 		frames.append(rect)
 		_check(rect.encloses(_bounds(game.info_records[i+1])),"full equipment identifier fits inside its own outline")
+		_check(rect.size.x<=_bounds(game.info_records[i+1]).size.x+2*constants.BATTLE_EQUIPMENT_LABEL_OFFSET.x+1,"frame has only configured padding around longest mutation name")
 		_check(rect.position.x>game.BOARD.x+10*game.CELL and rect.end.x<=game.T.BATTLE_CONTEXT_BUTTON.end.x,"equipment frame stays inside right region")
 	_check(not frames[0].intersects(frames[1]),"two separate equipment outlines")
 	_check(game.info_rings[0].center.y+81<frames[0].position.y and frames[1].end.y<_bounds(game.info_records[3]).position.y,"class ring equipment movement order is spatial")
