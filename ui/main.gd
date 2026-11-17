@@ -87,6 +87,7 @@ var last_panel_seed: int=-1
 var panel_probe: Control
 var notice: Label
 var preview_contours: Array=[]
+var preview_points: Array=[]
 var preview_signature: Array=[]
 var preview_generation := 0
 var result_awarded := false
@@ -356,7 +357,8 @@ func _draw_preview() -> void:
 		preview_signature=signature.duplicate(true)
 		preview_contours=V.phase_contours(u,status_colors)
 		preview_generation+=1
-	V.phase_orbit(self,T.PREVIEW_CENTER,preview_contours)
+	preview_points=V.motion_points(preview_contours,clock)
+	V.phase_orbit(self,T.PREVIEW_CENTER,preview_contours,preview_points)
 	_ring(self,T.PREVIEW_CENTER,T.PREVIEW_RADIUS,u)
 	if M.singularity(u):
 		_text("×5",Vector2(T.PREVIEW_PANEL.position.x+286,T.PREVIEW_SYNC_BASELINE),15,MAGENTA,mono)
@@ -703,7 +705,7 @@ func _help() -> void:
 	_label(panel,"両陣営を手動で操作する。敵CPUはない。",Rect2(36,85,1048,30),19,MUTED)
 	var steps=[
 		["move","01 / ROUTE","隣接する空きマスを順番にクリック。\n経路上をクリックすると後続を取消。"],
-		["target","02 / ALIGN","4輪郭はCORE、GEAR、ARMSと全体。\n実位相の一致を示し、境界色を補間。"],
+		["target","02 / ALIGN","3波は各SPDで揺れ、全体へ合成。\n色は実位相。戦闘角度は不変。"],
 		["check","03 / ACT","終点をダブルクリックして確定。\nWAITかスキルを選び、対象をクリック。"]
 	]
 	for i in range(3):
@@ -715,7 +717,7 @@ func _help() -> void:
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
 	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\n白は相対進捗、灰は残り。満周は待ち0。\n表示最大の待ち量で再計算。個別周期ではない。\n縦は順番。中心点が手番。満周でも順番待ち。",Rect2(36,377,500,174),18,WHITE)
 	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
-	_label(panel,"一致ほど広く明るい。最終補正とは別。\nINF / RESはLUK補助後の最終補正(最大200%)。\n全セルでGEAR ↶、ARMS ↷\nCORE回転はSPD × 1.5度、リセットは戦闘開始角。\n×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
+	_label(panel,"一致ほど振幅大。最終補正とは別。\nINF / RESはLUK補助後の最終補正(最大200%)。\n全セルでGEAR ↶、ARMS ↷\nCORE回転はSPD × 1.5度、リセットは戦闘開始角。\n×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
 	var panel_kinds=["CLOCKWISE","RESET","COUNTERCLOCKWISE"]
 	for i in range(panel_kinds.size()):
 		var view=PANEL_VIEWS[panel_kinds[i]]

@@ -15,9 +15,11 @@ func _run() -> void:
 		_test_gradient(visual)
 		_test_strength(visual)
 		_test_smooth_strength(visual)
+		_test_motion(visual)
 	else:
 		_check(false,"actual phase field and closed contours exist")
 	await _test_ui()
+	await _test_motion_ui()
 	await _test_board()
 	await _test_notifications()
 	await _test_compact_layout()
@@ -117,10 +119,10 @@ func _test_ui() -> void:
 		_check(is_equal_approx(actual.r,expected.r) and is_equal_approx(actual.g,expected.g) and is_equal_approx(actual.b,expected.b),"orbit blends actual boundary colors independently of vivid ring palette")
 		game.queue_redraw()
 		await create_timer(0.08).timeout
-		_check(game.preview_generation==generation+2,"time does not change or recompute orbit")
+		_check(game.preview_generation==generation+2,"time does not rebuild cached phase data")
 	game._help()
 	await process_frame
-	var guide=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text=="4輪郭はCORE、GEAR、ARMSと全体。\n実位相の一致を示し、境界色を補間。")
+	var guide=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text=="3波は各SPDで揺れ、全体へ合成。\n色は実位相。戦闘角度は不変。")
 	_check(guide.size()==1,"HELP explains overlapping roles and interpolation without an inner-to-outer order")
 	if guide.size()==1:
 		var label=guide[0]
@@ -265,6 +267,93 @@ func _test_smooth_strength(visual) -> void:
 		for i in range(curve.points.size()-1):
 			worst=maxf(worst,curve.points[i].distance_to(curve.points[i+1]))
 		_check(worst<bound,"partial agreement has no radial jump at role boundaries "+curve.role+" / "+str(worst))
+## REQ-033-S01、REQ-033-S02、REQ-033-S05
+func _test_motion(visual) -> void:
+	_check(visual.has_method("motion_points"),"cached phase data has a time-dependent motion evaluator")
+	if not visual.has_method("motion_points"):
+		return
+	var u=C.unit("01","PLAYER",Vector2i.ZERO,C.default_build())
+	var before=u.duplicate(true)
+	var curves=visual.phase_contours(u,P.PRESETS.DEFAULT.slice(1))
+	var times=[0.137,0.638,1.914,4.572]
+	var first=visual.motion_points(curves,times[0])
+	_check(first!=visual.motion_points(curves,times[1]) and first==visual.motion_points(curves,times[0]),"elapsed time changes shapes, same time is deterministic")
+	for r in range(3):
+		var curve=curves[r]
+		var periodic=visual.motion_points(curves,times[0]+TAU/curve.speed)[r]
+		_check(range(first[r].size()).all(func(i):return first[r][i].distance_to(periodic[i])<0.001),"each equipment wave repeats its own exact period "+curve.role)
+		var angle=TAU/10
+		var phase=curve.speed*times[0]+T.PREVIEW_MOTION_PHASES[r]
+		var expected=T.PREVIEW_RADII[r]+T.PREVIEW_AMPLITUDES[r]*(0.50*sin(phase)+0.30*sin(2*angle-phase)+0.20*sin(3*angle+phase))
+		_check(absf(first[r][T.PREVIEW_SAMPLES/10].length()-expected)<0.001,"uniform aligned sector peak follows independently calculated periodic wave "+curve.role)
+	var mixed=0.0
+	for r in range(3):
+		var phase=curves[r].speed*times[0]+T.PREVIEW_MOTION_PHASES[r]
+		mixed+=0.50*sin(phase)+0.30*sin(TAU/5-phase)+0.20*sin(TAU*3/10+phase)
+	var expected_result=T.PREVIEW_RADII[3]+T.PREVIEW_AMPLITUDES[3]*mixed/3
+	_check(absf(first[3][T.PREVIEW_SAMPLES/10].length()-expected_result)<0.001,"result actually combines the three waves")
+	for spd in [1,20,96]:
+		for key in ["core","gear","arms"]:
+			u[key]=[97-spd,1,1,spd,1]
+		var rates=visual.phase_contours(u,P.PRESETS.DEFAULT.slice(1)).slice(0,3).map(func(c):return c.speed)
+		_check(rates.all(func(rate):return is_finite(rate) and rate>0),"valid positive rates at SPD boundary "+str(spd))
+		_check(absf(rates[0]-rates[1])>=T.PREVIEW_RATE_GAP-0.00001 and absf(rates[1]-rates[2])>=T.PREVIEW_RATE_GAP-0.00001 and absf(rates[0]-rates[2])>=T.PREVIEW_RATE_GAP-0.00001,"equal SPD still gives three separate periods "+str(spd))
+	u=before.duplicate(true)
+	var slow=[]
+	var fast=[]
+	for key in ["core","gear","arms"]:
+		u[key]=[96,1,1,1,1]
+	slow=visual.phase_contours(u,P.PRESETS.DEFAULT.slice(1))
+	for key in ["core","gear","arms"]:
+		u[key]=[1,1,1,96,1]
+	fast=visual.phase_contours(u,P.PRESETS.DEFAULT.slice(1))
+	_check(range(3).all(func(r):return fast[r].speed>slow[r].speed),"actual SPD increases each ring's base motion speed")
+	u=before.duplicate(true)
+	var energies=[]
+	for angles in [[0.0,72.0,144.0],[0.0,0.0,72.0],[0.0,0.0,0.0]]:
+		u.gear_angle=angles[1]
+		u.arms_angle=angles[2]
+		curves=visual.phase_contours(u,P.PRESETS.DEFAULT.slice(1))
+		var energy=0.0
+		var bounded=true
+		for step in range(32):
+			var points=visual.motion_points(curves,step*0.25)
+			energy+=pow(points[3][T.PREVIEW_SAMPLES/10].length()-T.PREVIEW_RADII[3],2)
+			for r in range(4):
+				bounded=bounded and Array(points[r]).all(func(point):return absf(point.length()-T.PREVIEW_RADII[r])<=T.PREVIEW_AMPLITUDES[r]+0.001 and point.length()-curves[r].width/2>T.PREVIEW_RADIUS)
+		_check(bounded,"all moving contours stay circular, bounded and clear of inner rings "+str(angles))
+		energies.append(energy)
+	_check(energies[0]<energies[1] and energies[1]<energies[2],"actual low pair and full overlap increase multi-period result energy "+str(energies))
+	_check(before==C.unit("01","PLAYER",Vector2i.ZERO,C.default_build()),"motion never changes source data")
+## REQ-033-S02、REQ-033-S05、REQ-033-S06
+func _test_motion_ui() -> void:
+	var game=load("res://tests/phase_preview_audit.gd").new()
+	game.settings_path="res://artifacts/runtime/motion-no-settings-"+str(Time.get_ticks_usec())+".json"
+	root.add_child(game)
+	await process_frame
+	game._start_battle()
+	await create_timer(0.08).timeout
+	var points=game.get("preview_points")
+	_check(points is Array and not points.is_empty(),"preview draws cached data with current display time")
+	if points is Array and not points.is_empty():
+		var units=game.battle.units.duplicate(true)
+		var route=game.battle.path.duplicate()
+		var turn=game.battle.turn
+		var generation=game.preview_generation
+		await create_timer(0.16).timeout
+		_check(game.preview_points!=points and game.preview_generation==generation,"time changes actual drawn points without rebuilding phase data")
+		game.reduced_motion=true
+		await create_timer(0.08).timeout
+		var stopped=game.preview_points.duplicate(true)
+		var stopped_time=game.clock
+		await create_timer(0.16).timeout
+		_check(game.clock==stopped_time and game.preview_points==stopped,"reduced motion freezes the current display frame")
+		game.reduced_motion=false
+		await create_timer(0.16).timeout
+		_check(game.clock>stopped_time and game.preview_points!=stopped,"motion resumes from the stopped time")
+		_check(game.battle.units==units and game.battle.path==route and game.battle.turn==turn,"thinking time never changes actual phase turn or route")
+	game.queue_free()
+	await process_frame
 ## REQ-019-S05、NREQ-001-S04
 func _test_compact_layout() -> void:
 	var game=load("res://tests/map_orbit_audit.gd").new()

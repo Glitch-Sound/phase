@@ -87,7 +87,7 @@ static func _phase_field(sectors: Array, angle: float, colors: Array) -> Diction
 		mixed+=colors[status]*weight
 	return {"roles":roles,"profiles":profiles,"clarity":clarity,"height":height,"color":mixed/clarity if clarity>0 else P.MUTED}
 
-## 閉じた4輪郭を返す。uは予測ユニット、colorsは基本5色。戻り値はCORE、GEAR、ARMS、結果の局所座標と頂点色と線幅。副作用なし。
+## 閉じた4輪郭を返す。uは予測ユニット、colorsは基本5色。戻り値はCORE、GEAR、ARMS、結果の局所座標、頂点色、線幅と動きの包絡。副作用なし。
 static func phase_contours(u: Dictionary, colors: Array) -> Array:
 	var sectors=_sectors(u)
 	var boundaries=[]
@@ -98,8 +98,17 @@ static func phase_contours(u: Dictionary, colors: Array) -> Array:
 				boundaries.append(boundary)
 	boundaries.sort()
 	var curves=[]
-	for role in ["CORE","GEAR","ARMS","RESULT"]:
-		curves.append({"role":role,"points":PackedVector2Array(),"colors":PackedColorArray(),"width":T.PREVIEW_RESULT_LINE if role=="RESULT" else T.PREVIEW_LINE})
+	var speeds=[]
+	for r in range(3):
+		var speed=T.PREVIEW_MOTION_RATE*sqrt(float(u[M.KEYS[r]][3])/20.0)*T.PREVIEW_RATE_BIASES[r]
+		while speeds.any(func(other):return absf(other-speed)<T.PREVIEW_RATE_GAP):
+			speed+=T.PREVIEW_RATE_GAP
+		speeds.append(speed)
+	for r in range(4):
+		curves.append({"role":["CORE","GEAR","ARMS","RESULT"][r],"points":PackedVector2Array(),"colors":PackedColorArray(),"width":T.PREVIEW_RESULT_LINE if r==3 else T.PREVIEW_LINE,"envelope":PackedFloat32Array(),"speed":speeds[r] if r<3 else 0.0})
+	var directions=PackedVector2Array()
+	var basis=PackedVector2Array()
+	var profiles=PackedVector3Array()
 	var clarity_sum=0.0
 	for sample in range(T.PREVIEW_SAMPLES+1):
 		# 最後の点は0度を再利用し、色と形の継ぎ目を一致させる。
@@ -110,18 +119,46 @@ static func phase_contours(u: Dictionary, colors: Array) -> Array:
 		var paint=_phase_paint(sectors,boundaries,angle,colors,field)
 		var strength=sqrt(clampf(paint.clarity,0,1))
 		var gain=lerpf(T.PREVIEW_MIN_GAIN,1.0,strength)
-		var direction=Vector2.from_angle(deg_to_rad(angle)-PI/2)
+		var radians=deg_to_rad(angle)
+		var direction=Vector2.from_angle(radians-PI/2)
+		directions.append(direction)
+		# .5sin(p)+.3sin(2θ-p)+.2sin(3θ+p)を2成分へまとめる。
+		basis.append(Vector2(0.5-0.3*cos(2*radians)+0.2*cos(3*radians),0.3*sin(2*radians)+0.2*sin(3*radians)))
+		profiles.append(Vector3(field.profiles[0],field.profiles[1],field.profiles[2]))
 		for r in range(4):
 			var height=field.profiles[r] if r<3 else field.height
 			var color: Color=paint.colors[r]
 			color.a=lerpf(T.PREVIEW_BASE_ALPHA,T.PREVIEW_CLEAR_ALPHA,sqrt(clampf(paint.clarity,0,1))) if r<3 else lerpf(T.PREVIEW_RESULT_BASE_ALPHA,T.PREVIEW_RESULT_CLEAR_ALPHA,sqrt(clampf(paint.clarity,0,1)))
 			curves[r].points.append(direction*(T.PREVIEW_RADII[r]+height*T.PREVIEW_AMPLITUDES[r]*gain))
 			curves[r].colors.append(color)
+			curves[r].envelope.append(gain*(0.45+0.55*field.profiles[r]) if r<3 else (0.1+0.9*strength)*(0.45+0.55*field.height))
 	# 線幅は実際の全周平均に従い、毎フレームの乱数や時間では変えない。
 	var mean_strength=sqrt(clarity_sum/T.PREVIEW_SAMPLES)
 	for r in range(4):
 		curves[r].width=lerpf(T.PREVIEW_LINE,T.PREVIEW_LINE_MAX,mean_strength) if r<3 else lerpf(T.PREVIEW_RESULT_LINE,T.PREVIEW_RESULT_LINE_MAX,mean_strength)
+	curves[3].directions=directions
+	curves[3].basis=basis
+	curves[3].profiles=profiles
 	return curves
+
+## 周期的な座標を返す。curvesは実位相のキャッシュ、secondsは表示時間。戻り値は4本の閉曲線。入力と戦闘値を変更しない。
+static func motion_points(curves: Array, seconds: float) -> Array:
+	var result=[PackedVector2Array(),PackedVector2Array(),PackedVector2Array(),PackedVector2Array()]
+	var oscillators=[]
+	for r in range(3):
+		var phase=fposmod(seconds,TAU/curves[r].speed)*curves[r].speed+T.PREVIEW_MOTION_PHASES[r]
+		oscillators.append(Vector2(sin(phase),cos(phase)))
+	var shared: Dictionary=curves[3]
+	for i in range(shared.directions.size()):
+		var direction: Vector2=shared.directions[i]
+		var wave_basis: Vector2=shared.basis[i]
+		var waves=Vector3(wave_basis.dot(oscillators[0]),wave_basis.dot(oscillators[1]),wave_basis.dot(oscillators[2]))
+		for r in range(3):
+			result[r].append(direction*(T.PREVIEW_RADII[r]+T.PREVIEW_AMPLITUDES[r]*curves[r].envelope[i]*waves[r]))
+		var weights: Vector3=Vector3.ONE*0.25+shared.profiles[i]*0.75
+		var combined=waves.dot(weights)/(weights.x+weights.y+weights.z)
+		result[3].append(direction*(T.PREVIEW_RADII[3]+T.PREVIEW_AMPLITUDES[3]*curves[3].envelope[i]*combined))
+	return result
 
 static func _field_colors(field: Dictionary, colors: Array) -> Array:
 	return [colors[field.roles[0]],colors[field.roles[1]],colors[field.roles[2]],field.color]
@@ -145,12 +182,13 @@ static func _phase_paint(sectors: Array,boundaries: Array,angle: float,colors: A
 			return {"colors":blended,"clarity":lerpf(a.clarity,b.clarity,t)}
 	return {"colors":_field_colors(field,colors),"clarity":field.clarity}
 
-## 円形予測を描く。canvasは描画先、centerは中心、curvesは生成済みの4輪郭。戻り値なし。副作用は描画だけ。
-static func phase_orbit(canvas: CanvasItem, center: Vector2, curves: Array) -> void:
+## 円形予測を描く。canvasは描画先、centerは中心、curvesは生成済みの4輪郭、animatedは表示時刻の座標で省略時は包絡。戻り値なし。副作用は描画だけ。
+static func phase_orbit(canvas: CanvasItem, center: Vector2, curves: Array, animated: Array=[]) -> void:
 	var scale_px=maxf(0.001,(canvas.get_viewport_transform()*canvas.get_global_transform()).get_scale().x)
-	for curve in curves:
+	for r in range(curves.size()):
+		var curve: Dictionary=curves[r]
 		var points=PackedVector2Array()
-		for point in curve.points:
+		for point in (animated[r] if not animated.is_empty() else curve.points):
 			points.append(point+center)
 		canvas.draw_polyline_colors(points,curve.colors,maxf(curve.width,T.PREVIEW_PIXEL_MIN/scale_px),true)
 

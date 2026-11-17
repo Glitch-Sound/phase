@@ -24,7 +24,7 @@ func _run() -> void:
 	quit(0 if failures==0 else 1)
 ## REQ-018-S03、NREQ-002-S02
 func _test_icons(game) -> void:
-	_check(FileAccess.get_file_as_string("res://assets/lucide/diamond.svg").contains('fill="#ffffff"'),"RESET diamond has a filled interior")
+	_check(FileAccess.get_file_as_string("res://assets/lucide/diamond.svg").contains('fill="none"'),"RESET diamond returns to its unfilled outline")
 	var paths={"CLOCKWISE":"rotate-cw.svg","RESET":"diamond.svg","COUNTERCLOCKWISE":"rotate-ccw.svg"}
 	var meanings={"CLOCKWISE":"CLOCKWISE / COREをSPD × 1.5度、時計回り","RESET":"RESET / COREを戦闘開始角へ戻す","COUNTERCLOCKWISE":"COUNTERCLOCKWISE / COREをSPD × 1.5度、反時計回り"}
 	_check(game.drawn_icons.size()==game.battle.panels.size(),"exactly one icon per effect cell")

@@ -107,9 +107,14 @@ const PREVIEW_SYNC_BASELINE := 934.0
 # 通知は盤面の下で、同期率とシステムメニューを避ける。
 const BATTLE_MESSAGE_POSITION := Vector2(40,1053)
 # 同じ軌道付近で4曲線を重ね、形は実際の配分と一致度へ従わせる。
+# 実SPDによる基礎速度に役割差を加え、同SPDでも表示の周期を分ける。
+const PREVIEW_MOTION_RATE := TAU/5.0
+const PREVIEW_RATE_BIASES := [1.0,1.17,1.37]
+const PREVIEW_RATE_GAP := PREVIEW_MOTION_RATE*0.04
+const PREVIEW_MOTION_PHASES := [0.0,TAU/3,TAU*2/3]
 const PREVIEW_SAMPLES := 360
 const PREVIEW_RADII := [78.0,78.8,79.6,78.8]
-const PREVIEW_AMPLITUDES := [16.0,16.0,16.0,22.0]
+const PREVIEW_AMPLITUDES := [6.0,6.0,6.0,10.0]
 # 局所的一致が低い輪郭も読める最小振幅倍率。完全一致で最大振幅になる。
 const PREVIEW_MIN_GAIN := 0.35
 # 実境界の両側を滑らかに結び、狭い領域では隣接間隔の半分へ縮める。
