@@ -16,29 +16,29 @@
 				"B"
 			],
 			"history": [
-				"01 MOVE (3, 3) G330.0 A330.0",
+				"01 MOVE (3, 3) C330.0 G330.0 A30.0",
 				"01 WAIT",
-				"02 MOVE (3, 5) G330.0 A30.0",
+				"02 MOVE (3, 5) C0.0 G330.0 A30.0",
 				"02 WAIT",
-				"A MOVE (9, 1) G330.0 A30.0",
+				"A MOVE (9, 1) C0.0 G330.0 A30.0",
 				"A WAIT",
-				"B MOVE (6, 9) G300.0 A90.0",
+				"B MOVE (6, 9) C0.0 G270.0 A90.0",
 				"B WAIT",
-				"01 MOVE (3, 2) G300.0 A0.0",
+				"01 MOVE (3, 2) C330.0 G300.0 A60.0",
 				"01 WAIT",
-				"02 MOVE (3, 4) G300.0 A60.0",
+				"02 MOVE (3, 4) C0.0 G300.0 A60.0",
 				"02 WAIT",
-				"A MOVE (9, 2) G300.0 A60.0",
+				"A MOVE (9, 2) C0.0 G300.0 A60.0",
 				"A WAIT",
-				"B MOVE (3, 9) G240.0 A180.0",
+				"B MOVE (3, 9) C0.0 G180.0 A180.0",
 				"B WAIT",
-				"01 MOVE (3, 1) G300.0 A30.0",
+				"01 MOVE (3, 1) C0.0 G270.0 A90.0",
 				"01 WAIT",
-				"02 MOVE (3, 3) G270.0 A30.0",
+				"02 MOVE (3, 3) C330.0 G270.0 A90.0",
 				"02 WAIT",
-				"A MOVE (9, 1) G270.0 A90.0",
+				"A MOVE (9, 1) C0.0 G270.0 A90.0",
 				"A WAIT",
-				"B MOVE (0, 9) G150.0 A270.0"
+				"B MOVE (0, 9) C0.0 G90.0 A270.0"
 			],
 			"result": "DEFEAT",
 			"seed": 0,
@@ -61,29 +61,29 @@
 				"B"
 			],
 			"history": [
-				"01 MOVE (3, 3) G330.0 A330.0",
+				"01 MOVE (3, 3) C330.0 G330.0 A30.0",
 				"01 WAIT",
-				"02 MOVE (3, 5) G330.0 A30.0",
+				"02 MOVE (3, 5) C0.0 G330.0 A30.0",
 				"02 WAIT",
-				"A MOVE (9, 0) G330.0 A30.0",
+				"A MOVE (9, 0) C0.0 G330.0 A30.0",
 				"A WAIT",
-				"B MOVE (6, 9) G300.0 A90.0",
+				"B MOVE (6, 9) C0.0 G270.0 A90.0",
 				"B WAIT",
-				"01 MOVE (3, 2) G300.0 A0.0",
+				"01 MOVE (3, 2) C330.0 G300.0 A60.0",
 				"01 WAIT",
-				"02 MOVE (3, 4) G300.0 A60.0",
+				"02 MOVE (3, 4) C0.0 G300.0 A60.0",
 				"02 WAIT",
-				"A MOVE (9, 1) G300.0 A60.0",
+				"A MOVE (9, 1) C0.0 G300.0 A60.0",
 				"A WAIT",
-				"B MOVE (3, 9) G240.0 A180.0",
+				"B MOVE (3, 9) C0.0 G180.0 A180.0",
 				"B WAIT",
-				"01 MOVE (3, 1) G300.0 A30.0",
+				"01 MOVE (3, 1) C0.0 G270.0 A90.0",
 				"01 WAIT",
-				"02 MOVE (3, 3) G270.0 A30.0",
+				"02 MOVE (3, 3) C330.0 G270.0 A90.0",
 				"02 WAIT",
-				"A MOVE (9, 0) G270.0 A90.0",
+				"A MOVE (9, 0) C0.0 G270.0 A90.0",
 				"A WAIT",
-				"B MOVE (0, 9) G150.0 A270.0",
+				"B MOVE (0, 9) C0.0 G90.0 A270.0",
 				"B WAIT"
 			],
 			"result": "DEFEAT",
@@ -107,29 +107,29 @@
 				"B"
 			],
 			"history": [
-				"01 MOVE (3, 3) G330.0 A30.0",
+				"01 MOVE (3, 3) C0.0 G330.0 A30.0",
 				"01 WAIT",
-				"02 MOVE (3, 5) G0.0 A30.0",
+				"02 MOVE (3, 5) C0.0 G330.0 A30.0",
 				"02 WAIT",
-				"A MOVE (9, 1) G330.0 A30.0",
+				"A MOVE (9, 1) C0.0 G330.0 A30.0",
 				"A WAIT",
-				"B MOVE (6, 9) G270.0 A90.0",
+				"B MOVE (6, 9) C0.0 G270.0 A90.0",
 				"B WAIT",
-				"01 MOVE (3, 2) G300.0 A60.0",
+				"01 MOVE (3, 2) C0.0 G300.0 A60.0",
 				"01 WAIT",
-				"02 MOVE (3, 4) G330.0 A60.0",
+				"02 MOVE (3, 4) C0.0 G300.0 A60.0",
 				"02 WAIT",
-				"A MOVE (9, 2) G300.0 A60.0",
+				"A MOVE (9, 2) C0.0 G300.0 A60.0",
 				"A WAIT",
-				"B MOVE (3, 9) G180.0 A180.0",
+				"B MOVE (3, 9) C0.0 G180.0 A180.0",
 				"B WAIT",
-				"01 MOVE (3, 1) G270.0 A90.0",
+				"01 MOVE (3, 1) C0.0 G270.0 A90.0",
 				"01 WAIT",
-				"02 MOVE (3, 3) G300.0 A90.0",
+				"02 MOVE (3, 3) C0.0 G270.0 A90.0",
 				"02 WAIT",
-				"A MOVE (9, 1) G270.0 A90.0",
+				"A MOVE (9, 1) C0.0 G270.0 A90.0",
 				"A WAIT",
-				"B MOVE (0, 9) G90.0 A300.0"
+				"B MOVE (0, 9) C30.0 G90.0 A270.0"
 			],
 			"result": "DEFEAT",
 			"seed": 1,
@@ -152,29 +152,29 @@
 				"B"
 			],
 			"history": [
-				"01 MOVE (3, 3) G330.0 A30.0",
+				"01 MOVE (3, 3) C0.0 G330.0 A30.0",
 				"01 WAIT",
-				"02 MOVE (3, 5) G0.0 A30.0",
+				"02 MOVE (3, 5) C0.0 G330.0 A30.0",
 				"02 WAIT",
-				"A MOVE (9, 0) G330.0 A330.0",
+				"A MOVE (9, 0) C330.0 G330.0 A30.0",
 				"A WAIT",
-				"B MOVE (6, 9) G270.0 A90.0",
+				"B MOVE (6, 9) C0.0 G270.0 A90.0",
 				"B WAIT",
-				"01 MOVE (3, 2) G300.0 A60.0",
+				"01 MOVE (3, 2) C0.0 G300.0 A60.0",
 				"01 WAIT",
-				"02 MOVE (3, 4) G330.0 A60.0",
+				"02 MOVE (3, 4) C0.0 G300.0 A60.0",
 				"02 WAIT",
-				"A MOVE (9, 1) G300.0 A0.0",
+				"A MOVE (9, 1) C330.0 G300.0 A60.0",
 				"A WAIT",
-				"B MOVE (3, 9) G180.0 A180.0",
+				"B MOVE (3, 9) C0.0 G180.0 A180.0",
 				"B WAIT",
-				"01 MOVE (3, 1) G270.0 A90.0",
+				"01 MOVE (3, 1) C0.0 G270.0 A90.0",
 				"01 WAIT",
-				"02 MOVE (3, 3) G300.0 A90.0",
+				"02 MOVE (3, 3) C0.0 G270.0 A90.0",
 				"02 WAIT",
-				"A MOVE (9, 0) G270.0 A330.0",
+				"A MOVE (9, 0) C300.0 G270.0 A90.0",
 				"A WAIT",
-				"B MOVE (0, 9) G90.0 A300.0",
+				"B MOVE (0, 9) C30.0 G90.0 A270.0",
 				"B WAIT"
 			],
 			"result": "DEFEAT",
@@ -198,29 +198,29 @@
 				"B"
 			],
 			"history": [
-				"01 MOVE (3, 3) G330.0 A30.0",
+				"01 MOVE (3, 3) C0.0 G330.0 A30.0",
 				"01 WAIT",
-				"02 MOVE (3, 5) G330.0 A30.0",
+				"02 MOVE (3, 5) C0.0 G330.0 A30.0",
 				"02 WAIT",
-				"A MOVE (9, 1) G330.0 A30.0",
+				"A MOVE (9, 1) C0.0 G330.0 A30.0",
 				"A WAIT",
-				"B MOVE (6, 9) G300.0 A90.0",
+				"B MOVE (6, 9) C0.0 G270.0 A90.0",
 				"B WAIT",
-				"01 MOVE (3, 2) G300.0 A60.0",
+				"01 MOVE (3, 2) C0.0 G300.0 A60.0",
 				"01 WAIT",
-				"02 MOVE (3, 4) G300.0 A60.0",
+				"02 MOVE (3, 4) C0.0 G300.0 A60.0",
 				"02 WAIT",
-				"A MOVE (9, 2) G300.0 A60.0",
+				"A MOVE (9, 2) C0.0 G300.0 A60.0",
 				"A WAIT",
-				"B MOVE (3, 9) G210.0 A180.0",
+				"B MOVE (3, 9) C0.0 G180.0 A180.0",
 				"B WAIT",
-				"01 MOVE (3, 1) G270.0 A90.0",
+				"01 MOVE (3, 1) C0.0 G270.0 A90.0",
 				"01 WAIT",
-				"02 MOVE (3, 3) G270.0 A90.0",
+				"02 MOVE (3, 3) C0.0 G270.0 A90.0",
 				"02 WAIT",
-				"A MOVE (9, 1) G270.0 A90.0",
+				"A MOVE (9, 1) C0.0 G270.0 A90.0",
 				"A WAIT",
-				"B MOVE (0, 9) G150.0 A270.0"
+				"B MOVE (0, 9) C0.0 G90.0 A270.0"
 			],
 			"result": "DEFEAT",
 			"seed": 7,
@@ -243,29 +243,29 @@
 				"B"
 			],
 			"history": [
-				"01 MOVE (3, 3) G330.0 A30.0",
+				"01 MOVE (3, 3) C0.0 G330.0 A30.0",
 				"01 WAIT",
-				"02 MOVE (3, 5) G330.0 A30.0",
+				"02 MOVE (3, 5) C0.0 G330.0 A30.0",
 				"02 WAIT",
-				"A MOVE (9, 0) G330.0 A30.0",
+				"A MOVE (9, 0) C0.0 G330.0 A30.0",
 				"A WAIT",
-				"B MOVE (6, 9) G300.0 A90.0",
+				"B MOVE (6, 9) C0.0 G270.0 A90.0",
 				"B WAIT",
-				"01 MOVE (3, 2) G300.0 A60.0",
+				"01 MOVE (3, 2) C0.0 G300.0 A60.0",
 				"01 WAIT",
-				"02 MOVE (3, 4) G300.0 A60.0",
+				"02 MOVE (3, 4) C0.0 G300.0 A60.0",
 				"02 WAIT",
-				"A MOVE (9, 1) G300.0 A60.0",
+				"A MOVE (9, 1) C0.0 G300.0 A60.0",
 				"A WAIT",
-				"B MOVE (3, 9) G210.0 A180.0",
+				"B MOVE (3, 9) C0.0 G180.0 A180.0",
 				"B WAIT",
-				"01 MOVE (3, 1) G270.0 A90.0",
+				"01 MOVE (3, 1) C0.0 G270.0 A90.0",
 				"01 WAIT",
-				"02 MOVE (3, 3) G270.0 A90.0",
+				"02 MOVE (3, 3) C0.0 G270.0 A90.0",
 				"02 WAIT",
-				"A MOVE (9, 0) G270.0 A90.0",
+				"A MOVE (9, 0) C0.0 G270.0 A90.0",
 				"A WAIT",
-				"B MOVE (0, 9) G150.0 A270.0",
+				"B MOVE (0, 9) C0.0 G90.0 A270.0",
 				"B WAIT"
 			],
 			"result": "DEFEAT",
@@ -279,12 +279,678 @@
 		{
 			"actions": {
 				"ENEMY": {
-					"DAMAGE": 9,
-					"HEAL": 1,
+					"DAMAGE": 7,
+					"HEAL": 5,
 					"WAIT": 0
 				},
 				"PLAYER": {
-					"DAMAGE": 10,
+					"DAMAGE": 12,
+					"HEAL": 5,
+					"WAIT": 0
+				}
+			},
+			"commands": [
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							4,
+							4
+						],
+						[
+							5,
+							4
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 2,
+					"target_cell": [
+						6,
+						4
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							4,
+							6
+						],
+						[
+							5,
+							6
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"target_cell": [
+						6,
+						6
+					],
+					"unit": "02"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							6,
+							5
+						]
+					],
+					"skill": "ACTIVE_HEAL_ADJACENT",
+					"target": 3,
+					"target_cell": [
+						6,
+						6
+					],
+					"unit": "A"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							6,
+							7
+						],
+						[
+							5,
+							7
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						5,
+						6
+					],
+					"unit": "B"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							5,
+							5
+						],
+						[
+							4,
+							5
+						],
+						[
+							4,
+							6
+						]
+					],
+					"skill": "ACTIVE_HEAL_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						5,
+						6
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							6,
+							6
+						],
+						[
+							6,
+							7
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"target_cell": [
+						5,
+						7
+					],
+					"unit": "02"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							6,
+							6
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						6,
+						7
+					],
+					"unit": "A"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							5,
+							8
+						],
+						[
+							6,
+							8
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						6,
+						7
+					],
+					"unit": "B"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							5,
+							6
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 2,
+					"target_cell": [
+						6,
+						6
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							7,
+							7
+						],
+						[
+							7,
+							8
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"target_cell": [
+						6,
+						8
+					],
+					"unit": "02"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							6,
+							7
+						]
+					],
+					"skill": "ACTIVE_HEAL_ADJACENT",
+					"target": 3,
+					"target_cell": [
+						6,
+						8
+					],
+					"unit": "A"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							5,
+							8
+						],
+						[
+							5,
+							7
+						]
+					],
+					"skill": "ACTIVE_HEAL_ADJACENT",
+					"target": 2,
+					"target_cell": [
+						6,
+						7
+					],
+					"unit": "B"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							6,
+							6
+						],
+						[
+							7,
+							6
+						],
+						[
+							7,
+							7
+						]
+					],
+					"skill": "ACTIVE_HEAL_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						7,
+						8
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							6,
+							8
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 2,
+					"target_cell": [
+						6,
+						7
+					],
+					"unit": "02"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							6,
+							6
+						],
+						[
+							5,
+							6
+						]
+					],
+					"skill": "ACTIVE_HEAL_ADJACENT",
+					"target": 3,
+					"target_cell": [
+						5,
+						7
+					],
+					"unit": "A"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							4,
+							7
+						],
+						[
+							4,
+							8
+						],
+						[
+							5,
+							8
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						6,
+						8
+					],
+					"unit": "B"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							7,
+							6
+						],
+						[
+							6,
+							6
+						],
+						[
+							6,
+							7
+						]
+					],
+					"skill": "ACTIVE_HEAL_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						6,
+						8
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							6,
+							6
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 2,
+					"target_cell": [
+						5,
+						6
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							6,
+							7
+						],
+						[
+							5,
+							7
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 2,
+					"target_cell": [
+						5,
+						6
+					],
+					"unit": "02"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							4,
+							6
+						],
+						[
+							4,
+							7
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						5,
+						7
+					],
+					"unit": "A"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							5,
+							9
+						],
+						[
+							4,
+							9
+						],
+						[
+							4,
+							8
+						]
+					],
+					"skill": "ACTIVE_HEAL_ADJACENT",
+					"target": 2,
+					"target_cell": [
+						4,
+						7
+					],
+					"unit": "B"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							6,
+							7
+						]
+					],
+					"skill": "ACTIVE_HEAL_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						5,
+						7
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							5,
+							6
+						],
+						[
+							4,
+							6
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 2,
+					"target_cell": [
+						4,
+						7
+					],
+					"unit": "02"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							4,
+							7
+						],
+						[
+							5,
+							7
+						],
+						[
+							5,
+							6
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						4,
+						6
+					],
+					"unit": "B"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							5,
+							7
+						],
+						[
+							4,
+							7
+						]
+					],
+					"skill": "ACTIVE_HEAL_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						4,
+						6
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							4,
+							5
+						],
+						[
+							5,
+							5
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"target_cell": [
+						5,
+						6
+					],
+					"unit": "02"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							6,
+							6
+						],
+						[
+							6,
+							7
+						],
+						[
+							5,
+							7
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 0,
+					"target_cell": [
+						4,
+						7
+					],
+					"unit": "B"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							4,
+							6
+						],
+						[
+							5,
+							6
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"target_cell": [
+						5,
+						7
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							6,
+							5
+						],
+						[
+							6,
+							6
+						],
+						[
+							6,
+							7
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"target_cell": [
+						5,
+						7
+					],
+					"unit": "02"
+				}
+			],
+			"heal_weight": 1.1,
+			"history": [
+				"01 MOVE (5, 4) C0.0 G300.0 A60.0",
+				"01 DAMAGE A 10 (HP 90.00)",
+				"02 MOVE (5, 6) C30.0 G300.0 A60.0",
+				"02 DAMAGE B 18 (HP 82.00)",
+				"A MOVE (6, 5) C0.0 G330.0 A30.0",
+				"A HEAL B 34 (HP 100.00)",
+				"B MOVE (5, 7) C330.0 G300.0 A60.0",
+				"B DAMAGE 02 21 (HP 79.00)",
+				"01 MOVE (4, 6) C45.0 G210.0 A150.0",
+				"01 HEAL 02 16 (HP 95.00)",
+				"02 MOVE (6, 7) C0.0 G240.0 A120.0",
+				"02 DAMAGE B 21 (HP 79.00)",
+				"A MOVE (6, 6) C0.0 G300.0 A60.0",
+				"A DAMAGE 02 20 (HP 75.00)",
+				"B MOVE (6, 8) C330.0 G240.0 A120.0",
+				"B DAMAGE 02 19 (HP 56.00)",
+				"01 MOVE (5, 6) C45.0 G180.0 A180.0",
+				"01 DAMAGE A 19 (HP 71.00)",
+				"02 MOVE (7, 8) C0.0 G180.0 A180.0",
+				"02 DAMAGE B 30 (HP 49.00)",
+				"A MOVE (6, 7) C330.0 G270.0 A90.0",
+				"A HEAL B 17 (HP 66.00)",
+				"B MOVE (5, 7) C330.0 G180.0 A180.0",
+				"B HEAL A 22 (HP 93.00)",
+				"01 MOVE (7, 7) C45.0 G90.0 A270.0",
+				"01 HEAL 02 17 (HP 73.00)",
+				"02 MOVE (6, 8) C0.0 G150.0 A210.0",
+				"02 DAMAGE A 24 (HP 69.00)",
+				"A MOVE (5, 6) C330.0 G210.0 A150.0",
+				"A HEAL B 17 (HP 83.00)",
+				"B MOVE (5, 8) C300.0 G90.0 A270.0",
+				"B DAMAGE 02 22 (HP 51.00)",
+				"01 MOVE (6, 7) C0.0 G0.0 A0.0",
+				"01 HEAL 02 48 (HP 99.00)",
+				"01 MOVE (6, 6) C0.0 G330.0 A30.0",
+				"01 DAMAGE A 30 (HP 39.00)",
+				"02 MOVE (5, 7) C330.0 G90.0 A270.0",
+				"02 DAMAGE A 24 (HP 15.00)",
+				"A MOVE (4, 7) C0.0 G150.0 A210.0",
+				"A DAMAGE 02 20 (HP 79.00)",
+				"B MOVE (4, 8) C270.0 G0.0 A0.0",
+				"B HEAL A 22 (HP 37.00)",
+				"01 MOVE (6, 7) C315.0 G300.0 A60.0",
+				"01 HEAL 02 19 (HP 98.00)",
+				"02 MOVE (4, 6) C0.0 G30.0 A330.0",
+				"02 DAMAGE A 67 (HP 0.00)",
+				"B MOVE (5, 6) C270.0 G270.0 A90.0",
+				"B DAMAGE 02 23 (HP 75.00)",
+				"01 MOVE (4, 7) C315.0 G240.0 A120.0",
+				"01 HEAL 02 15 (HP 90.00)",
+				"02 MOVE (5, 5) C0.0 G330.0 A30.0",
+				"02 DAMAGE B 62 (HP 21.00)",
+				"B MOVE (5, 7) C240.0 G180.0 A180.0",
+				"B DAMAGE 01 37 (HP 63.00)",
+				"01 MOVE (5, 6) C0.0 G180.0 A180.0",
+				"01 DAMAGE B 14 (HP 7.00)",
+				"02 MOVE (6, 7) C330.0 G240.0 A120.0",
+				"02 DAMAGE B 17 (HP 0.00)"
+			],
+			"repeated_states": 0,
+			"result": "VICTORY",
+			"roles": true,
+			"seed": 0,
+			"turns": 29
+		},
+		{
+			"actions": {
+				"ENEMY": {
+					"DAMAGE": 12,
+					"HEAL": 0,
+					"WAIT": 0
+				},
+				"PLAYER": {
+					"DAMAGE": 12,
 					"HEAL": 3,
 					"WAIT": 0
 				}
@@ -335,18 +1001,18 @@
 					"path": [
 						[
 							6,
-							3
+							5
 						],
 						[
 							5,
-							3
+							5
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 0,
+					"target": 1,
 					"target_cell": [
 						5,
-						4
+						6
 					],
 					"unit": "A"
 				},
@@ -374,15 +1040,167 @@
 					"camp": "PLAYER",
 					"path": [
 						[
+							6,
+							4
+						],
+						[
+							6,
+							5
+						],
+						[
+							6,
+							6
+						]
+					],
+					"skill": "ACTIVE_HEAL_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						5,
+						6
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							4,
+							6
+						],
+						[
+							4,
+							5
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 2,
+					"target_cell": [
+						5,
+						5
+					],
+					"unit": "02"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							5,
+							4
+						],
+						[
+							4,
+							4
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						4,
+						5
+					],
+					"unit": "A"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							5,
+							6
+						],
+						[
 							5,
 							5
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						4,
+						5
+					],
+					"unit": "B"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							6,
+							5
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"target_cell": [
+						5,
+						5
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							4,
+							6
 						],
+						[
+							5,
+							6
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"target_cell": [
+						5,
+						5
+					],
+					"unit": "02"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
 						[
 							4,
 							5
 						],
 						[
 							4,
+							6
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						5,
+						6
+					],
+					"unit": "A"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							5,
+							4
+						],
+						[
+							6,
+							4
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 0,
+					"target_cell": [
+						6,
+						5
+					],
+					"unit": "B"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							6,
 							6
 						]
 					],
@@ -402,14 +1220,14 @@
 							5
 						],
 						[
-							4,
+							6,
 							5
 						]
 					],
 					"skill": "ACTIVE_HEAL_ADJACENT",
 					"target": 0,
 					"target_cell": [
-						4,
+						6,
 						6
 					],
 					"unit": "02"
@@ -419,282 +1237,142 @@
 					"path": [
 						[
 							4,
+							5
+						],
+						[
+							5,
+							5
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						6,
+						5
+					],
+					"unit": "A"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							7,
+							4
+						],
+						[
+							7,
+							5
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 1,
+					"target_cell": [
+						6,
+						5
+					],
+					"unit": "B"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							6,
+							5
+						],
+						[
+							6,
+							4
+						],
+						[
+							7,
+							4
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"target_cell": [
+						7,
+						5
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							6,
+							4
+						],
+						[
+							6,
+							5
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"target_cell": [
+						7,
+						5
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							5,
+							4
+						],
+						[
+							6,
+							4
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 0,
+					"target_cell": [
+						6,
+						5
+					],
+					"unit": "A"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							7,
+							5
+						],
+						[
+							7,
+							4
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 2,
+					"target_cell": [
+						6,
+						4
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							6,
 							3
 						],
 						[
-							4,
-							4
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						4,
-						5
-					],
-					"unit": "A"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							5,
-							6
-						],
-						[
-							5,
-							5
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						4,
-						5
-					],
-					"unit": "B"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							5,
-							6
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"target_cell": [
-						5,
-						5
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							3,
-							5
-						],
-						[
-							3,
-							4
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 2,
-					"target_cell": [
-						4,
-						4
-					],
-					"unit": "02"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							5,
-							4
-						],
-						[
-							6,
-							4
-						],
-						[
-							6,
-							5
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 3,
-					"target_cell": [
-						5,
-						5
-					],
-					"unit": "A"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							4,
-							5
-						],
-						[
-							4,
-							6
+							7,
+							3
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 0,
 					"target_cell": [
-						5,
-						6
-					],
-					"unit": "B"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							5,
-							5
-						],
-						[
-							5,
-							4
-						],
-						[
-							4,
-							4
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						3,
+						7,
 						4
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							3,
-							5
-						],
-						[
-							4,
-							5
-						],
-						[
-							5,
-							5
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 2,
-					"target_cell": [
-						6,
-						5
-					],
-					"unit": "02"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							6,
-							4
-						],
-						[
-							5,
-							4
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						5,
-						5
-					],
-					"unit": "A"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							4,
-							5
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						5,
-						5
-					],
-					"unit": "B"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							3,
-							4
-						],
-						[
-							3,
-							5
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"target_cell": [
-						4,
-						5
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							3,
-							4
-						],
-						[
-							4,
-							4
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 2,
-					"target_cell": [
-						5,
-						4
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							5,
-							6
-						],
-						[
-							4,
-							6
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"target_cell": [
-						4,
-						5
-					],
-					"unit": "02"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							5,
-							5
-						],
-						[
-							5,
-							6
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						4,
-						6
 					],
 					"unit": "A"
 				},
@@ -702,19 +1380,19 @@
 					"camp": "PLAYER",
 					"path": [
 						[
-							5,
+							8,
 							4
 						],
 						[
-							5,
-							5
+							8,
+							3
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 2,
 					"target_cell": [
-						5,
-						6
+						7,
+						3
 					],
 					"unit": "01"
 				},
@@ -722,19 +1400,19 @@
 					"camp": "ENEMY",
 					"path": [
 						[
-							6,
-							6
+							7,
+							4
 						],
 						[
-							6,
-							5
+							8,
+							4
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 0,
 					"target_cell": [
-						5,
-						5
+						8,
+						3
 					],
 					"unit": "A"
 				},
@@ -742,724 +1420,156 @@
 					"camp": "PLAYER",
 					"path": [
 						[
-							5,
-							4
+							9,
+							3
 						],
 						[
-							6,
+							9,
 							4
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 2,
 					"target_cell": [
-						6,
-						5
+						8,
+						4
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							8,
+							3
+						],
+						[
+							9,
+							3
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 0,
+					"target_cell": [
+						9,
+						4
+					],
+					"unit": "A"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							8,
+							4
+						],
+						[
+							8,
+							3
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 2,
+					"target_cell": [
+						9,
+						3
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							8,
+							2
+						],
+						[
+							9,
+							2
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 2,
+					"target_cell": [
+						9,
+						3
 					],
 					"unit": "01"
 				}
 			],
 			"heal_weight": 1.1,
 			"history": [
-				"01 MOVE (5, 4) G300.0 A60.0",
+				"01 MOVE (5, 4) C0.0 G300.0 A60.0",
 				"01 DAMAGE A 10 (HP 90.00)",
-				"02 MOVE (5, 6) G300.0 A90.0",
-				"02 DAMAGE B 16 (HP 84.00)",
-				"A MOVE (5, 3) G330.0 A60.0",
-				"A DAMAGE 01 21 (HP 79.00)",
-				"B MOVE (5, 7) G300.0 A0.0",
-				"B DAMAGE 02 41 (HP 59.00)",
-				"01 MOVE (4, 6) G210.0 A180.0",
-				"01 HEAL 02 18 (HP 77.00)",
-				"02 MOVE (4, 5) G240.0 A150.0",
-				"02 HEAL 01 24 (HP 100.00)",
-				"A MOVE (4, 4) G300.0 A120.0",
-				"A DAMAGE 02 20 (HP 57.00)",
-				"B MOVE (5, 5) G240.0 A60.0",
-				"B DAMAGE 02 20 (HP 37.00)",
-				"01 MOVE (5, 6) G180.0 A210.0",
-				"01 DAMAGE B 17 (HP 67.00)",
-				"02 MOVE (3, 4) G180.0 A210.0",
-				"02 DAMAGE A 27 (HP 63.00)",
-				"A MOVE (6, 5) G210.0 A210.0",
-				"A HEAL B 22 (HP 89.00)",
-				"B MOVE (4, 6) G180.0 A150.0",
-				"B DAMAGE 01 19 (HP 81.00)",
-				"01 MOVE (4, 4) G90.0 A300.0",
-				"01 HEAL 02 16 (HP 53.00)",
-				"02 MOVE (5, 5) G90.0 A300.0",
-				"02 DAMAGE A 23 (HP 40.00)",
-				"A MOVE (5, 4) G150.0 A270.0",
-				"A DAMAGE 02 19 (HP 34.00)",
-				"B MOVE (4, 5) G150.0 A180.0",
-				"B DAMAGE 02 22 (HP 12.00)",
-				"01 MOVE (3, 5) G30.0 A0.0",
-				"01 DAMAGE B 44 (HP 45.00)",
-				"01 MOVE (4, 4) G330.0 A60.0",
-				"01 DAMAGE A 18 (HP 22.00)",
-				"02 MOVE (4, 6) G30.0 A30.0",
-				"02 DAMAGE B 66 (HP 0.00)",
-				"A MOVE (5, 6) G90.0 A330.0",
-				"A DAMAGE 02 14 (HP 0.00)",
-				"01 MOVE (5, 5) G270.0 A120.0",
-				"01 DAMAGE A 14 (HP 8.00)",
-				"A MOVE (6, 5) G30.0 A30.0",
-				"A DAMAGE 01 50 (HP 31.00)",
-				"01 MOVE (6, 4) G210.0 A180.0",
-				"01 DAMAGE A 11 (HP 0.00)"
-			],
-			"repeated_states": 0,
-			"result": "VICTORY",
-			"roles": true,
-			"seed": 0,
-			"turns": 23
-		},
-		{
-			"actions": {
-				"ENEMY": {
-					"DAMAGE": 11,
-					"HEAL": 0,
-					"WAIT": 0
-				},
-				"PLAYER": {
-					"DAMAGE": 8,
-					"HEAL": 9,
-					"WAIT": 0
-				}
-			},
-			"commands": [
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							4,
-							4
-						],
-						[
-							5,
-							4
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 2,
-					"target_cell": [
-						6,
-						4
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							4,
-							6
-						],
-						[
-							5,
-							6
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"target_cell": [
-						6,
-						6
-					],
-					"unit": "02"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							6,
-							5
-						],
-						[
-							5,
-							5
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						5,
-						6
-					],
-					"unit": "A"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							6,
-							7
-						],
-						[
-							5,
-							7
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						5,
-						6
-					],
-					"unit": "B"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							6,
-							4
-						],
-						[
-							6,
-							5
-						],
-						[
-							6,
-							6
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						5,
-						6
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							4,
-							6
-						],
-						[
-							4,
-							5
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 2,
-					"target_cell": [
-						5,
-						5
-					],
-					"unit": "02"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							5,
-							4
-						],
-						[
-							4,
-							4
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						4,
-						5
-					],
-					"unit": "A"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							6,
-							7
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 0,
-					"target_cell": [
-						6,
-						6
-					],
-					"unit": "B"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							6,
-							5
-						],
-						[
-							5,
-							5
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						4,
-						5
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							3,
-							5
-						],
-						[
-							3,
-							4
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 2,
-					"target_cell": [
-						4,
-						4
-					],
-					"unit": "02"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							4,
-							3
-						],
-						[
-							3,
-							3
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						3,
-						4
-					],
-					"unit": "A"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							6,
-							6
-						],
-						[
-							6,
-							5
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 0,
-					"target_cell": [
-						5,
-						5
-					],
-					"unit": "B"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							5,
-							4
-						],
-						[
-							4,
-							4
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						3,
-						4
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							3,
-							5
-						],
-						[
-							4,
-							5
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 0,
-					"target_cell": [
-						4,
-						4
-					],
-					"unit": "02"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							4,
-							3
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 0,
-					"target_cell": [
-						4,
-						4
-					],
-					"unit": "A"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							6,
-							4
-						],
-						[
-							5,
-							4
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 0,
-					"target_cell": [
-						4,
-						4
-					],
-					"unit": "B"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							3,
-							4
-						],
-						[
-							3,
-							3
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 2,
-					"target_cell": [
-						4,
-						3
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							3,
-							2
-						],
-						[
-							4,
-							2
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 2,
-					"target_cell": [
-						4,
-						3
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							4,
-							4
-						],
-						[
-							4,
-							3
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 0,
-					"target_cell": [
-						4,
-						2
-					],
-					"unit": "02"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							5,
-							3
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						4,
-						3
-					],
-					"unit": "B"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							3,
-							2
-						],
-						[
-							3,
-							3
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						4,
-						3
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							4,
-							2
-						],
-						[
-							3,
-							2
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 0,
-					"target_cell": [
-						3,
-						3
-					],
-					"unit": "02"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							5,
-							2
-						],
-						[
-							4,
-							2
-						],
-						[
-							4,
-							3
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 0,
-					"target_cell": [
-						3,
-						3
-					],
-					"unit": "B"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							2,
-							3
-						],
-						[
-							2,
-							2
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						3,
-						2
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							3,
-							1
-						],
-						[
-							4,
-							1
-						],
-						[
-							4,
-							2
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"target_cell": [
-						4,
-						3
-					],
-					"unit": "02"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							5,
-							3
-						],
-						[
-							5,
-							2
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						4,
-						2
-					],
-					"unit": "B"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							3,
-							2
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						4,
-						2
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							4,
-							1
-						],
-						[
-							5,
-							1
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"target_cell": [
-						5,
-						2
-					],
-					"unit": "02"
-				}
-			],
-			"heal_weight": 1.1,
-			"history": [
-				"01 MOVE (5, 4) G300.0 A60.0",
-				"01 DAMAGE A 10 (HP 90.00)",
-				"02 MOVE (5, 6) G300.0 A60.0",
+				"02 MOVE (5, 6) C0.0 G300.0 A60.0",
 				"02 DAMAGE B 17 (HP 83.00)",
-				"A MOVE (5, 5) G300.0 A60.0",
+				"A MOVE (5, 5) C0.0 G300.0 A60.0",
 				"A DAMAGE 02 20 (HP 80.00)",
-				"B MOVE (5, 7) G330.0 A60.0",
-				"B DAMAGE 02 23 (HP 57.00)",
-				"01 MOVE (6, 6) G210.0 A150.0",
-				"01 HEAL 02 16 (HP 73.00)",
-				"02 MOVE (4, 5) G240.0 A120.0",
+				"B MOVE (5, 7) C0.0 G300.0 A60.0",
+				"B DAMAGE 02 20 (HP 60.00)",
+				"01 MOVE (6, 6) C0.0 G210.0 A150.0",
+				"01 HEAL 02 16 (HP 76.00)",
+				"02 MOVE (4, 5) C0.0 G240.0 A120.0",
 				"02 DAMAGE A 22 (HP 68.00)",
-				"A MOVE (4, 4) G240.0 A120.0",
-				"A DAMAGE 02 19 (HP 54.00)",
-				"B MOVE (6, 7) G330.0 A90.0",
-				"B DAMAGE 01 20 (HP 80.00)",
-				"01 MOVE (5, 5) G150.0 A210.0",
-				"01 HEAL 02 16 (HP 70.00)",
-				"02 MOVE (3, 4) G180.0 A120.0",
-				"02 DAMAGE A 25 (HP 43.00)",
-				"A MOVE (3, 3) G210.0 A180.0",
-				"A DAMAGE 02 22 (HP 48.00)",
-				"B MOVE (6, 5) G270.0 A150.0",
-				"B DAMAGE 01 17 (HP 63.00)",
-				"01 MOVE (4, 4) G90.0 A270.0",
-				"01 HEAL 02 15 (HP 63.00)",
-				"02 MOVE (4, 5) G120.0 A120.0",
-				"02 HEAL 01 31 (HP 94.00)",
-				"A MOVE (4, 3) G210.0 A210.0",
-				"A DAMAGE 01 23 (HP 71.00)",
-				"B MOVE (5, 4) G210.0 A210.0",
-				"B DAMAGE 01 23 (HP 48.00)",
-				"01 MOVE (3, 3) G30.0 A330.0",
-				"01 DAMAGE A 28 (HP 15.00)",
-				"01 MOVE (4, 2) G330.0 A30.0",
-				"01 DAMAGE A 28 (HP 0.00)",
-				"02 MOVE (4, 3) G90.0 A180.0",
-				"02 HEAL 01 24 (HP 72.00)",
-				"B MOVE (5, 3) G180.0 A240.0",
-				"B DAMAGE 02 20 (HP 43.00)",
-				"01 MOVE (3, 3) G270.0 A90.0",
-				"01 HEAL 02 15 (HP 58.00)",
-				"02 MOVE (3, 2) G30.0 A240.0",
-				"02 HEAL 01 28 (HP 100.00)",
-				"B MOVE (4, 3) G120.0 A330.0",
-				"B DAMAGE 01 20 (HP 80.00)",
-				"01 MOVE (2, 2) G240.0 A150.0",
-				"01 HEAL 02 15 (HP 73.00)",
-				"02 MOVE (4, 2) G300.0 A330.0",
-				"02 DAMAGE B 65 (HP 18.00)",
-				"B MOVE (5, 2) G60.0 A30.0",
-				"B DAMAGE 02 36 (HP 37.00)",
-				"01 MOVE (3, 2) G210.0 A180.0",
-				"01 HEAL 02 18 (HP 55.00)",
-				"02 MOVE (5, 1) G240.0 A30.0",
-				"02 DAMAGE B 21 (HP 0.00)"
+				"A MOVE (4, 4) C0.0 G240.0 A120.0",
+				"A DAMAGE 02 19 (HP 57.00)",
+				"B MOVE (5, 5) C0.0 G240.0 A120.0",
+				"B DAMAGE 02 19 (HP 38.00)",
+				"01 MOVE (6, 5) C0.0 G180.0 A180.0",
+				"01 DAMAGE B 20 (HP 63.00)",
+				"02 MOVE (5, 6) C0.0 G180.0 A180.0",
+				"02 DAMAGE B 30 (HP 33.00)",
+				"A MOVE (4, 6) C0.0 G180.0 A180.0",
+				"A DAMAGE 02 23 (HP 15.00)",
+				"B MOVE (6, 4) C0.0 G180.0 A180.0",
+				"B DAMAGE 01 21 (HP 79.00)",
+				"01 MOVE (6, 6) C0.0 G150.0 A210.0",
+				"01 HEAL 02 16 (HP 31.00)",
+				"02 MOVE (6, 5) C0.0 G120.0 A240.0",
+				"02 HEAL 01 23 (HP 100.00)",
+				"A MOVE (5, 5) C0.0 G120.0 A240.0",
+				"A DAMAGE 02 19 (HP 12.00)",
+				"B MOVE (7, 5) C0.0 G120.0 A240.0",
+				"B DAMAGE 02 19 (HP 0.00)",
+				"01 MOVE (7, 4) C0.0 G60.0 A300.0",
+				"01 DAMAGE B 16 (HP 17.00)",
+				"01 MOVE (6, 5) C0.0 G0.0 A0.0",
+				"01 DAMAGE B 46 (HP 0.00)",
+				"A MOVE (6, 4) C0.0 G60.0 A300.0",
+				"A DAMAGE 01 12 (HP 88.00)",
+				"01 MOVE (7, 4) C0.0 G300.0 A60.0",
+				"01 DAMAGE A 15 (HP 53.00)",
+				"A MOVE (7, 3) C0.0 G0.0 A0.0",
+				"A DAMAGE 01 49 (HP 39.00)",
+				"01 MOVE (8, 3) C315.0 G240.0 A120.0",
+				"01 DAMAGE A 9 (HP 44.00)",
+				"A MOVE (8, 4) C330.0 G300.0 A60.0",
+				"A DAMAGE 01 20 (HP 19.00)",
+				"01 MOVE (9, 4) C315.0 G180.0 A180.0",
+				"01 DAMAGE A 19 (HP 25.00)",
+				"A MOVE (9, 3) C330.0 G240.0 A120.0",
+				"A DAMAGE 01 16 (HP 3.00)",
+				"01 MOVE (8, 3) C270.0 G120.0 A240.0",
+				"01 DAMAGE A 17 (HP 8.00)",
+				"01 MOVE (9, 2) C225.0 G60.0 A300.0",
+				"01 DAMAGE A 15 (HP 0.00)"
 			],
 			"repeated_states": 0,
 			"result": "VICTORY",
 			"roles": true,
 			"seed": 1,
-			"turns": 28
+			"turns": 27
 		},
 		{
 			"actions": {
 				"ENEMY": {
 					"DAMAGE": 10,
-					"HEAL": 2,
+					"HEAL": 0,
 					"WAIT": 0
 				},
 				"PLAYER": {
-					"DAMAGE": 10,
-					"HEAL": 8,
+					"DAMAGE": 11,
+					"HEAL": 2,
 					"WAIT": 0
 				}
 			},
@@ -1529,14 +1639,18 @@
 					"path": [
 						[
 							6,
-							5
+							7
+						],
+						[
+							5,
+							7
 						]
 					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 2,
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 1,
 					"target_cell": [
 						5,
-						5
+						6
 					],
 					"unit": "B"
 				},
@@ -1544,15 +1658,15 @@
 					"camp": "PLAYER",
 					"path": [
 						[
-							4,
+							6,
 							4
 						],
 						[
-							4,
+							6,
 							5
 						],
 						[
-							4,
+							6,
 							6
 						]
 					],
@@ -1568,25 +1682,37 @@
 					"camp": "PLAYER",
 					"path": [
 						[
-							6,
+							4,
 							6
 						],
 						[
-							7,
-							6
-						],
-						[
-							7,
-							5
+							4,
+							7
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
+					"target_cell": [
+						5,
+						7
+					],
+					"unit": "02"
+				},
+				{
+					"camp": "ENEMY",
+					"path": [
+						[
+							6,
+							5
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 0,
 					"target_cell": [
 						6,
-						5
+						6
 					],
-					"unit": "02"
+					"unit": "A"
 				},
 				{
 					"camp": "ENEMY",
@@ -1596,21 +1722,53 @@
 							6
 						],
 						[
-							6,
-							6
-						],
-						[
-							7,
+							4,
 							6
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 1,
 					"target_cell": [
-						7,
-						5
+						4,
+						7
 					],
-					"unit": "A"
+					"unit": "B"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							5,
+							6
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"target_cell": [
+						4,
+						6
+					],
+					"unit": "01"
+				},
+				{
+					"camp": "PLAYER",
+					"path": [
+						[
+							3,
+							7
+						],
+						[
+							3,
+							6
+						]
+					],
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"target_cell": [
+						4,
+						6
+					],
+					"unit": "02"
 				},
 				{
 					"camp": "ENEMY",
@@ -1622,72 +1780,16 @@
 						[
 							4,
 							5
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 0,
-					"target_cell": [
-						4,
-						6
-					],
-					"unit": "B"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							5,
-							6
 						],
 						[
-							5,
-							5
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"target_cell": [
-						4,
-						5
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							8,
-							5
-						],
-						[
-							8,
-							6
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 2,
-					"target_cell": [
-						7,
-						6
-					],
-					"unit": "02"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							7,
-							5
-						],
-						[
-							8,
+							3,
 							5
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 1,
 					"target_cell": [
-						8,
+						3,
 						6
 					],
 					"unit": "A"
@@ -1697,109 +1799,17 @@
 					"path": [
 						[
 							4,
-							6
+							7
 						],
 						[
-							5,
-							6
+							3,
+							7
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 0,
-					"target_cell": [
-						5,
-						5
-					],
-					"unit": "B"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							6,
-							5
-						],
-						[
-							7,
-							5
-						],
-						[
-							7,
-							6
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
 					"target": 1,
 					"target_cell": [
-						8,
-						6
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							8,
-							7
-						],
-						[
-							7,
-							7
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 0,
-					"target_cell": [
-						7,
-						6
-					],
-					"unit": "02"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							7,
-							5
-						],
-						[
-							6,
-							5
-						],
-						[
-							6,
-							6
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 3,
-					"target_cell": [
-						5,
-						6
-					],
-					"unit": "A"
-				},
-				{
-					"camp": "ENEMY",
-					"path": [
-						[
-							5,
-							5
-						],
-						[
-							6,
-							5
-						],
-						[
-							7,
-							5
-						]
-					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 0,
-					"target_cell": [
-						7,
+						3,
 						6
 					],
 					"unit": "B"
@@ -1808,38 +1818,18 @@
 					"camp": "PLAYER",
 					"path": [
 						[
-							8,
-							6
+							5,
+							7
 						],
 						[
-							8,
-							5
+							4,
+							7
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"target_cell": [
-						7,
-						5
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							8,
-							6
-						],
-						[
-							8,
-							7
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						7,
+						3,
 						7
 					],
 					"unit": "01"
@@ -1848,15 +1838,23 @@
 					"camp": "PLAYER",
 					"path": [
 						[
-							7,
+							4,
 							6
+						],
+						[
+							5,
+							6
+						],
+						[
+							5,
+							7
 						]
 					],
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
+					"skill": "ACTIVE_HEAL_ADJACENT",
+					"target": 0,
 					"target_cell": [
-						7,
-						5
+						4,
+						7
 					],
 					"unit": "02"
 				},
@@ -1864,19 +1862,23 @@
 					"camp": "ENEMY",
 					"path": [
 						[
-							6,
-							5
+							3,
+							6
 						],
 						[
-							7,
-							5
+							4,
+							6
+						],
+						[
+							5,
+							6
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 1,
 					"target_cell": [
-						7,
-						6
+						5,
+						7
 					],
 					"unit": "A"
 				},
@@ -1884,14 +1886,22 @@
 					"camp": "PLAYER",
 					"path": [
 						[
-							8,
+							4,
 							6
+						],
+						[
+							4,
+							5
+						],
+						[
+							5,
+							5
 						]
 					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 1,
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 2,
 					"target_cell": [
-						7,
+						5,
 						6
 					],
 					"unit": "01"
@@ -1901,98 +1911,78 @@
 					"path": [
 						[
 							6,
-							6
+							5
 						],
 						[
 							6,
-							5
+							6
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 2,
 					"target_cell": [
-						7,
-						5
+						5,
+						6
 					],
-					"unit": "02"
+					"unit": "01"
 				},
 				{
 					"camp": "ENEMY",
 					"path": [
 						[
-							8,
-							5
+							5,
+							7
+						],
+						[
+							6,
+							7
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 0,
-					"target_cell": [
-						8,
-						6
-					],
-					"unit": "A"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							7,
-							6
-						],
-						[
-							7,
-							5
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 1,
 					"target_cell": [
 						6,
-						5
+						6
 					],
-					"unit": "01"
+					"unit": "A"
 				},
 				{
 					"camp": "PLAYER",
 					"path": [
 						[
-							6,
-							4
+							7,
+							6
 						],
 						[
 							7,
-							4
+							7
 						]
 					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 0,
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 2,
 					"target_cell": [
-						7,
-						5
+						6,
+						7
 					],
-					"unit": "02"
+					"unit": "01"
 				},
 				{
 					"camp": "ENEMY",
 					"path": [
 						[
-							8,
-							4
-						],
-						[
-							8,
-							3
+							6,
+							6
 						],
 						[
 							7,
-							3
+							6
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 1,
+					"target": 0,
 					"target_cell": [
 						7,
-						4
+						7
 					],
 					"unit": "A"
 				},
@@ -2001,54 +1991,38 @@
 					"path": [
 						[
 							8,
-							5
+							7
 						],
 						[
 							8,
-							4
-						]
-					],
-					"skill": "ACTIVE_HEAL_ADJACENT",
-					"target": 1,
-					"target_cell": [
-						7,
-						4
-					],
-					"unit": "01"
-				},
-				{
-					"camp": "PLAYER",
-					"path": [
-						[
-							6,
-							4
-						],
-						[
-							6,
-							3
+							6
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 2,
 					"target_cell": [
 						7,
-						3
+						6
 					],
-					"unit": "02"
+					"unit": "01"
 				},
 				{
 					"camp": "ENEMY",
 					"path": [
 						[
+							7,
+							7
+						],
+						[
 							8,
-							3
+							7
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 0,
 					"target_cell": [
 						8,
-						4
+						6
 					],
 					"unit": "A"
 				},
@@ -2056,91 +2030,77 @@
 					"camp": "PLAYER",
 					"path": [
 						[
-							9,
-							4
+							7,
+							6
 						],
 						[
-							9,
-							3
+							7,
+							7
 						]
 					],
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 2,
 					"target_cell": [
 						8,
-						3
+						7
 					],
 					"unit": "01"
 				}
 			],
 			"heal_weight": 1.1,
 			"history": [
-				"01 MOVE (5, 4) G300.0 A0.0",
-				"01 DAMAGE A 21 (HP 79.00)",
-				"02 MOVE (5, 6) G300.0 A90.0",
-				"02 DAMAGE B 16 (HP 84.00)",
-				"A MOVE (5, 5) G300.0 A90.0",
-				"A DAMAGE 02 20 (HP 80.00)",
-				"B MOVE (6, 5) G330.0 A60.0",
-				"B HEAL A 20 (HP 99.00)",
-				"01 MOVE (4, 6) G240.0 A120.0",
-				"01 HEAL 02 15 (HP 95.00)",
-				"02 MOVE (7, 5) G210.0 A180.0",
-				"02 DAMAGE B 25 (HP 59.00)",
-				"A MOVE (7, 6) G210.0 A180.0",
-				"A DAMAGE 02 21 (HP 74.00)",
-				"B MOVE (4, 5) G300.0 A120.0",
-				"B DAMAGE 01 18 (HP 82.00)",
-				"01 MOVE (5, 5) G180.0 A180.0",
-				"01 DAMAGE B 20 (HP 39.00)",
-				"02 MOVE (8, 6) G150.0 A240.0",
-				"02 DAMAGE A 22 (HP 77.00)",
-				"A MOVE (8, 5) G150.0 A240.0",
-				"A DAMAGE 02 19 (HP 55.00)",
-				"B MOVE (5, 6) G240.0 A210.0",
-				"B DAMAGE 01 18 (HP 64.00)",
-				"01 MOVE (7, 6) G90.0 A300.0",
-				"01 HEAL 02 16 (HP 71.00)",
-				"02 MOVE (7, 7) G90.0 A330.0",
-				"02 HEAL 01 29 (HP 93.00)",
-				"A MOVE (6, 6) G60.0 A0.0",
-				"A HEAL B 36 (HP 75.00)",
-				"B MOVE (7, 5) G150.0 A330.0",
-				"B DAMAGE 01 20 (HP 73.00)",
-				"01 MOVE (8, 5) G30.0 A0.0",
-				"01 DAMAGE B 44 (HP 31.00)",
-				"01 MOVE (8, 7) G330.0 A60.0",
-				"01 HEAL 02 18 (HP 89.00)",
-				"02 MOVE (7, 6) G60.0 A0.0",
-				"02 DAMAGE B 65 (HP 0.00)",
-				"A MOVE (7, 5) G0.0 A90.0",
-				"A DAMAGE 02 23 (HP 66.00)",
-				"01 MOVE (8, 6) G300.0 A90.0",
-				"01 HEAL 02 16 (HP 82.00)",
-				"02 MOVE (6, 5) G0.0 A90.0",
-				"02 DAMAGE A 43 (HP 34.00)",
-				"A MOVE (8, 5) G330.0 A120.0",
-				"A DAMAGE 01 20 (HP 53.00)",
-				"01 MOVE (7, 5) G240.0 A150.0",
-				"01 HEAL 02 15 (HP 97.00)",
-				"02 MOVE (7, 4) G300.0 A150.0",
-				"02 HEAL 01 26 (HP 79.00)",
-				"A MOVE (7, 3) G240.0 A210.0",
-				"A DAMAGE 02 22 (HP 75.00)",
-				"01 MOVE (8, 4) G180.0 A210.0",
-				"01 HEAL 02 18 (HP 93.00)",
-				"02 MOVE (6, 3) G240.0 A210.0",
-				"02 DAMAGE A 26 (HP 8.00)",
-				"A MOVE (8, 3) G210.0 A240.0",
-				"A DAMAGE 01 19 (HP 60.00)",
-				"01 MOVE (9, 3) G120.0 A270.0",
-				"01 DAMAGE A 14 (HP 0.00)"
+				"01 MOVE (5, 4) C315.0 G300.0 A60.0",
+				"01 DAMAGE A 12 (HP 88.00)",
+				"02 MOVE (5, 6) C30.0 G300.0 A60.0",
+				"02 DAMAGE B 18 (HP 82.00)",
+				"A MOVE (5, 5) C30.0 G300.0 A60.0",
+				"A DAMAGE 02 21 (HP 79.00)",
+				"B MOVE (5, 7) C0.0 G300.0 A60.0",
+				"B DAMAGE 02 19 (HP 60.00)",
+				"01 MOVE (6, 6) C0.0 G210.0 A150.0",
+				"01 HEAL 02 16 (HP 76.00)",
+				"02 MOVE (4, 7) C60.0 G240.0 A120.0",
+				"02 DAMAGE B 24 (HP 58.00)",
+				"A MOVE (6, 5) C60.0 G270.0 A90.0",
+				"A DAMAGE 01 20 (HP 80.00)",
+				"B MOVE (4, 6) C30.0 G240.0 A120.0",
+				"B DAMAGE 02 19 (HP 57.00)",
+				"01 MOVE (5, 6) C0.0 G180.0 A180.0",
+				"01 DAMAGE B 20 (HP 38.00)",
+				"02 MOVE (3, 6) C60.0 G180.0 A180.0",
+				"02 DAMAGE B 30 (HP 8.00)",
+				"A MOVE (3, 5) C30.0 G180.0 A180.0",
+				"A DAMAGE 02 23 (HP 34.00)",
+				"B MOVE (3, 7) C30.0 G180.0 A180.0",
+				"B DAMAGE 02 23 (HP 11.00)",
+				"01 MOVE (4, 7) C0.0 G120.0 A240.0",
+				"01 DAMAGE B 13 (HP 0.00)",
+				"02 MOVE (5, 7) C90.0 G90.0 A270.0",
+				"02 HEAL 01 31 (HP 100.00)",
+				"A MOVE (5, 6) C60.0 G90.0 A270.0",
+				"A DAMAGE 02 20 (HP 0.00)",
+				"01 MOVE (5, 5) C0.0 G30.0 A330.0",
+				"01 DAMAGE A 29 (HP 59.00)",
+				"01 MOVE (6, 6) C45.0 G330.0 A30.0",
+				"01 DAMAGE A 19 (HP 40.00)",
+				"A MOVE (6, 7) C60.0 G30.0 A330.0",
+				"A DAMAGE 01 18 (HP 82.00)",
+				"01 MOVE (7, 7) C90.0 G270.0 A90.0",
+				"01 DAMAGE A 18 (HP 22.00)",
+				"A MOVE (7, 6) C60.0 G330.0 A30.0",
+				"A DAMAGE 01 19 (HP 63.00)",
+				"01 MOVE (8, 6) C90.0 G210.0 A150.0",
+				"01 DAMAGE A 15 (HP 7.00)",
+				"A MOVE (8, 7) C90.0 G270.0 A90.0",
+				"A DAMAGE 01 22 (HP 41.00)",
+				"01 MOVE (7, 7) C135.0 G150.0 A210.0",
+				"01 DAMAGE A 19 (HP 0.00)"
 			],
 			"repeated_states": 0,
 			"result": "VICTORY",
 			"roles": true,
 			"seed": 7,
-			"turns": 30
+			"turns": 23
 		}
 	],
 	"objectives": [
@@ -2220,29 +2180,29 @@
 				}
 			],
 			"history": [
-				"01 MOVE (5, 5) G270.0 A90.0",
+				"01 MOVE (5, 5) C0.0 G270.0 A90.0",
 				"01 WAIT",
-				"02 MOVE (5, 6) G300.0 A90.0",
-				"02 DAMAGE B 16 (HP 84.00)",
-				"A MOVE (9, 1) G330.0 A30.0",
+				"02 MOVE (5, 6) C30.0 G300.0 A60.0",
+				"02 DAMAGE B 18 (HP 82.00)",
+				"A MOVE (9, 1) C0.0 G330.0 A30.0",
 				"A WAIT",
-				"B MOVE (6, 9) G300.0 A90.0",
+				"B MOVE (6, 9) C0.0 G270.0 A90.0",
 				"B WAIT",
-				"01 MOVE (6, 7) G180.0 A210.0",
+				"01 MOVE (6, 7) C45.0 G180.0 A180.0",
 				"01 WAIT",
-				"02 MOVE (6, 8) G210.0 A180.0",
-				"02 DAMAGE B 27 (HP 57.00)",
-				"A MOVE (9, 0) G300.0 A60.0",
+				"02 MOVE (6, 8) C30.0 G210.0 A150.0",
+				"02 DAMAGE B 25 (HP 57.00)",
+				"A MOVE (9, 0) C0.0 G300.0 A60.0",
 				"A WAIT",
-				"B MOVE (3, 9) G240.0 A180.0",
+				"B MOVE (3, 9) C0.0 G180.0 A180.0",
 				"B WAIT",
-				"01 MOVE (4, 8) G90.0 A330.0",
+				"01 MOVE (4, 8) C90.0 G90.0 A270.0",
 				"01 WAIT",
-				"02 MOVE (4, 9) G180.0 A270.0",
-				"02 DAMAGE B 23 (HP 34.00)",
-				"A MOVE (9, 1) G270.0 A90.0",
+				"02 MOVE (4, 9) C0.0 G120.0 A240.0",
+				"02 DAMAGE B 20 (HP 37.00)",
+				"A MOVE (9, 1) C0.0 G270.0 A90.0",
 				"A WAIT",
-				"B MOVE (0, 9) G150.0 A270.0"
+				"B MOVE (0, 9) C0.0 G90.0 A270.0"
 			],
 			"result": "DEFEAT",
 			"seed": 0,
@@ -2253,13 +2213,13 @@
 			"build": "collected MOVE / same stats",
 			"commands": [
 				{
-					"path": "[(4, 4), (5, 4), (5, 5), (5, 6)]",
+					"path": "[(4, 4), (5, 4), (6, 4), (6, 5)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "01"
 				},
 				{
-					"path": "[(4, 6), (4, 5), (5, 5), (6, 5)]",
+					"path": "[(4, 6), (5, 6)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "02"
@@ -2277,13 +2237,13 @@
 					"unit": "B"
 				},
 				{
-					"path": "[(5, 7), (5, 8), (5, 9)]",
+					"path": "[(6, 6), (6, 7), (6, 8)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "01"
 				},
 				{
-					"path": "[(6, 6), (6, 7), (6, 8)]",
+					"path": "[(5, 7), (5, 8), (5, 9)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "02"
@@ -2301,13 +2261,13 @@
 					"unit": "B"
 				},
 				{
-					"path": "[(6, 9)]",
+					"path": "[(7, 8), (8, 8), (8, 9)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "01"
 				},
 				{
-					"path": "[(7, 8), (8, 8), (8, 9)]",
+					"path": "[(6, 9)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "02"
@@ -2319,13 +2279,13 @@
 					"unit": "A"
 				},
 				{
-					"path": "[(6, 8), (6, 7), (6, 6), (7, 6)]",
+					"path": "[(8, 8), (8, 7), (8, 6), (9, 6)]",
 					"skill": "",
 					"target": -1,
 					"unit": "01"
 				},
 				{
-					"path": "[(8, 8), (8, 7), (8, 6), (8, 5)]",
+					"path": "[(6, 8), (6, 7), (6, 6), (6, 5)]",
 					"skill": "",
 					"target": -1,
 					"unit": "02"
@@ -2337,27 +2297,27 @@
 					"unit": "A"
 				},
 				{
-					"path": "[(7, 5), (7, 4), (7, 3), (7, 2)]",
+					"path": "[(9, 5), (9, 4), (9, 3), (9, 2)]",
 					"skill": "",
 					"target": -1,
 					"unit": "01"
 				},
 				{
-					"path": "[(7, 1), (7, 0), (8, 0)]",
+					"path": "[(9, 1), (8, 1), (8, 0)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 2,
 					"unit": "01"
 				},
 				{
-					"path": "[(9, 5), (9, 4), (9, 3), (9, 2)]",
+					"path": "[(6, 4), (6, 3), (6, 2), (6, 1)]",
 					"skill": "",
 					"target": -1,
 					"unit": "02"
 				},
 				{
 					"path": "[(9, 1)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 1,
+					"skill": "",
+					"target": -1,
 					"unit": "A"
 				},
 				{
@@ -2368,43 +2328,43 @@
 				}
 			],
 			"history": [
-				"01 MOVE (5, 6) G240.0 A120.0",
+				"01 MOVE (6, 5) C45.0 G240.0 A120.0",
 				"01 DAMAGE B 9 (HP 91.00)",
-				"02 MOVE (6, 5) G240.0 A180.0",
-				"02 DAMAGE B 16 (HP 75.00)",
-				"A MOVE (9, 1) G330.0 A30.0",
+				"02 MOVE (5, 6) C30.0 G300.0 A60.0",
+				"02 DAMAGE B 18 (HP 73.00)",
+				"A MOVE (9, 1) C0.0 G330.0 A30.0",
 				"A WAIT",
-				"B MOVE (6, 9) G300.0 A90.0",
+				"B MOVE (6, 9) C0.0 G270.0 A90.0",
 				"B WAIT",
-				"01 MOVE (5, 9) G180.0 A210.0",
-				"01 DAMAGE B 17 (HP 58.00)",
-				"02 MOVE (6, 8) G150.0 A270.0",
-				"02 DAMAGE B 23 (HP 35.00)",
-				"A MOVE (9, 0) G300.0 A60.0",
+				"01 MOVE (6, 8) C45.0 G150.0 A210.0",
+				"01 DAMAGE B 15 (HP 58.00)",
+				"02 MOVE (5, 9) C0.0 G210.0 A150.0",
+				"02 DAMAGE B 25 (HP 33.00)",
+				"A MOVE (9, 0) C0.0 G300.0 A60.0",
 				"A WAIT",
-				"B MOVE (7, 9) G270.0 A120.0",
+				"B MOVE (7, 9) C0.0 G240.0 A120.0",
 				"B WAIT",
-				"01 MOVE (6, 9) G180.0 A240.0",
-				"01 DAMAGE B 15 (HP 20.00)",
-				"02 MOVE (8, 9) G60.0 A0.0",
-				"02 DAMAGE B 69 (HP 0.00)",
-				"A MOVE (9, 1) G270.0 A90.0",
+				"01 MOVE (8, 9) C45.0 G60.0 A300.0",
+				"01 DAMAGE B 19 (HP 14.00)",
+				"02 MOVE (6, 9) C0.0 G180.0 A180.0",
+				"02 DAMAGE B 30 (HP 0.00)",
+				"A MOVE (9, 1) C0.0 G270.0 A90.0",
 				"A WAIT",
-				"01 MOVE (7, 6) G60.0 A0.0",
+				"01 MOVE (9, 6) C45.0 G300.0 A60.0",
 				"01 WAIT",
-				"02 MOVE (8, 5) G330.0 A120.0",
+				"02 MOVE (6, 5) C30.0 G60.0 A300.0",
 				"02 WAIT",
-				"A MOVE (9, 0) G180.0 A180.0",
+				"A MOVE (9, 0) C0.0 G180.0 A180.0",
 				"A WAIT",
-				"01 MOVE (7, 2) G300.0 A60.0",
+				"01 MOVE (9, 2) C45.0 G180.0 A180.0",
 				"01 WAIT",
-				"01 MOVE (8, 0) G210.0 A150.0",
-				"01 DAMAGE A 14 (HP 86.00)",
-				"02 MOVE (9, 2) G210.0 A240.0",
+				"01 MOVE (8, 0) C45.0 G90.0 A270.0",
+				"01 DAMAGE A 15 (HP 85.00)",
+				"02 MOVE (6, 1) C60.0 G300.0 A60.0",
 				"02 WAIT",
-				"A MOVE (9, 1) G150.0 A210.0",
-				"A DAMAGE 02 19 (HP 81.00)",
-				"01 MOVE (9, 0) G180.0 A180.0"
+				"A MOVE (9, 1) C0.0 G150.0 A210.0",
+				"A WAIT",
+				"01 MOVE (9, 0) C45.0 G60.0 A300.0"
 			],
 			"result": "VICTORY",
 			"seed": 0,
@@ -2487,29 +2447,29 @@
 				}
 			],
 			"history": [
-				"01 MOVE (5, 5) G270.0 A90.0",
+				"01 MOVE (5, 5) C0.0 G270.0 A90.0",
 				"01 WAIT",
-				"02 MOVE (5, 6) G300.0 A90.0",
-				"02 DAMAGE B 16 (HP 84.00)",
-				"A MOVE (8, 1) G330.0 A30.0",
+				"02 MOVE (5, 6) C30.0 G300.0 A60.0",
+				"02 DAMAGE B 18 (HP 82.00)",
+				"A MOVE (8, 1) C0.0 G330.0 A30.0",
 				"A WAIT",
-				"B MOVE (6, 9) G300.0 A90.0",
+				"B MOVE (6, 9) C0.0 G270.0 A90.0",
 				"B WAIT",
-				"01 MOVE (6, 7) G180.0 A210.0",
+				"01 MOVE (6, 7) C45.0 G180.0 A180.0",
 				"01 WAIT",
-				"02 MOVE (6, 8) G210.0 A180.0",
-				"02 DAMAGE B 27 (HP 57.00)",
-				"A MOVE (8, 0) G300.0 A60.0",
+				"02 MOVE (6, 8) C30.0 G210.0 A150.0",
+				"02 DAMAGE B 25 (HP 57.00)",
+				"A MOVE (8, 0) C0.0 G300.0 A60.0",
 				"A WAIT",
-				"B MOVE (3, 9) G240.0 A180.0",
+				"B MOVE (3, 9) C0.0 G180.0 A180.0",
 				"B WAIT",
-				"01 MOVE (4, 8) G90.0 A330.0",
+				"01 MOVE (4, 8) C90.0 G90.0 A270.0",
 				"01 WAIT",
-				"02 MOVE (4, 9) G180.0 A270.0",
-				"02 DAMAGE B 23 (HP 34.00)",
-				"A MOVE (8, 1) G270.0 A90.0",
+				"02 MOVE (4, 9) C0.0 G120.0 A240.0",
+				"02 DAMAGE B 20 (HP 37.00)",
+				"A MOVE (8, 1) C0.0 G270.0 A90.0",
 				"A WAIT",
-				"B MOVE (0, 9) G150.0 A270.0",
+				"B MOVE (0, 9) C0.0 G90.0 A270.0",
 				"B WAIT"
 			],
 			"result": "DEFEAT",
@@ -2521,13 +2481,13 @@
 			"build": "collected MOVE / same stats",
 			"commands": [
 				{
-					"path": "[(4, 4), (5, 4), (5, 5), (5, 6)]",
+					"path": "[(4, 4), (5, 4), (6, 4), (6, 5)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "01"
 				},
 				{
-					"path": "[(4, 6), (4, 5), (5, 5), (6, 5)]",
+					"path": "[(4, 6), (5, 6)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "02"
@@ -2545,13 +2505,13 @@
 					"unit": "B"
 				},
 				{
-					"path": "[(5, 7), (5, 8), (5, 9)]",
+					"path": "[(6, 6), (6, 7), (6, 8)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "01"
 				},
 				{
-					"path": "[(6, 6), (6, 7), (6, 8)]",
+					"path": "[(5, 7), (5, 8), (5, 9)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "02"
@@ -2569,13 +2529,13 @@
 					"unit": "B"
 				},
 				{
-					"path": "[(6, 9)]",
+					"path": "[(7, 8), (8, 8), (8, 9)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "01"
 				},
 				{
-					"path": "[(7, 8), (8, 8), (8, 9)]",
+					"path": "[(6, 9)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "02"
@@ -2587,13 +2547,13 @@
 					"unit": "A"
 				},
 				{
-					"path": "[(6, 8), (6, 7), (6, 6), (7, 6)]",
+					"path": "[(8, 8), (8, 7), (8, 6), (9, 6)]",
 					"skill": "",
 					"target": -1,
 					"unit": "01"
 				},
 				{
-					"path": "[(8, 8), (8, 7), (8, 6), (8, 5)]",
+					"path": "[(6, 8), (6, 7), (6, 6), (6, 5)]",
 					"skill": "",
 					"target": -1,
 					"unit": "02"
@@ -2605,25 +2565,25 @@
 					"unit": "A"
 				},
 				{
-					"path": "[(7, 5), (7, 4), (7, 3), (7, 2)]",
+					"path": "[(9, 5), (9, 4), (9, 3), (9, 2)]",
 					"skill": "",
 					"target": -1,
 					"unit": "01"
 				},
 				{
-					"path": "[(7, 1), (8, 1), (9, 1), (9, 0)]",
+					"path": "[(9, 1), (8, 1), (7, 1), (7, 0)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 2,
 					"unit": "01"
 				},
 				{
-					"path": "[(8, 4), (8, 3), (8, 2), (8, 1)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 2,
+					"path": "[(6, 4), (6, 3), (6, 2), (6, 1)]",
+					"skill": "",
+					"target": -1,
 					"unit": "02"
 				},
 				{
-					"path": "[(7, 0)]",
+					"path": "[(9, 0)]",
 					"skill": "",
 					"target": -1,
 					"unit": "A"
@@ -2636,43 +2596,43 @@
 				}
 			],
 			"history": [
-				"01 MOVE (5, 6) G240.0 A120.0",
+				"01 MOVE (6, 5) C45.0 G240.0 A120.0",
 				"01 DAMAGE B 9 (HP 91.00)",
-				"02 MOVE (6, 5) G240.0 A180.0",
-				"02 DAMAGE B 16 (HP 75.00)",
-				"A MOVE (8, 1) G330.0 A30.0",
+				"02 MOVE (5, 6) C30.0 G300.0 A60.0",
+				"02 DAMAGE B 18 (HP 73.00)",
+				"A MOVE (8, 1) C0.0 G330.0 A30.0",
 				"A WAIT",
-				"B MOVE (6, 9) G300.0 A90.0",
+				"B MOVE (6, 9) C0.0 G270.0 A90.0",
 				"B WAIT",
-				"01 MOVE (5, 9) G180.0 A210.0",
-				"01 DAMAGE B 17 (HP 58.00)",
-				"02 MOVE (6, 8) G150.0 A270.0",
-				"02 DAMAGE B 23 (HP 35.00)",
-				"A MOVE (8, 0) G300.0 A60.0",
+				"01 MOVE (6, 8) C45.0 G150.0 A210.0",
+				"01 DAMAGE B 15 (HP 58.00)",
+				"02 MOVE (5, 9) C0.0 G210.0 A150.0",
+				"02 DAMAGE B 25 (HP 33.00)",
+				"A MOVE (8, 0) C0.0 G300.0 A60.0",
 				"A WAIT",
-				"B MOVE (7, 9) G270.0 A120.0",
+				"B MOVE (7, 9) C0.0 G240.0 A120.0",
 				"B WAIT",
-				"01 MOVE (6, 9) G180.0 A240.0",
-				"01 DAMAGE B 15 (HP 20.00)",
-				"02 MOVE (8, 9) G60.0 A0.0",
-				"02 DAMAGE B 69 (HP 0.00)",
-				"A MOVE (9, 0) G270.0 A90.0",
+				"01 MOVE (8, 9) C45.0 G60.0 A300.0",
+				"01 DAMAGE B 19 (HP 14.00)",
+				"02 MOVE (6, 9) C0.0 G180.0 A180.0",
+				"02 DAMAGE B 30 (HP 0.00)",
+				"A MOVE (9, 0) C0.0 G270.0 A90.0",
 				"A WAIT",
-				"01 MOVE (7, 6) G60.0 A0.0",
+				"01 MOVE (9, 6) C45.0 G300.0 A60.0",
 				"01 WAIT",
-				"02 MOVE (8, 5) G330.0 A120.0",
+				"02 MOVE (6, 5) C30.0 G60.0 A300.0",
 				"02 WAIT",
-				"A MOVE (8, 0) G180.0 A180.0",
+				"A MOVE (8, 0) C0.0 G180.0 A180.0",
 				"A WAIT",
-				"01 MOVE (7, 2) G300.0 A60.0",
+				"01 MOVE (9, 2) C45.0 G180.0 A180.0",
 				"01 WAIT",
-				"01 MOVE (9, 0) G180.0 A180.0",
-				"01 DAMAGE A 18 (HP 82.00)",
-				"02 MOVE (8, 1) G210.0 A270.0",
-				"02 DAMAGE A 23 (HP 59.00)",
-				"A MOVE (7, 0) G150.0 A210.0",
+				"01 MOVE (7, 0) C45.0 G60.0 A300.0",
+				"01 DAMAGE A 17 (HP 83.00)",
+				"02 MOVE (6, 1) C60.0 G300.0 A60.0",
+				"02 WAIT",
+				"A MOVE (9, 0) C0.0 G150.0 A210.0",
 				"A WAIT",
-				"01 MOVE (8, 0) G150.0 A210.0",
+				"01 MOVE (8, 0) C45.0 G30.0 A330.0",
 				"01 WAIT"
 			],
 			"result": "VICTORY",
@@ -2683,7 +2643,7 @@
 		{
 			"commands": [
 				{
-					"path": "[(3, 5), (4, 5), (5, 5)]",
+					"path": "[(4, 4), (5, 4), (5, 5)]",
 					"skill": "",
 					"target": -1,
 					"unit": "01"
@@ -2701,127 +2661,21 @@
 					"unit": "A"
 				},
 				{
-					"path": "[(6, 7), (5, 7), (5, 8)]",
+					"path": "[(6, 7), (5, 7), (4, 7)]",
 					"skill": "",
 					"target": -1,
 					"unit": "B"
 				},
 				{
-					"path": "[(4, 5), (4, 6), (4, 7)]",
-					"skill": "",
-					"target": -1,
-					"unit": "01"
-				},
-				{
-					"path": "[(5, 7)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "02"
-				},
-				{
-					"path": "[(9, 0)]",
-					"skill": "",
-					"target": -1,
-					"unit": "A"
-				},
-				{
-					"path": "[(5, 9), (4, 9), (3, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "B"
-				},
-				{
-					"path": "[(4, 8), (4, 9)]",
+					"path": "[(4, 5), (4, 6)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "01"
-				},
-				{
-					"path": "[(4, 7), (4, 8), (3, 8)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "02"
-				},
-				{
-					"path": "[(8, 0)]",
-					"skill": "",
-					"target": -1,
-					"unit": "A"
-				},
-				{
-					"path": "[(2, 9), (1, 9), (0, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "B"
-				}
-			],
-			"history": [
-				"01 MOVE (5, 5) G300.0 A90.0",
-				"01 WAIT",
-				"02 MOVE (5, 6) G300.0 A60.0",
-				"02 DAMAGE B 17 (HP 83.00)",
-				"A MOVE (8, 0) G330.0 A330.0",
-				"A WAIT",
-				"B MOVE (5, 8) G300.0 A90.0",
-				"B WAIT",
-				"01 MOVE (4, 7) G210.0 A210.0",
-				"01 WAIT",
-				"02 MOVE (5, 7) G300.0 A90.0",
-				"02 DAMAGE B 25 (HP 58.00)",
-				"A MOVE (9, 0) G300.0 A0.0",
-				"A WAIT",
-				"B MOVE (3, 9) G210.0 A180.0",
-				"B WAIT",
-				"01 MOVE (4, 9) G150.0 A270.0",
-				"01 DAMAGE B 14 (HP 44.00)",
-				"02 MOVE (3, 8) G240.0 A210.0",
-				"02 DAMAGE B 26 (HP 18.00)",
-				"A MOVE (8, 0) G270.0 A330.0",
-				"A WAIT",
-				"B MOVE (0, 9) G120.0 A300.0"
-			],
-			"result": "DEFEAT",
-			"seed": 1,
-			"stage": 2,
-			"turns": 12
-		},
-		{
-			"build": "collected MOVE / same stats",
-			"commands": [
-				{
-					"path": "[(4, 4), (5, 4), (5, 5), (5, 6)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "01"
-				},
-				{
-					"path": "[(3, 5), (4, 5), (5, 5), (6, 5)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "02"
-				},
-				{
-					"path": "[(8, 0)]",
-					"skill": "",
-					"target": -1,
-					"unit": "A"
-				},
-				{
-					"path": "[(6, 7), (5, 7), (5, 8)]",
-					"skill": "",
-					"target": -1,
-					"unit": "B"
 				},
 				{
 					"path": "[(6, 6), (6, 7), (5, 7)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
-					"unit": "01"
-				},
-				{
-					"path": "[(6, 6), (6, 7), (6, 8)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
 					"unit": "02"
 				},
 				{
@@ -2831,7 +2685,7 @@
 					"unit": "A"
 				},
 				{
-					"path": "[(5, 9), (4, 9), (3, 9)]",
+					"path": "[(4, 8), (4, 9), (3, 9)]",
 					"skill": "",
 					"target": -1,
 					"unit": "B"
@@ -2855,15 +2709,79 @@
 					"unit": "A"
 				},
 				{
-					"path": "[(4, 8), (4, 7), (5, 7), (5, 6)]",
+					"path": "[(2, 9), (1, 9), (0, 9)]",
 					"skill": "",
 					"target": -1,
+					"unit": "B"
+				}
+			],
+			"history": [
+				"01 MOVE (5, 5) C0.0 G270.0 A90.0",
+				"01 WAIT",
+				"02 MOVE (5, 6) C0.0 G300.0 A60.0",
+				"02 DAMAGE B 17 (HP 83.00)",
+				"A MOVE (8, 0) C330.0 G330.0 A30.0",
+				"A WAIT",
+				"B MOVE (4, 7) C30.0 G270.0 A90.0",
+				"B WAIT",
+				"01 MOVE (4, 6) C0.0 G210.0 A150.0",
+				"01 DAMAGE B 15 (HP 68.00)",
+				"02 MOVE (5, 7) C0.0 G210.0 A150.0",
+				"02 DAMAGE B 24 (HP 44.00)",
+				"A MOVE (9, 0) C330.0 G300.0 A60.0",
+				"A WAIT",
+				"B MOVE (3, 9) C30.0 G180.0 A180.0",
+				"B WAIT",
+				"01 MOVE (4, 9) C45.0 G120.0 A240.0",
+				"01 DAMAGE B 13 (HP 31.00)",
+				"02 MOVE (3, 8) C0.0 G120.0 A240.0",
+				"02 DAMAGE B 20 (HP 11.00)",
+				"A MOVE (8, 0) C300.0 G270.0 A90.0",
+				"A WAIT",
+				"B MOVE (0, 9) C60.0 G90.0 A270.0"
+			],
+			"result": "DEFEAT",
+			"seed": 1,
+			"stage": 2,
+			"turns": 12
+		},
+		{
+			"build": "collected MOVE / same stats",
+			"commands": [
+				{
+					"path": "[(4, 4), (5, 4), (6, 4), (6, 5)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
 					"unit": "01"
 				},
 				{
-					"path": "[(3, 7), (3, 6), (4, 6), (4, 5)]",
+					"path": "[(4, 6), (5, 6)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "02"
+				},
+				{
+					"path": "[(8, 0)]",
 					"skill": "",
 					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(6, 7), (5, 7), (4, 7)]",
+					"skill": "",
+					"target": -1,
+					"unit": "B"
+				},
+				{
+					"path": "[(6, 6), (6, 7), (5, 7)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "01"
+				},
+				{
+					"path": "[(5, 5), (4, 5), (4, 6)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
 					"unit": "02"
 				},
 				{
@@ -2873,74 +2791,116 @@
 					"unit": "A"
 				},
 				{
-					"path": "[(5, 5), (5, 4), (5, 3), (5, 2)]",
+					"path": "[(4, 8), (4, 9), (3, 9)]",
+					"skill": "",
+					"target": -1,
+					"unit": "B"
+				},
+				{
+					"path": "[(4, 7), (4, 8), (4, 9)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "01"
+				},
+				{
+					"path": "[(4, 7), (4, 8), (3, 8)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "02"
+				},
+				{
+					"path": "[(8, 0)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(4, 8), (4, 7), (4, 6), (4, 5)]",
 					"skill": "",
 					"target": -1,
 					"unit": "01"
 				},
 				{
-					"path": "[(5, 1), (5, 0), (6, 0), (7, 0)]",
-					"skill": "",
-					"target": -1,
-					"unit": "01"
-				},
-				{
-					"path": "[(4, 4), (4, 3), (4, 2), (5, 2)]",
+					"path": "[(3, 7), (3, 6), (3, 5), (3, 4)]",
 					"skill": "",
 					"target": -1,
 					"unit": "02"
 				},
 				{
-					"path": "[(8, 0)]",
+					"path": "[(8, 1), (9, 1), (9, 0)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(4, 4), (4, 3), (4, 2), (5, 2)]",
+					"skill": "",
+					"target": -1,
+					"unit": "01"
+				},
+				{
+					"path": "[(5, 1), (6, 1), (7, 1), (8, 1)]",
+					"skill": "",
+					"target": -1,
+					"unit": "01"
+				},
+				{
+					"path": "[(3, 3), (3, 2), (3, 1), (3, 0)]",
+					"skill": "",
+					"target": -1,
+					"unit": "02"
+				},
+				{
+					"path": "[(9, 1)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 0,
 					"unit": "A"
 				},
 				{
-					"path": "[(7, 1), (8, 1), (9, 1), (9, 0)]",
+					"path": "[(8, 0), (9, 0)]",
 					"skill": "",
 					"target": -1,
 					"unit": "01"
 				}
 			],
 			"history": [
-				"01 MOVE (5, 6) G240.0 A120.0",
+				"01 MOVE (6, 5) C0.0 G240.0 A120.0",
 				"01 DAMAGE B 9 (HP 91.00)",
-				"02 MOVE (6, 5) G270.0 A120.0",
-				"02 DAMAGE B 15 (HP 76.00)",
-				"A MOVE (8, 0) G330.0 A330.0",
+				"02 MOVE (5, 6) C0.0 G300.0 A60.0",
+				"02 DAMAGE B 17 (HP 74.00)",
+				"A MOVE (8, 0) C330.0 G330.0 A30.0",
 				"A WAIT",
-				"B MOVE (5, 8) G300.0 A90.0",
+				"B MOVE (4, 7) C30.0 G270.0 A90.0",
 				"B WAIT",
-				"01 MOVE (5, 7) G180.0 A210.0",
-				"01 DAMAGE B 17 (HP 59.00)",
-				"02 MOVE (6, 8) G180.0 A210.0",
-				"02 DAMAGE B 27 (HP 32.00)",
-				"A MOVE (9, 0) G300.0 A0.0",
+				"01 MOVE (5, 7) C0.0 G150.0 A210.0",
+				"01 DAMAGE B 15 (HP 59.00)",
+				"02 MOVE (4, 6) C0.0 G210.0 A150.0",
+				"02 DAMAGE B 24 (HP 35.00)",
+				"A MOVE (9, 0) C330.0 G300.0 A60.0",
 				"A WAIT",
-				"B MOVE (3, 9) G210.0 A180.0",
+				"B MOVE (3, 9) C30.0 G180.0 A180.0",
 				"B WAIT",
-				"01 MOVE (4, 9) G90.0 A330.0",
-				"01 DAMAGE B 16 (HP 16.00)",
-				"02 MOVE (3, 8) G120.0 A300.0",
-				"02 DAMAGE B 23 (HP 0.00)",
-				"A MOVE (8, 0) G270.0 A330.0",
+				"01 MOVE (4, 9) C45.0 G60.0 A300.0",
+				"01 DAMAGE B 17 (HP 18.00)",
+				"02 MOVE (3, 8) C0.0 G120.0 A240.0",
+				"02 DAMAGE B 20 (HP 0.00)",
+				"A MOVE (8, 0) C300.0 G270.0 A90.0",
 				"A WAIT",
-				"01 MOVE (5, 6) G0.0 A120.0",
+				"01 MOVE (4, 5) C90.0 G300.0 A60.0",
 				"01 WAIT",
-				"02 MOVE (4, 5) G0.0 A60.0",
+				"02 MOVE (3, 4) C0.0 G0.0 A0.0",
 				"02 WAIT",
-				"A MOVE (9, 0) G240.0 A0.0",
+				"A MOVE (9, 0) C0.0 G180.0 A180.0",
 				"A WAIT",
-				"01 MOVE (5, 2) G270.0 A270.0",
+				"01 MOVE (5, 2) C180.0 G180.0 A180.0",
 				"01 WAIT",
-				"01 MOVE (7, 0) G150.0 A30.0",
+				"01 MOVE (8, 1) C0.0 G60.0 A300.0",
 				"01 WAIT",
-				"02 MOVE (5, 2) G240.0 A240.0",
+				"02 MOVE (3, 0) C330.0 G240.0 A120.0",
 				"02 WAIT",
-				"A MOVE (8, 0) G210.0 A330.0",
-				"A DAMAGE 01 20 (HP 80.00)",
-				"01 MOVE (9, 0) G60.0 A150.0"
+				"A MOVE (9, 1) C0.0 G150.0 A210.0",
+				"A DAMAGE 01 18 (HP 82.00)",
+				"01 MOVE (9, 0) C315.0 G0.0 A0.0"
 			],
 			"result": "VICTORY",
 			"seed": 1,
@@ -2950,7 +2910,7 @@
 		{
 			"commands": [
 				{
-					"path": "[(3, 5), (4, 5), (5, 5)]",
+					"path": "[(4, 4), (5, 4), (5, 5)]",
 					"skill": "",
 					"target": -1,
 					"unit": "01"
@@ -2968,19 +2928,19 @@
 					"unit": "A"
 				},
 				{
-					"path": "[(6, 7), (5, 7), (5, 8)]",
+					"path": "[(6, 7), (5, 7), (4, 7)]",
 					"skill": "",
 					"target": -1,
 					"unit": "B"
 				},
 				{
-					"path": "[(4, 5), (4, 6), (4, 7)]",
-					"skill": "",
-					"target": -1,
+					"path": "[(4, 5), (4, 6)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
 					"unit": "01"
 				},
 				{
-					"path": "[(5, 7)]",
+					"path": "[(6, 6), (6, 7), (5, 7)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "02"
@@ -2992,19 +2952,19 @@
 					"unit": "A"
 				},
 				{
-					"path": "[(5, 9), (4, 9), (3, 9)]",
+					"path": "[(4, 8), (4, 9), (3, 9)]",
 					"skill": "",
 					"target": -1,
 					"unit": "B"
 				},
 				{
-					"path": "[(4, 8), (4, 9)]",
+					"path": "[(4, 7), (4, 8), (4, 9)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "01"
 				},
 				{
-					"path": "[(4, 7), (4, 8), (3, 8)]",
+					"path": "[(5, 8), (4, 8), (3, 8)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "02"
@@ -3023,29 +2983,29 @@
 				}
 			],
 			"history": [
-				"01 MOVE (5, 5) G300.0 A90.0",
+				"01 MOVE (5, 5) C0.0 G270.0 A90.0",
 				"01 WAIT",
-				"02 MOVE (5, 6) G300.0 A60.0",
+				"02 MOVE (5, 6) C0.0 G300.0 A60.0",
 				"02 DAMAGE B 17 (HP 83.00)",
-				"A MOVE (8, 1) G0.0 A30.0",
+				"A MOVE (8, 1) C0.0 G330.0 A30.0",
 				"A WAIT",
-				"B MOVE (5, 8) G300.0 A90.0",
+				"B MOVE (4, 7) C30.0 G270.0 A90.0",
 				"B WAIT",
-				"01 MOVE (4, 7) G210.0 A210.0",
-				"01 WAIT",
-				"02 MOVE (5, 7) G300.0 A90.0",
-				"02 DAMAGE B 25 (HP 58.00)",
-				"A MOVE (8, 0) G330.0 A60.0",
+				"01 MOVE (4, 6) C0.0 G210.0 A150.0",
+				"01 DAMAGE B 15 (HP 68.00)",
+				"02 MOVE (5, 7) C0.0 G210.0 A150.0",
+				"02 DAMAGE B 24 (HP 44.00)",
+				"A MOVE (8, 0) C0.0 G300.0 A60.0",
 				"A WAIT",
-				"B MOVE (3, 9) G210.0 A180.0",
+				"B MOVE (3, 9) C30.0 G180.0 A180.0",
 				"B WAIT",
-				"01 MOVE (4, 9) G150.0 A270.0",
-				"01 DAMAGE B 14 (HP 44.00)",
-				"02 MOVE (3, 8) G240.0 A210.0",
-				"02 DAMAGE B 26 (HP 18.00)",
-				"A MOVE (8, 1) G330.0 A90.0",
+				"01 MOVE (4, 9) C45.0 G120.0 A240.0",
+				"01 DAMAGE B 13 (HP 31.00)",
+				"02 MOVE (3, 8) C0.0 G120.0 A240.0",
+				"02 DAMAGE B 20 (HP 11.00)",
+				"A MOVE (8, 1) C0.0 G270.0 A90.0",
 				"A WAIT",
-				"B MOVE (0, 9) G120.0 A300.0",
+				"B MOVE (0, 9) C60.0 G90.0 A270.0",
 				"B WAIT"
 			],
 			"result": "DEFEAT",
@@ -3057,13 +3017,13 @@
 			"build": "collected MOVE / same stats",
 			"commands": [
 				{
-					"path": "[(4, 4), (5, 4), (5, 5), (5, 6)]",
+					"path": "[(4, 4), (5, 4), (6, 4), (6, 5)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "01"
 				},
 				{
-					"path": "[(3, 5), (4, 5), (5, 5), (6, 5)]",
+					"path": "[(4, 6), (5, 6)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "02"
@@ -3075,7 +3035,7 @@
 					"unit": "A"
 				},
 				{
-					"path": "[(6, 7), (5, 7), (5, 8)]",
+					"path": "[(6, 7), (5, 7), (4, 7)]",
 					"skill": "",
 					"target": -1,
 					"unit": "B"
@@ -3087,7 +3047,436 @@
 					"unit": "01"
 				},
 				{
+					"path": "[(5, 5), (4, 5), (4, 6)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "02"
+				},
+				{
+					"path": "[(8, 0)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(4, 8), (4, 9), (3, 9)]",
+					"skill": "",
+					"target": -1,
+					"unit": "B"
+				},
+				{
+					"path": "[(4, 7), (4, 8), (4, 9)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "01"
+				},
+				{
+					"path": "[(4, 7), (4, 8), (3, 8)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "02"
+				},
+				{
+					"path": "[(9, 0)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(4, 8), (4, 7), (4, 6), (4, 5)]",
+					"skill": "",
+					"target": -1,
+					"unit": "01"
+				},
+				{
+					"path": "[(3, 7), (3, 6), (3, 5), (3, 4)]",
+					"skill": "",
+					"target": -1,
+					"unit": "02"
+				},
+				{
+					"path": "[(9, 1), (8, 1), (8, 0)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(4, 4), (4, 3), (4, 2), (5, 2)]",
+					"skill": "",
+					"target": -1,
+					"unit": "01"
+				},
+				{
+					"path": "[(5, 1), (6, 1), (7, 1), (8, 1)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 2,
+					"unit": "01"
+				},
+				{
+					"path": "[(3, 3), (3, 2), (3, 1), (3, 0)]",
+					"skill": "",
+					"target": -1,
+					"unit": "02"
+				},
+				{
+					"path": "[(9, 0)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(8, 0)]",
+					"skill": "",
+					"target": -1,
+					"unit": "01"
+				}
+			],
+			"history": [
+				"01 MOVE (6, 5) C0.0 G240.0 A120.0",
+				"01 DAMAGE B 9 (HP 91.00)",
+				"02 MOVE (5, 6) C0.0 G300.0 A60.0",
+				"02 DAMAGE B 17 (HP 74.00)",
+				"A MOVE (8, 1) C0.0 G330.0 A30.0",
+				"A WAIT",
+				"B MOVE (4, 7) C30.0 G270.0 A90.0",
+				"B WAIT",
+				"01 MOVE (5, 7) C0.0 G150.0 A210.0",
+				"01 DAMAGE B 15 (HP 59.00)",
+				"02 MOVE (4, 6) C0.0 G210.0 A150.0",
+				"02 DAMAGE B 24 (HP 35.00)",
+				"A MOVE (8, 0) C0.0 G300.0 A60.0",
+				"A WAIT",
+				"B MOVE (3, 9) C30.0 G180.0 A180.0",
+				"B WAIT",
+				"01 MOVE (4, 9) C45.0 G60.0 A300.0",
+				"01 DAMAGE B 17 (HP 18.00)",
+				"02 MOVE (3, 8) C0.0 G120.0 A240.0",
+				"02 DAMAGE B 20 (HP 0.00)",
+				"A MOVE (9, 0) C330.0 G270.0 A90.0",
+				"A WAIT",
+				"01 MOVE (4, 5) C90.0 G300.0 A60.0",
+				"01 WAIT",
+				"02 MOVE (3, 4) C0.0 G0.0 A0.0",
+				"02 WAIT",
+				"A MOVE (8, 0) C0.0 G180.0 A180.0",
+				"A WAIT",
+				"01 MOVE (5, 2) C180.0 G180.0 A180.0",
+				"01 WAIT",
+				"01 MOVE (8, 1) C0.0 G60.0 A300.0",
+				"01 DAMAGE A 14 (HP 86.00)",
+				"02 MOVE (3, 0) C330.0 G240.0 A120.0",
+				"02 WAIT",
+				"A MOVE (9, 0) C330.0 G150.0 A210.0",
+				"A WAIT",
+				"01 MOVE (8, 0) C0.0 G30.0 A330.0",
+				"01 WAIT"
+			],
+			"result": "VICTORY",
+			"seed": 1,
+			"stage": 3,
+			"turns": 19
+		},
+		{
+			"commands": [
+				{
+					"path": "[(4, 4), (5, 4), (5, 5)]",
+					"skill": "",
+					"target": -1,
+					"unit": "01"
+				},
+				{
+					"path": "[(4, 6), (5, 6)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "02"
+				},
+				{
+					"path": "[(9, 1)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(6, 7), (6, 8), (6, 9)]",
+					"skill": "",
+					"target": -1,
+					"unit": "B"
+				},
+				{
+					"path": "[(6, 5), (6, 6), (6, 7)]",
+					"skill": "",
+					"target": -1,
+					"unit": "01"
+				},
+				{
+					"path": "[(5, 7), (5, 8), (6, 8)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "02"
+				},
+				{
+					"path": "[(9, 0)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(5, 9), (4, 9), (3, 9)]",
+					"skill": "",
+					"target": -1,
+					"unit": "B"
+				},
+				{
+					"path": "[(5, 7), (5, 8), (5, 9)]",
+					"skill": "",
+					"target": -1,
+					"unit": "01"
+				},
+				{
+					"path": "[(5, 8), (4, 8), (4, 9)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "02"
+				},
+				{
+					"path": "[(9, 1)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(2, 9), (1, 9), (0, 9)]",
+					"skill": "",
+					"target": -1,
+					"unit": "B"
+				}
+			],
+			"history": [
+				"01 MOVE (5, 5) C45.0 G270.0 A90.0",
+				"01 WAIT",
+				"02 MOVE (5, 6) C0.0 G300.0 A60.0",
+				"02 DAMAGE B 17 (HP 83.00)",
+				"A MOVE (9, 1) C0.0 G330.0 A30.0",
+				"A WAIT",
+				"B MOVE (6, 9) C0.0 G270.0 A90.0",
+				"B WAIT",
+				"01 MOVE (6, 7) C0.0 G180.0 A180.0",
+				"01 WAIT",
+				"02 MOVE (6, 8) C0.0 G210.0 A150.0",
+				"02 DAMAGE B 25 (HP 58.00)",
+				"A MOVE (9, 0) C0.0 G300.0 A60.0",
+				"A WAIT",
+				"B MOVE (3, 9) C0.0 G180.0 A180.0",
+				"B WAIT",
+				"01 MOVE (5, 9) C0.0 G90.0 A270.0",
+				"01 WAIT",
+				"02 MOVE (4, 9) C0.0 G120.0 A240.0",
+				"02 DAMAGE B 20 (HP 38.00)",
+				"A MOVE (9, 1) C0.0 G270.0 A90.0",
+				"A WAIT",
+				"B MOVE (0, 9) C0.0 G90.0 A270.0"
+			],
+			"result": "DEFEAT",
+			"seed": 7,
+			"stage": 2,
+			"turns": 12
+		},
+		{
+			"build": "collected MOVE / same stats",
+			"commands": [
+				{
+					"path": "[(4, 4), (5, 4), (6, 4), (6, 5)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "01"
+				},
+				{
+					"path": "[(4, 6), (5, 6)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "02"
+				},
+				{
+					"path": "[(9, 1)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(6, 7), (6, 8), (6, 9)]",
+					"skill": "",
+					"target": -1,
+					"unit": "B"
+				},
+				{
 					"path": "[(6, 6), (6, 7), (6, 8)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "01"
+				},
+				{
+					"path": "[(5, 7), (5, 8), (5, 9)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "02"
+				},
+				{
+					"path": "[(9, 0)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(7, 9)]",
+					"skill": "",
+					"target": -1,
+					"unit": "B"
+				},
+				{
+					"path": "[(6, 7), (7, 7), (7, 8)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "01"
+				},
+				{
+					"path": "[(6, 9)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "02"
+				},
+				{
+					"path": "[(9, 1)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(7, 7), (8, 7), (8, 6), (8, 5)]",
+					"skill": "",
+					"target": -1,
+					"unit": "01"
+				},
+				{
+					"path": "[(6, 8), (7, 8), (7, 7), (8, 7)]",
+					"skill": "",
+					"target": -1,
+					"unit": "02"
+				},
+				{
+					"path": "[(8, 1), (8, 0), (9, 0)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(8, 4), (8, 3), (8, 2), (8, 1)]",
+					"skill": "",
+					"target": -1,
+					"unit": "01"
+				},
+				{
+					"path": "[(8, 2), (9, 2), (9, 1)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 2,
+					"unit": "01"
+				},
+				{
+					"path": "[(8, 6), (8, 5), (8, 4), (8, 3)]",
+					"skill": "",
+					"target": -1,
+					"unit": "02"
+				},
+				{
+					"path": "[(8, 0)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(9, 0)]",
+					"skill": "",
+					"target": -1,
+					"unit": "01"
+				}
+			],
+			"history": [
+				"01 MOVE (6, 5) C315.0 G240.0 A120.0",
+				"01 DAMAGE B 9 (HP 91.00)",
+				"02 MOVE (5, 6) C0.0 G300.0 A60.0",
+				"02 DAMAGE B 17 (HP 74.00)",
+				"A MOVE (9, 1) C0.0 G330.0 A30.0",
+				"A WAIT",
+				"B MOVE (6, 9) C0.0 G270.0 A90.0",
+				"B WAIT",
+				"01 MOVE (6, 8) C0.0 G150.0 A210.0",
+				"01 DAMAGE B 15 (HP 59.00)",
+				"02 MOVE (5, 9) C0.0 G210.0 A150.0",
+				"02 DAMAGE B 25 (HP 34.00)",
+				"A MOVE (9, 0) C0.0 G300.0 A60.0",
+				"A WAIT",
+				"B MOVE (7, 9) C0.0 G240.0 A120.0",
+				"B WAIT",
+				"01 MOVE (7, 8) C45.0 G60.0 A300.0",
+				"01 DAMAGE B 19 (HP 15.00)",
+				"02 MOVE (6, 9) C0.0 G180.0 A180.0",
+				"02 DAMAGE B 30 (HP 0.00)",
+				"A MOVE (9, 1) C0.0 G270.0 A90.0",
+				"A WAIT",
+				"01 MOVE (8, 5) C90.0 G300.0 A60.0",
+				"01 WAIT",
+				"02 MOVE (8, 7) C60.0 G60.0 A300.0",
+				"02 WAIT",
+				"A MOVE (9, 0) C0.0 G180.0 A180.0",
+				"A WAIT",
+				"01 MOVE (8, 1) C90.0 G180.0 A180.0",
+				"01 WAIT",
+				"01 MOVE (9, 1) C90.0 G90.0 A270.0",
+				"01 DAMAGE A 18 (HP 82.00)",
+				"02 MOVE (8, 3) C60.0 G300.0 A60.0",
+				"02 WAIT",
+				"A MOVE (8, 0) C0.0 G150.0 A210.0",
+				"A WAIT",
+				"01 MOVE (9, 0) C90.0 G60.0 A300.0"
+			],
+			"result": "VICTORY",
+			"seed": 7,
+			"stage": 2,
+			"turns": 19
+		},
+		{
+			"commands": [
+				{
+					"path": "[(4, 4), (5, 4), (5, 5)]",
+					"skill": "",
+					"target": -1,
+					"unit": "01"
+				},
+				{
+					"path": "[(4, 6), (5, 6)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "02"
+				},
+				{
+					"path": "[(8, 1)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(6, 7), (6, 8), (6, 9)]",
+					"skill": "",
+					"target": -1,
+					"unit": "B"
+				},
+				{
+					"path": "[(6, 5), (6, 6), (6, 7)]",
+					"skill": "",
+					"target": -1,
+					"unit": "01"
+				},
+				{
+					"path": "[(5, 7), (5, 8), (6, 8)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "02"
@@ -3105,13 +3494,120 @@
 					"unit": "B"
 				},
 				{
-					"path": "[(4, 7), (4, 8), (4, 9)]",
+					"path": "[(5, 7), (5, 8), (5, 9)]",
+					"skill": "",
+					"target": -1,
+					"unit": "01"
+				},
+				{
+					"path": "[(5, 8), (4, 8), (4, 9)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "02"
+				},
+				{
+					"path": "[(8, 1)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(2, 9), (1, 9), (0, 9)]",
+					"skill": "",
+					"target": -1,
+					"unit": "B"
+				}
+			],
+			"history": [
+				"01 MOVE (5, 5) C45.0 G270.0 A90.0",
+				"01 WAIT",
+				"02 MOVE (5, 6) C0.0 G300.0 A60.0",
+				"02 DAMAGE B 17 (HP 83.00)",
+				"A MOVE (8, 1) C0.0 G330.0 A30.0",
+				"A WAIT",
+				"B MOVE (6, 9) C0.0 G270.0 A90.0",
+				"B WAIT",
+				"01 MOVE (6, 7) C0.0 G180.0 A180.0",
+				"01 WAIT",
+				"02 MOVE (6, 8) C0.0 G210.0 A150.0",
+				"02 DAMAGE B 25 (HP 58.00)",
+				"A MOVE (8, 0) C0.0 G300.0 A60.0",
+				"A WAIT",
+				"B MOVE (3, 9) C0.0 G180.0 A180.0",
+				"B WAIT",
+				"01 MOVE (5, 9) C0.0 G90.0 A270.0",
+				"01 WAIT",
+				"02 MOVE (4, 9) C0.0 G120.0 A240.0",
+				"02 DAMAGE B 20 (HP 38.00)",
+				"A MOVE (8, 1) C0.0 G270.0 A90.0",
+				"A WAIT",
+				"B MOVE (0, 9) C0.0 G90.0 A270.0",
+				"B WAIT"
+			],
+			"result": "DEFEAT",
+			"seed": 7,
+			"stage": 3,
+			"turns": 12
+		},
+		{
+			"build": "collected MOVE / same stats",
+			"commands": [
+				{
+					"path": "[(4, 4), (5, 4), (6, 4), (6, 5)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "01"
 				},
 				{
-					"path": "[(5, 8), (4, 8), (3, 8)]",
+					"path": "[(4, 6), (5, 6)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "02"
+				},
+				{
+					"path": "[(8, 1)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(6, 7), (6, 8), (6, 9)]",
+					"skill": "",
+					"target": -1,
+					"unit": "B"
+				},
+				{
+					"path": "[(6, 6), (6, 7), (6, 8)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "01"
+				},
+				{
+					"path": "[(5, 7), (5, 8), (5, 9)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "02"
+				},
+				{
+					"path": "[(8, 0)]",
+					"skill": "",
+					"target": -1,
+					"unit": "A"
+				},
+				{
+					"path": "[(7, 9)]",
+					"skill": "",
+					"target": -1,
+					"unit": "B"
+				},
+				{
+					"path": "[(6, 7), (7, 7), (7, 8)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 3,
+					"unit": "01"
+				},
+				{
+					"path": "[(6, 9)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 3,
 					"unit": "02"
@@ -3123,37 +3619,37 @@
 					"unit": "A"
 				},
 				{
-					"path": "[(4, 8), (4, 7), (5, 7), (5, 6)]",
+					"path": "[(7, 7), (8, 7), (8, 6), (8, 5)]",
 					"skill": "",
 					"target": -1,
 					"unit": "01"
 				},
 				{
-					"path": "[(3, 7), (3, 6), (4, 6), (4, 5)]",
+					"path": "[(6, 8), (7, 8), (7, 7), (8, 7)]",
 					"skill": "",
 					"target": -1,
 					"unit": "02"
 				},
 				{
-					"path": "[(8, 0)]",
+					"path": "[(9, 1), (8, 1), (8, 0)]",
 					"skill": "",
 					"target": -1,
 					"unit": "A"
 				},
 				{
-					"path": "[(5, 5), (5, 4), (5, 3), (5, 2)]",
-					"skill": "",
-					"target": -1,
-					"unit": "01"
-				},
-				{
-					"path": "[(5, 1), (5, 0), (6, 0), (7, 0)]",
+					"path": "[(8, 4), (8, 3), (8, 2), (8, 1)]",
 					"skill": "ACTIVE_DAMAGE_ADJACENT",
 					"target": 2,
 					"unit": "01"
 				},
 				{
-					"path": "[(4, 4), (4, 3), (4, 2), (5, 2)]",
+					"path": "[(8, 2), (7, 2), (7, 1), (7, 0)]",
+					"skill": "ACTIVE_DAMAGE_ADJACENT",
+					"target": 2,
+					"unit": "01"
+				},
+				{
+					"path": "[(8, 6), (8, 5), (8, 4), (8, 3)]",
 					"skill": "",
 					"target": -1,
 					"unit": "02"
@@ -3172,473 +3668,49 @@
 				}
 			],
 			"history": [
-				"01 MOVE (5, 6) G240.0 A120.0",
+				"01 MOVE (6, 5) C315.0 G240.0 A120.0",
 				"01 DAMAGE B 9 (HP 91.00)",
-				"02 MOVE (6, 5) G270.0 A120.0",
-				"02 DAMAGE B 15 (HP 76.00)",
-				"A MOVE (8, 1) G0.0 A30.0",
+				"02 MOVE (5, 6) C0.0 G300.0 A60.0",
+				"02 DAMAGE B 17 (HP 74.00)",
+				"A MOVE (8, 1) C0.0 G330.0 A30.0",
 				"A WAIT",
-				"B MOVE (5, 8) G300.0 A90.0",
+				"B MOVE (6, 9) C0.0 G270.0 A90.0",
 				"B WAIT",
-				"01 MOVE (5, 7) G180.0 A210.0",
-				"01 DAMAGE B 17 (HP 59.00)",
-				"02 MOVE (6, 8) G180.0 A210.0",
-				"02 DAMAGE B 27 (HP 32.00)",
-				"A MOVE (8, 0) G330.0 A60.0",
+				"01 MOVE (6, 8) C0.0 G150.0 A210.0",
+				"01 DAMAGE B 15 (HP 59.00)",
+				"02 MOVE (5, 9) C0.0 G210.0 A150.0",
+				"02 DAMAGE B 25 (HP 34.00)",
+				"A MOVE (8, 0) C0.0 G300.0 A60.0",
 				"A WAIT",
-				"B MOVE (3, 9) G210.0 A180.0",
+				"B MOVE (7, 9) C0.0 G240.0 A120.0",
 				"B WAIT",
-				"01 MOVE (4, 9) G90.0 A330.0",
-				"01 DAMAGE B 16 (HP 16.00)",
-				"02 MOVE (3, 8) G120.0 A300.0",
-				"02 DAMAGE B 23 (HP 0.00)",
-				"A MOVE (9, 0) G300.0 A30.0",
+				"01 MOVE (7, 8) C45.0 G60.0 A300.0",
+				"01 DAMAGE B 19 (HP 15.00)",
+				"02 MOVE (6, 9) C0.0 G180.0 A180.0",
+				"02 DAMAGE B 30 (HP 0.00)",
+				"A MOVE (9, 0) C0.0 G270.0 A90.0",
 				"A WAIT",
-				"01 MOVE (5, 6) G0.0 A120.0",
+				"01 MOVE (8, 5) C90.0 G300.0 A60.0",
 				"01 WAIT",
-				"02 MOVE (4, 5) G0.0 A60.0",
+				"02 MOVE (8, 7) C60.0 G60.0 A300.0",
 				"02 WAIT",
-				"A MOVE (8, 0) G270.0 A60.0",
+				"A MOVE (8, 0) C0.0 G180.0 A180.0",
 				"A WAIT",
-				"01 MOVE (5, 2) G270.0 A270.0",
-				"01 WAIT",
-				"01 MOVE (7, 0) G150.0 A30.0",
-				"01 DAMAGE A 17 (HP 83.00)",
-				"02 MOVE (5, 2) G240.0 A240.0",
+				"01 MOVE (8, 1) C90.0 G180.0 A180.0",
+				"01 DAMAGE A 18 (HP 82.00)",
+				"01 MOVE (7, 0) C45.0 G60.0 A300.0",
+				"01 DAMAGE A 17 (HP 65.00)",
+				"02 MOVE (8, 3) C60.0 G300.0 A60.0",
 				"02 WAIT",
-				"A MOVE (9, 0) G240.0 A30.0",
+				"A MOVE (9, 0) C0.0 G150.0 A210.0",
 				"A WAIT",
-				"01 MOVE (8, 0) G90.0 A120.0",
+				"01 MOVE (8, 0) C0.0 G330.0 A30.0",
 				"01 WAIT"
 			],
 			"result": "VICTORY",
-			"seed": 1,
+			"seed": 7,
 			"stage": 3,
 			"turns": 19
-		},
-		{
-			"commands": [
-				{
-					"path": "[(4, 4), (5, 4), (5, 5)]",
-					"skill": "",
-					"target": -1,
-					"unit": "01"
-				},
-				{
-					"path": "[(4, 6), (5, 6)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "02"
-				},
-				{
-					"path": "[(9, 1)]",
-					"skill": "",
-					"target": -1,
-					"unit": "A"
-				},
-				{
-					"path": "[(6, 7), (6, 8), (6, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "B"
-				},
-				{
-					"path": "[(6, 5), (6, 6), (6, 7)]",
-					"skill": "",
-					"target": -1,
-					"unit": "01"
-				},
-				{
-					"path": "[(5, 7), (5, 8), (6, 8)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "02"
-				},
-				{
-					"path": "[(9, 0)]",
-					"skill": "",
-					"target": -1,
-					"unit": "A"
-				},
-				{
-					"path": "[(5, 9), (4, 9), (3, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "B"
-				},
-				{
-					"path": "[(5, 7), (5, 8), (5, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "01"
-				},
-				{
-					"path": "[(5, 8), (4, 8), (4, 9)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "02"
-				},
-				{
-					"path": "[(9, 1)]",
-					"skill": "",
-					"target": -1,
-					"unit": "A"
-				},
-				{
-					"path": "[(2, 9), (1, 9), (0, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "B"
-				}
-			],
-			"history": [
-				"01 MOVE (5, 5) G270.0 A120.0",
-				"01 WAIT",
-				"02 MOVE (5, 6) G300.0 A60.0",
-				"02 DAMAGE B 17 (HP 83.00)",
-				"A MOVE (9, 1) G330.0 A30.0",
-				"A WAIT",
-				"B MOVE (6, 9) G300.0 A90.0",
-				"B WAIT",
-				"01 MOVE (6, 7) G210.0 A210.0",
-				"01 WAIT",
-				"02 MOVE (6, 8) G210.0 A150.0",
-				"02 DAMAGE B 24 (HP 59.00)",
-				"A MOVE (9, 0) G300.0 A60.0",
-				"A WAIT",
-				"B MOVE (3, 9) G210.0 A180.0",
-				"B WAIT",
-				"01 MOVE (5, 9) G120.0 A300.0",
-				"01 WAIT",
-				"02 MOVE (4, 9) G150.0 A240.0",
-				"02 DAMAGE B 22 (HP 37.00)",
-				"A MOVE (9, 1) G270.0 A90.0",
-				"A WAIT",
-				"B MOVE (0, 9) G150.0 A270.0"
-			],
-			"result": "DEFEAT",
-			"seed": 7,
-			"stage": 2,
-			"turns": 12
-		},
-		{
-			"build": "collected MOVE / same stats",
-			"commands": [
-				{
-					"path": "[(4, 4), (4, 5), (4, 6), (5, 6)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "01"
-				},
-				{
-					"path": "[(3, 5), (4, 5), (5, 5), (6, 5)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "02"
-				},
-				{
-					"path": "[(9, 1)]",
-					"skill": "",
-					"target": -1,
-					"unit": "A"
-				},
-				{
-					"path": "[(6, 7), (6, 8), (6, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "B"
-				},
-				{
-					"path": "[(5, 7), (5, 8), (6, 8)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "01"
-				},
-				{
-					"path": "[(6, 6), (6, 7)]",
-					"skill": "",
-					"target": -1,
-					"unit": "02"
-				},
-				{
-					"path": "[(9, 0)]",
-					"skill": "",
-					"target": -1,
-					"unit": "A"
-				},
-				{
-					"path": "[(5, 9), (4, 9), (3, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "B"
-				},
-				{
-					"path": "[(6, 9), (5, 9), (4, 9)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "01"
-				},
-				{
-					"path": "[(6, 8), (5, 8), (4, 8), (3, 8)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "02"
-				},
-				{
-					"path": "[(9, 1)]",
-					"skill": "",
-					"target": -1,
-					"unit": "A"
-				},
-				{
-					"path": "[(2, 9), (1, 9), (0, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "B"
-				}
-			],
-			"history": [
-				"01 MOVE (5, 6) G240.0 A60.0",
-				"01 DAMAGE B 10 (HP 90.00)",
-				"02 MOVE (6, 5) G240.0 A90.0",
-				"02 DAMAGE B 15 (HP 75.00)",
-				"A MOVE (9, 1) G330.0 A30.0",
-				"A WAIT",
-				"B MOVE (6, 9) G300.0 A90.0",
-				"B WAIT",
-				"01 MOVE (6, 8) G150.0 A150.0",
-				"01 DAMAGE B 20 (HP 55.00)",
-				"02 MOVE (6, 7) G210.0 A150.0",
-				"02 WAIT",
-				"A MOVE (9, 0) G300.0 A60.0",
-				"A WAIT",
-				"B MOVE (3, 9) G210.0 A180.0",
-				"B WAIT",
-				"01 MOVE (4, 9) G60.0 A240.0",
-				"01 DAMAGE B 14 (HP 41.00)",
-				"02 MOVE (3, 8) G120.0 A270.0",
-				"02 DAMAGE B 22 (HP 19.00)",
-				"A MOVE (9, 1) G270.0 A90.0",
-				"A WAIT",
-				"B MOVE (0, 9) G150.0 A270.0"
-			],
-			"result": "DEFEAT",
-			"seed": 7,
-			"stage": 2,
-			"turns": 12
-		},
-		{
-			"commands": [
-				{
-					"path": "[(4, 4), (5, 4), (5, 5)]",
-					"skill": "",
-					"target": -1,
-					"unit": "01"
-				},
-				{
-					"path": "[(4, 6), (5, 6)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "02"
-				},
-				{
-					"path": "[(8, 1)]",
-					"skill": "",
-					"target": -1,
-					"unit": "A"
-				},
-				{
-					"path": "[(6, 7), (6, 8), (6, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "B"
-				},
-				{
-					"path": "[(6, 5), (6, 6), (6, 7)]",
-					"skill": "",
-					"target": -1,
-					"unit": "01"
-				},
-				{
-					"path": "[(5, 7), (5, 8), (6, 8)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "02"
-				},
-				{
-					"path": "[(8, 0)]",
-					"skill": "",
-					"target": -1,
-					"unit": "A"
-				},
-				{
-					"path": "[(5, 9), (4, 9), (3, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "B"
-				},
-				{
-					"path": "[(5, 7), (5, 8), (5, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "01"
-				},
-				{
-					"path": "[(5, 8), (4, 8), (4, 9)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "02"
-				},
-				{
-					"path": "[(8, 1)]",
-					"skill": "",
-					"target": -1,
-					"unit": "A"
-				},
-				{
-					"path": "[(2, 9), (1, 9), (0, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "B"
-				}
-			],
-			"history": [
-				"01 MOVE (5, 5) G270.0 A120.0",
-				"01 WAIT",
-				"02 MOVE (5, 6) G300.0 A60.0",
-				"02 DAMAGE B 17 (HP 83.00)",
-				"A MOVE (8, 1) G330.0 A30.0",
-				"A WAIT",
-				"B MOVE (6, 9) G300.0 A90.0",
-				"B WAIT",
-				"01 MOVE (6, 7) G210.0 A210.0",
-				"01 WAIT",
-				"02 MOVE (6, 8) G210.0 A150.0",
-				"02 DAMAGE B 24 (HP 59.00)",
-				"A MOVE (8, 0) G300.0 A60.0",
-				"A WAIT",
-				"B MOVE (3, 9) G210.0 A180.0",
-				"B WAIT",
-				"01 MOVE (5, 9) G120.0 A300.0",
-				"01 WAIT",
-				"02 MOVE (4, 9) G150.0 A240.0",
-				"02 DAMAGE B 22 (HP 37.00)",
-				"A MOVE (8, 1) G270.0 A90.0",
-				"A WAIT",
-				"B MOVE (0, 9) G150.0 A270.0",
-				"B WAIT"
-			],
-			"result": "DEFEAT",
-			"seed": 7,
-			"stage": 3,
-			"turns": 12
-		},
-		{
-			"build": "collected MOVE / same stats",
-			"commands": [
-				{
-					"path": "[(4, 4), (4, 5), (4, 6), (5, 6)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "01"
-				},
-				{
-					"path": "[(3, 5), (4, 5), (5, 5), (6, 5)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "02"
-				},
-				{
-					"path": "[(8, 1)]",
-					"skill": "",
-					"target": -1,
-					"unit": "A"
-				},
-				{
-					"path": "[(6, 7), (6, 8), (6, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "B"
-				},
-				{
-					"path": "[(5, 7), (5, 8), (6, 8)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "01"
-				},
-				{
-					"path": "[(6, 6), (6, 7)]",
-					"skill": "",
-					"target": -1,
-					"unit": "02"
-				},
-				{
-					"path": "[(8, 0)]",
-					"skill": "",
-					"target": -1,
-					"unit": "A"
-				},
-				{
-					"path": "[(5, 9), (4, 9), (3, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "B"
-				},
-				{
-					"path": "[(6, 9), (5, 9), (4, 9)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "01"
-				},
-				{
-					"path": "[(6, 8), (5, 8), (4, 8), (3, 8)]",
-					"skill": "ACTIVE_DAMAGE_ADJACENT",
-					"target": 3,
-					"unit": "02"
-				},
-				{
-					"path": "[(8, 1)]",
-					"skill": "",
-					"target": -1,
-					"unit": "A"
-				},
-				{
-					"path": "[(2, 9), (1, 9), (0, 9)]",
-					"skill": "",
-					"target": -1,
-					"unit": "B"
-				}
-			],
-			"history": [
-				"01 MOVE (5, 6) G240.0 A60.0",
-				"01 DAMAGE B 10 (HP 90.00)",
-				"02 MOVE (6, 5) G240.0 A90.0",
-				"02 DAMAGE B 15 (HP 75.00)",
-				"A MOVE (8, 1) G330.0 A30.0",
-				"A WAIT",
-				"B MOVE (6, 9) G300.0 A90.0",
-				"B WAIT",
-				"01 MOVE (6, 8) G150.0 A150.0",
-				"01 DAMAGE B 20 (HP 55.00)",
-				"02 MOVE (6, 7) G210.0 A150.0",
-				"02 WAIT",
-				"A MOVE (8, 0) G300.0 A60.0",
-				"A WAIT",
-				"B MOVE (3, 9) G210.0 A180.0",
-				"B WAIT",
-				"01 MOVE (4, 9) G60.0 A240.0",
-				"01 DAMAGE B 14 (HP 41.00)",
-				"02 MOVE (3, 8) G120.0 A270.0",
-				"02 DAMAGE B 22 (HP 19.00)",
-				"A MOVE (8, 1) G270.0 A90.0",
-				"A WAIT",
-				"B MOVE (0, 9) G150.0 A270.0",
-				"B WAIT"
-			],
-			"result": "DEFEAT",
-			"seed": 7,
-			"stage": 3,
-			"turns": 12
 		}
 	]
 }

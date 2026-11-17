@@ -41,7 +41,9 @@ static func player_builds() -> Array:
 ## 戦闘ユニットを作る。idは内部識別子、campは陣営、posは座標、buildは構成。戻り値はHPと角度を初期化した辞書。
 static func unit(id: String, camp: String, pos: Vector2i, build: Dictionary) -> Dictionary:
 	var u=build.duplicate(true)
-	u.merge({"id":id,"camp":camp,"pos":pos,"gear_angle":0.0,"arms_angle":0.0,"moved":0},true)
+	# 開始角は従来どおり0度であり、戦闘中のリセット基準だけを別に保持する。
+	var core_start=0.0
+	u.merge({"id":id,"camp":camp,"pos":pos,"core_angle":core_start,"initial_core_angle":core_start,"gear_angle":0.0,"arms_angle":0.0,"moved":0},true)
 	u.max_hp=M.max_hp(u)
 	u.hp=u.max_hp
 	u.next_time=M.delay(u)

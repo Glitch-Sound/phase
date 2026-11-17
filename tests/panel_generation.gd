@@ -27,9 +27,9 @@ func _test_count(generator) -> void:
 		_check(panels.size()==target,"whole 100 cells form denominator "+stage.name)
 		_check(panels.keys().all(func(cell):return Rect2i(0,0,10,10).has_point(cell) and not stage.spawns.has(cell) and cell!=stage.goal and cell!=stage.enemy_goal),"spawn and both goals excluded "+stage.name)
 		var counts=[]
-		for kind in ["SHIFT","LOCK","REVERSE"]:
+		for kind in ["CLOCKWISE","RESET","COUNTERCLOCKWISE"]:
 			counts.append(panels.values().count(kind))
-		_check(counts.max()-counts.min()<=1 and panels.values().all(func(kind):return kind in ["SHIFT","LOCK","REVERSE"]),"balanced complete type set")
+		_check(counts.max()-counts.min()<=1 and panels.values().all(func(kind):return kind in ["CLOCKWISE","RESET","COUNTERCLOCKWISE"]),"balanced complete type set")
 		_check(stage==before,"source stage unchanged")
 	var stage=C.stages()[0]
 	_check(generator.generate(stage,0,0.005).size()==1 and generator.generate(stage,0,0.0049).is_empty(),"half-up rounding independently of exclusions")

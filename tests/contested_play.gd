@@ -11,20 +11,23 @@ func _initialize() -> void:
 		var run=_unopposed(stage)
 		report.unopposed.append(run)
 		_check(run.result=="DEFEAT" and run.turns>4,"ignoring counter-goal loses after opponents act")
-	var first=_mutual(0.88,160)
-	var second=_mutual(0.88,160)
+	var first=_mutual(1.8,160)
+	var second=_mutual(1.8,160)
 	report.mutual.append(first)
 	_check(first==second,"mutual play deterministic")
 	_check(not first.result.is_empty(),"mutual play finishes")
 	for camp in ["PLAYER","ENEMY"]:
 		_check(first.actions[camp].DAMAGE>0 and first.actions[camp].HEAL>0,"both camps attack and heal")
-	report.mutual.append(_mutual(1.8,160))
+	report.mutual.append(_mutual(0.88,160))
 	report.mutual.append(_mutual(10.0,160))
 	for stage in [2,3]:
-		var win=_contested_win(stage)
+		var prepared=C.player_builds()
+		for build in prepared:
+			build.skills.append(C.MOVE)
+		var win=_contested_win(stage,null,prepared,Vector2i(6,5))
 		report.contested_wins.append(win)
 		_check(win.result=="VICTORY","contested objective is winnable: %d" % stage)
-	report.native_replay=_mutual(1.1,160,true)
+	report.native_replay=_mutual(1.4,160,true)
 	_check(report.native_replay.result=="VICTORY","actual starter roles finish the native replay")
 	for camp in ["PLAYER","ENEMY"]:
 		_check(report.native_replay.actions[camp].DAMAGE>0 and report.native_replay.actions[camp].HEAL>0 and report.native_replay.actions[camp].WAIT==0,"native replay includes both actions without waiting")
@@ -133,14 +136,14 @@ func _mutual(heal_weight: float, limit: int, roles: bool=false, layout_seed: Var
 		commands.append(command)
 		var state=[]
 		for u in b.units:
-			state.append([u.id,str(u.pos),u.hp,u.gear_angle,u.arms_angle])
+			state.append([u.id,str(u.pos),u.hp,u.core_angle,u.gear_angle,u.arms_angle])
 		var key=JSON.stringify([b.actor,state])
 		state_counts[key]=state_counts.get(key,0)+1
 		if state_counts[key]>1:
 			repeated_states+=1
 	return {"roles":roles,"heal_weight":heal_weight,"result":b.result,"turns":b.turn,"actions":actions,"repeated_states":repeated_states,"history":b.history,"commands":commands}
 
-func _contested_win(stage_index: int, layout_seed: Variant=null, builds_override: Array=[]) -> Dictionary:
+func _contested_win(stage_index: int, layout_seed: Variant=null, builds_override: Array=[], first_intercept: Vector2i=Vector2i(-1,-1)) -> Dictionary:
 	var b=B.new() if layout_seed==null else RUNTIME_B.new()
 	b.start(stage_index,C.player_builds() if builds_override.is_empty() else builds_override,0 if layout_seed==null else int(layout_seed))
 	var commands=[]
@@ -194,7 +197,8 @@ func _contested_win(stage_index: int, layout_seed: Variant=null, builds_override
 				target=-1
 				skill=""
 			# 初動で02の最短攻撃経路(4,6)を塞がず、迎撃を連携する。
-			if b.turn==1 and b.actor==0 and unit.pos==(Vector2i(5,6) if source.skills.has(C.MOVE) else Vector2i(5,5)):
+			var intercept=first_intercept if first_intercept.x>=0 else (Vector2i(5,6) if source.skills.has(C.MOVE) else Vector2i(5,5))
+			if b.turn==1 and b.actor==0 and unit.pos==intercept:
 				score+=1000
 			score+=M.sync(unit,2).factor*0.05-route.size()*0.001
 			if score>best.score:

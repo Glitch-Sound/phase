@@ -105,7 +105,7 @@ func commit_path() -> bool:
 	var u=preview()
 	u.moved=path.size()
 	units[actor]=u
-	history.append("%s MOVE %s G%.1f A%.1f" % [u.id,u.pos,u.gear_angle,u.arms_angle])
+	history.append("%s MOVE %s C%.1f G%.1f A%.1f" % [u.id,u.pos,u.core_angle,u.gear_angle,u.arms_angle])
 	path=[]
 	mode="CHOICE"
 	check_result("MOVE")

@@ -44,11 +44,11 @@ func test_hp() -> void:
 
 ## REQ-003-S01
 func test_shift() -> void:
-	for row in [["NORMAL",330.0,30.0],["SHIFT",330.0,60.0],["LOCK",0.0,30.0],["REVERSE",330.0,330.0]]:
+	for row in [["NORMAL",0.0],["RESET",0.0],["CLOCKWISE",30.0],["COUNTERCLOCKWISE",330.0]]:
 		var u := _unit()
 		M.enter_panel(u,row[0])
-		_check(u.gear_angle == row[1] and u.arms_angle == row[2], "panel " + row[0])
-		_check(M.sector(u,0,1).x == 72.0, "CORE stays fixed")
+		_check(u.gear_angle == 330.0 and u.arms_angle == 30.0 and u.get("core_angle",0)==row[1], "panel " + row[0])
+		_check(M.sector(u,0,1).x == fposmod(72.0+row[1],360.0), "CORE sector follows actual angle")
 
 ## REQ-004-S01
 func test_overlap() -> void:
@@ -150,14 +150,14 @@ func test_prediction() -> void:
 	var b=B.new()
 	b.start(0,[C.default_build(),C.default_build()])
 	b.panels[Vector2i(4,4)]="NORMAL"
-	b.panels[Vector2i(5,4)]="SHIFT"
+	b.panels[Vector2i(5,4)]="CLOCKWISE"
 	b.path_click(Vector2i(4,4))
 	b.path_click(Vector2i(5,4))
 	var u=b.preview()
-	_check(u.gear_angle == 300.0 and u.arms_angle == 90.0, "path prediction")
+	_check(u.gear_angle == 300.0 and u.arms_angle == 60.0 and u.get("core_angle",0)==30.0, "path prediction")
 	_check(b.units[0].gear_angle==0.0, "preview is pure")
 	_check(b.commit_path(), "commit")
-	_check(b.units[0].gear_angle==300.0 and b.units[0].arms_angle==90.0 and b.mode=="CHOICE", "prediction equals committed")
+	_check(b.units[0].gear_angle==300.0 and b.units[0].arms_angle==60.0 and b.units[0].get("core_angle",0)==30.0 and b.mode=="CHOICE", "prediction equals committed")
 
 ## REQ-011-S01
 func test_targets_back() -> void:

@@ -14,11 +14,13 @@ const BG = P.BG
 const PANEL = P.SURFACE
 const EDGE = P.EDGE
 const PANEL_VIEWS = {
- "SHIFT":{"icon":"fast_forward","text":"SHIFT / ARMSの回転量を2倍","short":"ARMS ×2"},
- "LOCK":{"icon":"lock","text":"LOCK / GEARを回転させない","short":"GEAR固定"},
- "REVERSE":{"icon":"restart","text":"REVERSE / ARMSを逆回転","short":"ARMS逆回転"}
+ "CLOCKWISE":{"icon":"rotate_cw","text":"CLOCKWISE / COREをSPD × 1.5度、時計回り","short":"CORE ↷"},
+ "RESET":{"icon":"undo","text":"RESET / COREを戦闘開始角へ戻す","short":"CORE開始角へ"},
+ "COUNTERCLOCKWISE":{"icon":"restart","text":"COUNTERCLOCKWISE / COREをSPD × 1.5度、反時計回り","short":"CORE ↶"}
 }
 const ICONS = {
+ "rotate_cw":preload("res://assets/lucide/rotate-cw.svg"),
+ "undo":preload("res://assets/lucide/undo-2.svg"),
  "fast_forward":preload("res://assets/lucide/fast-forward.svg"),
  "lock":preload("res://assets/lucide/lock.svg"),
  "help":preload("res://assets/lucide/circle-question-mark.svg"),
@@ -228,7 +230,7 @@ func _draw_board() -> void:
 			draw_rect(rect,color)
 			draw_rect(rect,EDGE,false,1)
 			if panel!="NORMAL":
-				var pc=MAGENTA if panel=="REVERSE" else (status_colors[3] if panel=="LOCK" else CYAN)
+				var pc=MAGENTA if panel=="COUNTERCLOCKWISE" else (status_colors[3] if panel=="RESET" else CYAN)
 				_draw_panel_icon(panel,Rect2(pos+T.PANEL_ICON_OFFSET,Vector2.ONE*T.PANEL_ICON_SIZE),pc)
 			if cell==battle.stage.goal:
 				draw_rect(rect.grow(-4),Color(MAGENTA,0.6),false,1)
@@ -320,7 +322,7 @@ func _draw_info() -> void:
 
 func _draw_preview() -> void:
 	var u=battle.preview()
-	var signature=[u.core,u.gear,u.arms,u.class_name,u.gear_mutation,u.arms_mutation,u.gear_angle,u.arms_angle,status_colors]
+	var signature=[u.core,u.gear,u.arms,u.class_name,u.gear_mutation,u.arms_mutation,u.get("core_angle",0.0),u.gear_angle,u.arms_angle,status_colors]
 	if signature!=preview_signature:
 		preview_signature=signature.duplicate(true)
 		preview_contours=V.phase_contours(u,status_colors)
@@ -684,12 +686,12 @@ func _help() -> void:
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
 	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\n白は相対進捗、灰は残り。満周は待ち0。\n表示最大の待ち量で再計算。個別周期ではない。\n縦は順番。中心点が手番。満周でも順番待ち。",Rect2(36,377,500,174),18,WHITE)
 	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
-	_label(panel,"鮮明な所ほど同じステータスが一致。\nINF / RESはLUK補助後の最終補正(最大200%)。\n通常はGEAR ↶、ARMS ↷\n×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
-	var panel_kinds=["SHIFT","LOCK","REVERSE"]
+	_label(panel,"鮮明な所ほど同じステータスが一致。\nINF / RESはLUK補助後の最終補正(最大200%)。\n全セルでGEAR ↶、ARMS ↷\nCORE回転はSPD × 1.5度、リセットは戦闘開始角。\n×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
+	var panel_kinds=["CLOCKWISE","RESET","COUNTERCLOCKWISE"]
 	for i in range(panel_kinds.size()):
 		var view=PANEL_VIEWS[panel_kinds[i]]
-		_icon(panel,view.icon,Rect2(580+i*172,481,20,20),CYAN)
-		_label(panel,view.short,Rect2(608+i*172,479,140,28),14,WHITE)
+		_icon(panel,view.icon,Rect2(580+i*172,514,20,20),CYAN)
+		_label(panel,view.short,Rect2(608+i*172,512,140,28),14,WHITE)
 	if not build_open:
 		_label(panel,"%s / SEED %d" % [battle.stage.name,battle.panel_seed],Rect2(36,704,1048,24),13,MUTED)
 	_separator(panel,Rect2(36,560,1048,1))

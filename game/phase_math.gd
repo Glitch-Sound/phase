@@ -30,7 +30,7 @@ static func order(u: Dictionary, ring: int) -> Array:
 
 ## 生領域を返す。uはユニット、ringは0から2、statusはVIT順。戻り値は開始角と幅の度数。
 static func sector(u: Dictionary, ring: int, status: int) -> Vector2:
-	var start=0.0 if ring==0 else float(u["gear_angle" if ring==1 else "arms_angle"])
+	var start=float(u.get("core_angle",0.0)) if ring==0 else float(u["gear_angle" if ring==1 else "arms_angle"])
 	var stats: Array=u[KEYS[ring]]
 	for k in order(u,ring):
 		if k==status:
@@ -106,16 +106,18 @@ static func max_hp(u: Dictionary) -> float:
 static func delay(u: Dictionary) -> float:
 	return T.BASE_DELAY*sqrt(20.0/float(u.core[3]))
 
-## パネル進入を適用する。uを直接更新し、panelはNORMAL、SHIFT、LOCK、REVERSE。戻り値はない。
+## パネル進入を適用する。uは現在角と戦闘開始CORE角を持つユニット、panelはNORMAL、RESET、CLOCKWISE、COUNTERCLOCKWISE。戻り値はなく、3リングの現在角だけを更新する。
 static func enter_panel(u: Dictionary, panel: String) -> void:
 	var gear=-1.5*float(u.gear[3])
 	var arms=1.5*float(u.arms[3])
-	if panel=="SHIFT":
-		arms*=2.0
-	elif panel=="LOCK":
-		gear=0.0
-	elif panel=="REVERSE":
-		arms*=-1.0
+	var core=float(u.get("core_angle",0.0))
+	if panel=="RESET":
+		core=float(u.get("initial_core_angle",0.0))
+	elif panel=="CLOCKWISE":
+		core+=1.5*float(u.core[3])
+	elif panel=="COUNTERCLOCKWISE":
+		core-=1.5*float(u.core[3])
+	u.core_angle=fposmod(core,360.0)
 	u.gear_angle=fposmod(u.gear_angle+gear,360.0)
 	u.arms_angle=fposmod(u.arms_angle+arms,360.0)
 

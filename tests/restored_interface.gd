@@ -37,7 +37,7 @@ func _run() -> void:
 	game.battle.choose_skill(game.C.DAMAGE)
 	game._clear_overlay()
 	game._cell_input(Vector2i(6,4))
-	_check(game.battle.actor==1 and game.battle.units[2].hp==89,"real attack reaches comparison state")
+	_check(game.battle.actor==1 and game.battle.units[2].hp==90,"real attack reaches comparison state")
 	game._cell_input(Vector2i(4,6))
 	game._cell_input(Vector2i(5,6))
 	_check(game.battle.path==[Vector2i(4,6),Vector2i(5,6)] and game.battle.preview().id=="02","restore comparison route without changing actor")

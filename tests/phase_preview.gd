@@ -103,8 +103,8 @@ func _test_ui() -> void:
 		game._cell_input(Vector2i(4,4))
 		await create_timer(0.08).timeout
 		_check(game.preview_generation==generation+1 and game.preview_contours!=curves,"route updates exactly once")
-		# (4,4)はLOCKなのでGEARは0度、ARMSだけ30度進む。
-		_check(game.preview_rings.size()==1 and game.preview_rings[0].unit.id=="01" and game.preview_rings[0].unit.gear_angle==0.0 and game.preview_rings[0].unit.arms_angle==30.0,"3 rings still use acting route preview through LOCK")
+		# (4,4)はRESETでCOREは開始角0度へ戻り、両装備は通常の1歩分を回転する。
+		_check(game.preview_rings.size()==1 and game.preview_rings[0].unit.id=="01" and game.preview_rings[0].unit.gear_angle==330.0 and game.preview_rings[0].unit.arms_angle==30.0 and game.preview_rings[0].unit.get("core_angle",0)==0.0,"3 rings still use acting route preview through RESET")
 		var units=game.battle.units.duplicate(true)
 		game.palette_colors=game.P.PRESETS.AMBER.duplicate()
 		game._set_theme()

@@ -7,7 +7,7 @@ func _initialize() -> void:
 	_run.call_deferred()
 ## REQ-018-S03、REQ-034-S06、NREQ-002-S01
 func _run() -> void:
-	game=load("res://tests/panel_audit.gd").new()
+	game=load("res://tests/core_panel_audit.gd").new()
 	game.settings_path="res://artifacts/runtime/panels-capture-"+stamp+".json"
 	root.add_child(game)
 	await process_frame
@@ -32,7 +32,7 @@ func _run() -> void:
 	game.panel_seed_override=128
 	game._start_battle()
 	var cells={}
-	for kind in ["SHIFT","LOCK","REVERSE"]:
+	for kind in ["CLOCKWISE","RESET","COUNTERCLOCKWISE"]:
 		cells[kind]=game.battle.panels.keys().filter(func(cell):return game.battle.panels[cell]==kind)[0]
 		var units=game.battle.units.duplicate(true)
 		var path=game.battle.path.duplicate()
@@ -49,16 +49,17 @@ func _run() -> void:
 		game.battle.units[0].pos=source
 		for i in range(1,4):
 			game.battle.units[i].pos=Vector2i(7+i%3,9)
+		game.battle.units[0].core_angle=90
 		game.battle.units[0].gear_angle=0
 		game.battle.units[0].arms_angle=0
 		_click(root.get_final_transform()*(game.BOARD+(Vector2(cell)+Vector2.ONE/2)*game.CELL))
 		await process_frame
 		var preview=game.battle.preview()
-		var expected={"SHIFT":Vector2(330,60),"LOCK":Vector2(0,30),"REVERSE":Vector2(330,330)}[kind]
-		_check(Vector2(preview.gear_angle,preview.arms_angle)==expected,"actual generated effect preserves rotation "+kind)
+		var expected={"CLOCKWISE":135.0,"RESET":0.0,"COUNTERCLOCKWISE":45.0}[kind]
+		_check(preview.core_angle==expected and preview.gear_angle==330 and preview.arms_angle==30,"actual generated effect preserves rotation "+kind)
 		_click(root.get_final_transform()*(game.BOARD+(Vector2(cell)+Vector2.ONE/2)*game.CELL),true)
 		await process_frame
-		_check(game.battle.mode=="CHOICE" and game.battle.units[0].gear_angle==expected.x and game.battle.units[0].arms_angle==expected.y,"commit same prediction "+kind)
+		_check(game.battle.mode=="CHOICE" and game.battle.units[0].core_angle==expected and game.battle.units[0].gear_angle==330 and game.battle.units[0].arms_angle==30,"commit same prediction "+kind)
 		game._clear_overlay()
 		game.battle.mode="MOVE"
 		game.selected=0
@@ -94,7 +95,7 @@ func _run() -> void:
 	game._restart()
 	await process_frame
 	_check(game.build_open,"capture runner returns BUILD without saving")
-	print("PANEL GPU: %d checks / %d failures" % [checks,failures])
+	print("CORE PANEL GPU: %d checks / %d failures" % [checks,failures])
 	print("PANEL REFERENCE CELLS ",cells)
 	quit(0 if failures==0 else 1)
 ## REQ-018-S03
@@ -106,7 +107,7 @@ func _capture(suffix: String) -> void:
 	var transform=Transform2D.IDENTITY.scaled(Vector2(picture.get_width()/1920.0,picture.get_height()/1080.0))
 	_check(game.drawn_icons.size()==game.battle.panels.size() and game.drawn_icons.size()==20,"all twenty actual icons rendered "+suffix)
 	_check(not game.drawn_text.any(func(t):return t.text in ["S+","L=","R-"]),"no letter substitute "+suffix)
-	for kind in ["SHIFT","LOCK","REVERSE"]:
+	for kind in ["CLOCKWISE","RESET","COUNTERCLOCKWISE"]:
 		# HELPは盤面を覆うため、盤面の明度ではなく前面の凡例を検査する。
 		if is_instance_valid(game.auxiliary):
 			var labels=game.auxiliary.find_children("*","Label",true,false)
@@ -121,7 +122,7 @@ func _capture(suffix: String) -> void:
 				if maxf(pixel.r,maxf(pixel.g,pixel.b))>0.35:
 					bright+=1
 		_check(bright>10,"visible colored icon pixels "+kind+" / "+suffix+" / "+str(bright))
-	var path="res://artifacts/runtime/PHASE-panels-"+stamp+"-"+suffix+".png"
+	var path="res://artifacts/runtime/PHASE-core-panels-"+stamp+"-"+suffix+".png"
 	_check(not FileAccess.file_exists(path) and picture.save_png(path)==OK,"unique capture "+suffix)
 	print("CAPTURE ",ProjectSettings.globalize_path(path))
 func _click(point: Vector2,double_click: bool=false) -> void:

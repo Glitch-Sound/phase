@@ -35,10 +35,10 @@
 
 #### Scenario: REQ-018-S03 - パネルのアイコンと確認
 
-- **GIVEN** SHIFT、LOCK、REVERSEとNORMALのパネル
+- **GIVEN** RESET、CLOCKWISE、COUNTERCLOCKWISEとNORMALのパネル
 - **WHEN** 盤面を表示して効果を調べる
-- **THEN** 特殊パネルには順に早送り、錠前、反時計回りのアイコンを表示し、S+、L=、R-の略号は残さず、NORMALには効果アイコンを表示しない
-- **AND** ホバーとHELPでARMSの回転2倍、GEAR固定、ARMS逆回転の対応が分かり、HELPで現在の配置シードを読める
+- **THEN** 特殊パネルには順に開始位置へ戻す、時計回り、反時計回りの区別できるアイコンを表示し、旧効果のアイコンとS+、L=、R-の略号は残さず、NORMALには効果アイコンを表示しない
+- **AND** ホバーとHELPでCOREの戦闘開始角へのリセット、COREのSPDに基づく正逆回転と、全セルでGEARとARMSの通常回転を維持することが分かり、HELPで現在の配置シードを読める
 - **AND** 最小と拡大でアイコンを区別でき、ホバーの確認は経路、対象とクリックを妨げない
 
 ### Requirement: REQ-019 - 情報と位相予測

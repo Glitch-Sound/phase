@@ -31,7 +31,7 @@ func _initialize() -> void:
 			var prepared=C.player_builds()
 			for build in prepared:
 				build.skills.append(C.MOVE)
-			var intercept=_contested_win(stage,layout_seed,prepared)
+			var intercept=_contested_win(stage,layout_seed,prepared,Vector2i(6,5))
 			intercept.seed=layout_seed
 			intercept.build="collected MOVE / same stats"
 			report.objectives.append(intercept)

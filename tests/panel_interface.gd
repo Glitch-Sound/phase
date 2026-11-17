@@ -23,9 +23,13 @@ func _run() -> void:
 	quit(0 if failures==0 else 1)
 ## REQ-018-S03、NREQ-002-S02
 func _test_icons(game) -> void:
-	var paths={"SHIFT":"fast-forward.svg","LOCK":"lock.svg","REVERSE":"rotate-ccw.svg"}
-	var meanings={"SHIFT":"SHIFT / ARMSの回転量を2倍","LOCK":"LOCK / GEARを回転させない","REVERSE":"REVERSE / ARMSを逆回転"}
+	var paths={"CLOCKWISE":"rotate-cw.svg","RESET":"undo-2.svg","COUNTERCLOCKWISE":"rotate-ccw.svg"}
+	var meanings={"CLOCKWISE":"CLOCKWISE / COREをSPD × 1.5度、時計回り","RESET":"RESET / COREを戦闘開始角へ戻す","COUNTERCLOCKWISE":"COUNTERCLOCKWISE / COREをSPD × 1.5度、反時計回り"}
 	_check(game.drawn_icons.size()==game.battle.panels.size(),"exactly one icon per effect cell")
+	var current_kinds=game.battle.panels.values().all(func(kind):return paths.has(kind))
+	_check(current_kinds,"only the three CORE effect kinds exist")
+	if not current_kinds:
+		return
 	var observed={}
 	for icon in game.drawn_icons:
 		var cell=Vector2i((icon.rect.position-game.BOARD)/game.CELL)
@@ -36,7 +40,7 @@ func _test_icons(game) -> void:
 		var point=Vector2(cell)*game.CELL+Vector2.ONE*game.CELL/2
 		_check(game.panel_probe._get_tooltip(point)==meanings[icon.kind],"real hover control connects to meaning "+icon.kind)
 	_check(observed==game.battle.panels and observed.size()==game.drawn_icons.size(),"complete cell-to-effect set, with no duplicate or normal-cell icon")
-	var colors={"SHIFT":game.CYAN,"LOCK":game.status_colors[3],"REVERSE":game.MAGENTA}
+	var colors={"CLOCKWISE":game.CYAN,"RESET":game.status_colors[3],"COUNTERCLOCKWISE":game.MAGENTA}
 	_check(game.drawn_icons.all(func(icon):return icon.color==colors[icon.kind]),"all glyphs retain configured role colors")
 	_check(game.panel_description(Vector2i(-1,-1))=="" and game.panel_description(game.battle.units[0].pos)=="","no invented effect on outside or normal cell")
 	_check(game.panel_probe.mouse_filter==Control.MOUSE_FILTER_PASS and game.panel_probe.focus_mode==Control.FOCUS_NONE,"hover probe has no focus and forwards board input")
@@ -44,12 +48,12 @@ func _test_icons(game) -> void:
 	game._help()
 	await process_frame
 	var labels=game.auxiliary.find_children("*","Label",true,false)
-	_check(["ARMS ×2","GEAR固定","ARMS逆回転"].all(func(s):return labels.any(func(l):return l.text==s)),"HELP maps all three icon meanings")
+	_check(["CORE ↷","CORE開始角へ","CORE ↶"].all(func(s):return labels.any(func(l):return l.text==s)),"HELP maps all three icon meanings")
 	_check(labels.any(func(l):return l.text=="%s / SEED 128" % game.battle.stage.name),"HELP discloses exact seed")
 	_check(game.panel_probe._get_tooltip(Vector2(450,450))=="" and game.battle.path==before,"modal suppresses tooltip without changing route")
 	game._close_aux()
 	var notice=FileAccess.get_file_as_string("res://assets/lucide/NOTICE.md")
-	_check(notice.contains("lock") and notice.contains("fast-forward") and FileAccess.get_file_as_string("res://assets/lucide/LICENSE").contains("ISC License"),"bundled icon sources and licenses retained")
+	_check(notice.contains("undo-2") and notice.contains("rotate-cw") and FileAccess.get_file_as_string("res://assets/lucide/LICENSE").contains("ISC License"),"bundled icon sources and licenses retained")
 ## REQ-034-S06
 func _test_seed(game) -> void:
 	game.panel_seed_override=null
