@@ -5,9 +5,9 @@ const DAMAGE = "ACTIVE_DAMAGE_ADJACENT"
 const HEAL = "ACTIVE_HEAL_ADJACENT"
 const MOVE = "PASSIVE_MOVE_PLUS_ONE_SELF"
 const SKILLS = {
-	DAMAGE:{"type":"ACTIVE","effect":"DAMAGE","area":"ADJACENT","label":"DAMAGE / ADJACENT"},
-	HEAL:{"type":"ACTIVE","effect":"HEAL","area":"ADJACENT","label":"HEAL / ADJACENT"},
-	MOVE:{"type":"PASSIVE","effect":"MOVE +1","area":"SELF","label":"MOVE +1 / SELF"}
+	DAMAGE:{"type":"ACTIVE","effect":"DAMAGE","area":"ADJACENT","label":"DAMAGE / ADJACENT","description":"Damage one adjacent enemy."},
+	HEAL:{"type":"ACTIVE","effect":"HEAL","area":"ADJACENT","label":"HEAL / ADJACENT","description":"Heal one adjacent wounded ally."},
+	MOVE:{"type":"PASSIVE","effect":"MOVE +1","area":"SELF","label":"MOVE +1 / SELF","description":"Adds 1 cell to movement."}
 }
 const STARTER_STATS = [[20,20,20,20,20],[20,30,15,20,15],[20,10,30,20,20],[25,15,20,30,10]]
 

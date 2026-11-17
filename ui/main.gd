@@ -306,19 +306,19 @@ func _draw_info() -> void:
 	var index=selected if selected>=0 else battle.actor
 	var u: Dictionary=battle.units[index]
 	var camp_color=CYAN if u.camp=="PLAYER" else status_colors[1]
-	_text(u.class_name,T.BATTLE_INFO_CLASS,17,camp_color,mono)
+	_text("CLASS: "+u.class_name,T.BATTLE_INFO_CLASS,17,camp_color,mono)
 	_ring(self,T.BATTLE_INFO_RING,81,u,index==battle.actor)
 	_text("MOVE %d" % battle.movement(u),T.BATTLE_INFO_MOVE,16,CYAN,mono)
+	_text("Move up to %d cells per turn." % battle.movement(u),T.BATTLE_INFO_MOVE+T.BATTLE_INFO_DESCRIPTION_OFFSET,T.BATTLE_INFO_DESCRIPTION_FONT,MUTED)
 	var position_px=T.BATTLE_INFO_DETAILS
 	for part in ["GEAR","ARMS"]:
 		var mutation: String=u[part.to_lower()+"_mutation"]
-		if mutation!="NORMAL":
-			_text(part+" / "+mutation,position_px,15,MUTED,mono)
-			position_px.y+=T.BATTLE_MUTATION_STEP
-	if position_px!=T.BATTLE_INFO_DETAILS:
-		position_px.y+=T.BATTLE_MUTATION_GAP
+		_text(C.serial(part,u[part.to_lower()],mutation),position_px,15,WHITE,mono)
+		position_px.y+=T.BATTLE_EQUIPMENT_STEP
+	position_px.y+=T.BATTLE_EQUIPMENT_GAP
 	for id in u.skills:
 		_text(C.SKILLS[id].label,position_px,15,WHITE,mono)
+		_text(C.SKILLS[id].description,position_px+T.BATTLE_INFO_DESCRIPTION_OFFSET,T.BATTLE_INFO_DESCRIPTION_FONT,MUTED)
 		position_px.y+=T.BATTLE_SKILL_STEP
 
 func _draw_preview() -> void:
