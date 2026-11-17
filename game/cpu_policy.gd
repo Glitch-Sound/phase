@@ -124,7 +124,7 @@ func _danger(after, actor: int, threats: Array) -> float:
 			if hit>=victim.hp:
 				risk+=T.CPU_KILL_BONUS
 		if hit>=victim.hp and _critical(after,key.y):
-			risk=maxf(risk,T.CPU_TERMINAL_SCORE*0.5)
+			risk=maxf(risk,T.CPU_KILL_BONUS*T.CPU_CRITICAL_RISK_WEIGHT)
 	return risk
 
 func _critical(b, index: int) -> bool:

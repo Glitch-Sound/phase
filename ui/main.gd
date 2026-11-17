@@ -103,6 +103,7 @@ var cpu_paused := false
 var cpu_policy=CPU.new()
 var cpu_turn=CPU_TURN.new()
 var cpu_memory: Array=[]
+var followed_turn: Array=[]
 
 func _ready() -> void:
 	get_window().focus_exited.connect(_window_focus_exited)
@@ -139,6 +140,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_cpu_tick(delta)
+	_follow_turn()
 	panel_probe.visible=not build_open
 	clock+=delta if not reduced_motion else 0.0
 	message_time=maxf(0,message_time-delta)
@@ -295,12 +297,9 @@ func _draw_board() -> void:
 			_center(str(i+1),center+Vector2(0,6)*BOARD_SCALE,roundi(17*BOARD_SCALE),BG,mono)
 		if not battle.path.is_empty():
 			_draw_cell_focus(_cell_rect(battle.path.back()),CYAN)
-	var marker=_acting_marker()
-	if not marker.is_empty():
-		draw_colored_polygon(marker.points,Color.WHITE)
-		var outline: PackedVector2Array=marker.points.duplicate()
-		outline.append(outline[0])
-		draw_polyline(outline,Color.WHITE,0.75*BOARD_SCALE,true)
+	var turn_cell=_turn_focus_cell()
+	if turn_cell!=Vector2i(-1,-1):
+		_draw_cell_focus(_cell_rect(turn_cell),CYAN)
 	# 全セルの描画後に重ね、次の行の背景で数字を隠さない。
 	for chip in effect_chips:
 		var rect=_effect_chip_rect(chip.cell)
@@ -308,14 +307,25 @@ func _draw_board() -> void:
 		draw_rect(rect,chip.color,false,1)
 		_center(chip.text,rect.position+Vector2(rect.size.x/2,16*BOARD_SCALE),roundi(16*BOARD_SCALE),chip.color,mono)
 
-func _acting_marker() -> Dictionary:
-	if build_open or not battle.result.is_empty() or battle.actor<0 or battle.units[battle.actor].hp<=0:
-		return {}
-	var cell: Vector2i=battle.units[battle.actor].pos
-	var points=PackedVector2Array()
-	for point in T.UNIT_ACTOR_MARKER:
-		points.append(_board_point(cell)+point*BOARD_SCALE)
-	return {"index":battle.actor,"cell":cell,"points":points}
+func _turn_focus_cell() -> Vector2i:
+	if build_open or not battle.result.is_empty() or battle.actor<0 or battle.units[battle.actor].hp<=0 or selected>=0 or (battle.mode=="MOVE" and not battle.path.is_empty()):
+		return Vector2i(-1,-1)
+	return battle.units[battle.actor].pos
+
+func _follow_turn() -> void:
+	if build_open:
+		followed_turn=[]
+		return
+	var current=[battle.turn,battle.actor]
+	if current==followed_turn:
+		return
+	followed_turn=current
+	selected=-1
+	timeline_hover=-1
+	timeline_hover_event={}
+	timeline_selected_event={}
+	hover_cell=Vector2i(-1,-1)
+	queue_redraw()
 
 func _cell_rect(cell: Vector2i) -> Rect2:
 	var inset=T.CELL_BORDER_INSET*BOARD_SCALE
@@ -401,6 +411,7 @@ func _draw_preview() -> void:
 		_text("×5",Vector2(T.PREVIEW_PANEL.position.x+286,T.PREVIEW_SYNC_BASELINE),15,MAGENTA,mono)
 
 func _input(event: InputEvent) -> void:
+	_follow_turn()
 	if event is InputEventMouseMotion:
 		if build_open or not window_focused or is_instance_valid(auxiliary) or is_instance_valid(overlay):
 			_timeline_mouse_exited()
@@ -413,6 +424,7 @@ func _timeline_mouse_exited() -> void:
 	timeline_hover_event={}
 
 func _unhandled_input(event: InputEvent) -> void:
+	_follow_turn()
 	if not window_focused:
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -465,6 +477,7 @@ func _window_focus_entered() -> void:
 		_focus_modal.call_deferred(overlay)
 
 func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
+	_follow_turn()
 	if _cpu_locked():
 		var occupant=battle.at(cell)
 		if occupant>=0:
@@ -498,6 +511,7 @@ func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 	queue_redraw()
 
 func _after_action() -> void:
+	_follow_turn()
 	timeline_hover=-1
 	timeline_hover_event={}
 	timeline_selected_event={}
@@ -583,6 +597,7 @@ func _reselect_path() -> void:
 
 func _build() -> void:
 	build_open=true
+	followed_turn=[]
 	if is_instance_valid(hud):
 		hud.visible=false
 	selected=-1
@@ -770,6 +785,7 @@ func _start_battle() -> void:
 		layout_seed=panel_rng.randi()
 	last_panel_seed=layout_seed
 	battle.start(collection.stage_index,collection.builds,layout_seed)
+	_follow_turn()
 	_clear_overlay()
 	_hud()
 	_notify("UNIT %s / %s — Click adjacent empty cells, then double-click the endpoint." % [V.unit_name(battle.units[battle.actor]),battle.units[battle.actor].camp])
@@ -809,7 +825,7 @@ func _help() -> void:
 	_label(panel,"HELP",Rect2(36,25,1048,48),32,WHITE)
 	_wrapped_label(panel,"BUILDのENEMY CPUで敵を自動操作。OFFは両陣営手動。\nSPEEDで早送り、PAUSEで停止。HELP中と非アクティブは自動停止。",Rect2(36,85,1048,56),17,MUTED)
 	var steps=[
-		["move","01 / ROUTE","白い三角が手番。空きマスを選択。\n経路上のクリックで後続を取消。"],
+		["move","01 / ROUTE","手番開始で角枠と詳細が追従。\n経路上のクリックで後続を取消。"],
 		["target","02 / ALIGN","3波は各SPDで揺れ、全体へ合成。\n色は実位相。戦闘角度は不変。"],
 		["check","03 / ACT","終点をダブルクリックして確定。\nWAITかスキルを選び、対象をクリック。"]
 	]
@@ -970,6 +986,7 @@ func _cpu_locked() -> bool:
 	return cpu_enabled and not build_open and battle.result.is_empty() and (cpu_turn.active or (battle.actor>=0 and battle.units[battle.actor].camp=="ENEMY"))
 
 func _cpu_tick(delta: float) -> void:
+	_follow_turn()
 	if not cpu_enabled or build_open or is_instance_valid(auxiliary) or not window_focused or cpu_paused:
 		return
 	if not battle.result.is_empty():
@@ -988,6 +1005,7 @@ func _cpu_tick(delta: float) -> void:
 	var actor=cpu_turn.actor
 	var command=cpu_turn.command.duplicate(true)
 	var event=cpu_turn.advance(battle,delta,false,T.CPU_FAST_SPEED if cpu_fast else 1.0)
+	_follow_turn()
 	if event=="act":
 		_feedback()
 	if event in ["act","wait"] or (event=="commit" and not battle.result.is_empty()):

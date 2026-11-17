@@ -33,7 +33,7 @@ if rg 'SCRIPT ERROR|FAIL:|Failed to load script' artifacts/runtime/ui-output.txt
 fi
 rg 'UI CONNECTIONS: [0-9]+ checks / 0 failures' artifacts/runtime/ui-output.txt
 
-for suite in review_regressions contested_play display_flow design_flow restored_interface map_chrome unit_glyphs arc_strokes ring_palette phase_preview battle_labels time_axis side_information route_clearance panel_generation panel_interface core_panels core_panel_ui panel_play interface_hierarchy cpu_policy cpu_turn cpu_interface cpu_play decision_model decision_interface; do
+for suite in review_regressions contested_play display_flow design_flow restored_interface map_chrome unit_glyphs arc_strokes ring_palette phase_preview battle_labels time_axis side_information route_clearance panel_generation panel_interface core_panels core_panel_ui panel_play interface_hierarchy cpu_policy cpu_turn cpu_interface cpu_play decision_model decision_interface turn_follow tempo_risk; do
   godot --headless --path . --script "tests/$suite.gd" --log-file "$PWD/artifacts/runtime/$suite.log" > "artifacts/runtime/$suite-output.txt" 2>&1
   cat "artifacts/runtime/$suite-output.txt"
   if rg 'SCRIPT ERROR|FAIL:|Failed to load script' "artifacts/runtime/$suite-output.txt"; then
@@ -72,9 +72,11 @@ rg 'CPU INTERFACE: [0-9]+ checks / 0 failures' artifacts/runtime/cpu_interface-o
 rg 'CPU PLAY: [0-9]+ checks / 0 failures' artifacts/runtime/cpu_play-output.txt
 rg 'TACTICAL DECISIONS MODEL: [0-9]+ checks / 0 failures' artifacts/runtime/decision_model-output.txt
 rg 'TACTICAL DECISIONS UI: [0-9]+ checks / 0 failures' artifacts/runtime/decision_interface-output.txt
+rg 'TURN FOLLOW: [0-9]+ checks / 0 failures' artifacts/runtime/turn_follow-output.txt
+rg 'TEMPO RISK: [0-9]+ checks / 0 failures' artifacts/runtime/tempo_risk-output.txt
 
 # macOS sandboxの証明書初期化警告を除き、エンジンの描画エラー等も失敗にする。
-for log in test-output smoke-output replay-output ui-output review_regressions-output contested_play-output display_flow-output design_flow-output restored_interface-output map_chrome-output unit_glyphs-output arc_strokes-output ring_palette-output phase_preview-output battle_labels-output time_axis-output side_information-output route_clearance-output panel_generation-output panel_interface-output core_panels-output core_panel_ui-output panel_play-output interface_hierarchy-output cpu_policy-output cpu_turn-output cpu_interface-output cpu_play-output decision_model-output decision_interface-output; do
+for log in test-output smoke-output replay-output ui-output review_regressions-output contested_play-output display_flow-output design_flow-output restored_interface-output map_chrome-output unit_glyphs-output arc_strokes-output ring_palette-output phase_preview-output battle_labels-output time_axis-output side_information-output route_clearance-output panel_generation-output panel_interface-output core_panels-output core_panel_ui-output panel_play-output interface_hierarchy-output cpu_policy-output cpu_turn-output cpu_interface-output cpu_play-output decision_model-output decision_interface-output turn_follow-output tempo_risk-output; do
   if rg '^ERROR:' "artifacts/runtime/$log.txt" | rg -v '^ERROR: Condition "ret != noErr" is true. Returning: ""$'; then
     exit 1
   fi

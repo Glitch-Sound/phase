@@ -13,7 +13,7 @@ func _process(delta: float) -> void:
 	if key==audit_key:
 		return
 	audit_key=key
-	var state={"build":build_open,"turn":battle.turn,"actor":battle.actor,"mode":battle.mode,"phase":cpu_turn.phase,"cpu":cpu_enabled,"paused":cpu_paused,"fast":cpu_fast,"result":battle.result,"units":battle.units,"path":battle.path,"history":battle.history,"window_size":get_window().size,"transform":str(get_viewport().get_final_transform())}
+	var state={"build":build_open,"turn":battle.turn,"actor":battle.actor,"mode":battle.mode,"phase":cpu_turn.phase,"cpu":cpu_enabled,"paused":cpu_paused,"fast":cpu_fast,"result":battle.result,"units":battle.units,"path":battle.path,"history":battle.history,"window_size":get_window().size,"transform":str(get_viewport().get_final_transform()),"selected":selected,"hover":timeline_hover,"turn_focus":_turn_focus_cell()}
 	var file=FileAccess.open("res://artifacts/runtime/cpu-manual-state.json",FileAccess.WRITE)
 	file.store_string(JSON.stringify(state,"\t"))
 	print("MANUAL STATE ",key)
