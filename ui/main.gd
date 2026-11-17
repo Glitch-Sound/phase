@@ -188,8 +188,8 @@ func _draw_timeline() -> void:
 		draw_line(first.point+Vector2(0,first.radius),next.point-Vector2(0,next.radius),Color(MUTED,0.55),width,true)
 	for link in view.links:
 		var event=link.event
-		var active=_timeline_matches(event,inspected) or (inspected.is_empty() and event.index==selected and not event.repeated)
-		draw_polyline(link.points,Color(CYAN if active else MUTED,0.95 if active else (0.18 if event.repeated else 0.40)),width,true)
+		# 接続線は選択やホバーでも通常の灰色を保ち、再登場の弱い線を維持する。
+		draw_polyline(link.points,Color(MUTED,0.18 if event.repeated else 0.40),width,true)
 	for card in view.cards:
 		var active=card.index==selected or card.index==timeline_hover
 		var color=CYAN if active else MUTED
