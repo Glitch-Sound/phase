@@ -233,7 +233,7 @@ func _draw_board() -> void:
 		for x in range(10):
 			var cell=Vector2i(x,y)
 			var pos=_board_point(cell)
-			var rect=Rect2(pos+Vector2.ONE*BOARD_SCALE,Vector2(68,68)*BOARD_SCALE)
+			var rect=_cell_rect(cell)
 			var panel=battle.panels.get(cell,"NORMAL")
 			var color=Color("0d1013") if (x+y)%2==0 else Color("090c0f")
 			if panel!="NORMAL":
@@ -256,17 +256,17 @@ func _draw_board() -> void:
 			if battle.mode=="TARGET" and _distance(cell,battle.units[battle.actor].pos)==1:
 				var tc=status_colors[1] if battle.selected_skill==C.DAMAGE else status_colors[2]
 				draw_rect(rect,Color(tc,0.12))
-				draw_rect(rect.grow(-3),Color(tc,0.7),false,1.5)
+				_draw_cell_focus(rect,Color(tc,0.7),true,1.5)
 			var i=battle.at(cell)
 			if i>=0:
 				var u: Dictionary=battle.units[i]
 				var center=pos+T.UNIT_BOARD_CENTER*BOARD_SCALE
 				_ring(self,center,T.UNIT_BOARD_RADIUS*BOARD_SCALE,u,i==battle.actor)
 				if i==selected or i==timeline_hover:
-					_brackets(Rect2(pos+Vector2(5,5)*BOARD_SCALE,Vector2(60,60)*BOARD_SCALE),MAGENTA)
+					_draw_cell_focus(rect,MAGENTA)
 				if battle.mode=="TARGET" and battle.valid_target(battle.actor,i,battle.selected_skill):
 					var tc=status_colors[1] if battle.selected_skill==C.DAMAGE else status_colors[2]
-					draw_rect(rect.grow(-1),tc,false,2)
+					_draw_cell_focus(rect,tc,true)
 					var amount=M.effect(battle.units[battle.actor],u,C.SKILLS[battle.selected_skill].effect)
 					if battle.selected_skill==C.HEAL:
 						amount=mini(amount,ceili(u.max_hp-u.hp))
@@ -279,13 +279,23 @@ func _draw_board() -> void:
 			draw_circle(center,T.ROUTE_NODE_RADIUS*BOARD_SCALE,WHITE)
 			_center(str(i+1),center+Vector2(0,6)*BOARD_SCALE,roundi(17*BOARD_SCALE),BG,mono)
 		if not battle.path.is_empty():
-			_brackets(Rect2(_board_point(battle.path.back(),Vector2(3,3)),Vector2(64,64)*BOARD_SCALE),CYAN)
+			_draw_cell_focus(_cell_rect(battle.path.back()),CYAN)
 	# 全セルの描画後に重ね、次の行の背景で数字を隠さない。
 	for chip in effect_chips:
 		var rect=_effect_chip_rect(chip.cell)
 		draw_rect(rect,BG)
 		draw_rect(rect,chip.color,false,1)
 		_center(chip.text,rect.position+Vector2(rect.size.x/2,16*BOARD_SCALE),roundi(16*BOARD_SCALE),chip.color,mono)
+
+func _cell_rect(cell: Vector2i) -> Rect2:
+	var inset=T.CELL_BORDER_INSET*BOARD_SCALE
+	return Rect2(_board_point(cell)+Vector2.ONE*inset,Vector2.ONE*(CELL-2*inset))
+
+func _draw_cell_focus(rect: Rect2,color: Color,full_outline: bool=false,line_width: float=2.0) -> void:
+	if full_outline:
+		draw_rect(rect,color,false,line_width)
+	else:
+		_brackets(rect,color)
 
 func _draw_panel_icon(kind: String, rect: Rect2, color: Color) -> void:
 	draw_texture_rect(ICONS[PANEL_VIEWS[kind].icon],rect,false,color)
@@ -705,7 +715,7 @@ func _help() -> void:
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
 	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\nBACKは移動を保持してスキルを選び直す。\n白は相対進捗、灰は残り。満周は待ち0。\n表示最大の待ち量で再計算。個別周期ではない。\n縦は順番。中心点が手番。満周でも順番待ち。",Rect2(36,377,500,174),18,WHITE)
 	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
-	_label(panel,"鮮明な所ほど同じステータスが一致。\nINF / RESはLUK補助後の最終補正(最大200%)。\n全セルでGEAR ↶、ARMS ↷\nCORE回転はSPD × 1.5度、リセットは戦闘開始角。\n×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
+	_label(panel,"一致ほど広く明るい。最終補正とは別。\nINF / RESはLUK補助後の最終補正(最大200%)。\n全セルでGEAR ↶、ARMS ↷\nCORE回転はSPD × 1.5度、リセットは戦闘開始角。\n×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
 	var panel_kinds=["CLOCKWISE","RESET","COUNTERCLOCKWISE"]
 	for i in range(panel_kinds.size()):
 		var view=PANEL_VIEWS[panel_kinds[i]]

@@ -10,6 +10,7 @@ const MUTANT_CHANCE := 0.10
 const SAVE_VERSION := 1
 # 密度の母数は除外前の全100セル。
 const PANEL_EFFECT_RATE := 0.20
+const CELL_BORDER_INSET := 1.0
 const PANEL_ICON_SIZE := 20.0
 const PANEL_ICON_OFFSET := Vector2(3,3)
 
@@ -108,15 +109,19 @@ const BATTLE_MESSAGE_POSITION := Vector2(40,1053)
 # 同じ軌道付近で4曲線を重ね、形は実際の配分と一致度へ従わせる。
 const PREVIEW_SAMPLES := 360
 const PREVIEW_RADII := [78.0,78.8,79.6,78.8]
-const PREVIEW_AMPLITUDES := [8.0,8.0,8.0,10.0]
+const PREVIEW_AMPLITUDES := [16.0,16.0,16.0,22.0]
+# 局所的一致が低い輪郭も読める最小振幅倍率。完全一致で最大振幅になる。
+const PREVIEW_MIN_GAIN := 0.35
 # 実境界の両側を滑らかに結び、狭い領域では隣接間隔の半分へ縮める。
 const PREVIEW_BLEND_DEGREES := 8.0
 const PREVIEW_LINE := 0.9
+const PREVIEW_LINE_MAX := 1.4
 # 結果の輪郭を通常の縮小表示でも追えるよう、他の細線より少し太くする。
 const PREVIEW_RESULT_LINE := 2.0
+const PREVIEW_RESULT_LINE_MAX := 3.4
 const PREVIEW_PIXEL_MIN := 0.9
 # 暗い不一致の輪郭も読み取りやすくし、一致時の鮮明さとの差を残す。
 const PREVIEW_BASE_ALPHA := 0.72
-const PREVIEW_CLEAR_ALPHA := 0.92
+const PREVIEW_CLEAR_ALPHA := 1.0
 const PREVIEW_RESULT_BASE_ALPHA := 0.45
 const PREVIEW_RESULT_CLEAR_ALPHA := 1.0

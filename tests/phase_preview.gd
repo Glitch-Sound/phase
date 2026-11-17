@@ -13,6 +13,8 @@ func _run() -> void:
 		_test_fields(visual)
 		_test_contours(visual)
 		_test_gradient(visual)
+		_test_strength(visual)
+		_test_smooth_strength(visual)
 	else:
 		_check(false,"actual phase field and closed contours exist")
 	await _test_ui()
@@ -226,6 +228,43 @@ func _test_gradient(visual) -> void:
 	u.arms_angle=144.0
 	var apart: Array=visual.phase_contours(u,colors)
 	_check(aligned_alpha>apart[3].colors[int(T.PREVIEW_SAMPLES/10)].a,"result clarity still distinguishes actual agreement")
+## REQ-033-S01、REQ-033-S03、REQ-033-S04
+func _test_strength(visual) -> void:
+	var u=C.unit("01","PLAYER",Vector2i.ZERO,C.default_build())
+	var colors=P.PRESETS.DEFAULT.slice(1)
+	var states=[]
+	for angles in [[0.0,72.0,144.0],[0.0,0.0,72.0],[0.0,0.0,0.0]]:
+		u.core_angle=angles[0]
+		u.gear_angle=angles[1]
+		u.arms_angle=angles[2]
+		states.append(visual.phase_contours(u,colors))
+	var middle=int(T.PREVIEW_SAMPLES/10)
+	for r in range(4):
+		var low=states[0][r]
+		var medium=states[1][r]
+		var high=states[2][r]
+		_check(low.points[middle].length()<medium.points[middle].length() and medium.points[middle].length()<high.points[middle].length(),"low pair and full agreement have strictly increasing radial size "+high.role)
+		_check(low.width<medium.width and medium.width<high.width,"low pair and full agreement have strictly increasing line clarity "+high.role)
+		_check(low.colors[middle].a<medium.colors[middle].a and medium.colors[middle].a<high.colors[middle].a,"low pair and full agreement have strictly increasing brightness "+high.role)
+		for status in range(5):
+			var color: Color=high.colors[int((status+0.5)*T.PREVIEW_SAMPLES/5)]
+			_check(Vector3(color.r,color.g,color.b).is_equal_approx(Vector3(colors[status].r,colors[status].g,colors[status].b)),"strength preserves exact status RGB "+high.role+" / "+str(status))
+		_check(Array(high.points).all(func(point):return point.length()-high.width/2>T.PREVIEW_RADIUS and point.length()<=T.PREVIEW_RADII[r]+T.PREVIEW_AMPLITUDES[r]+0.001),"all strong contour points stay outside inner rings and inside the configured envelope")
+## REQ-033-S04
+func _test_smooth_strength(visual) -> void:
+	var u=C.unit("01","PLAYER",Vector2i.ZERO,C.default_build())
+	u.core=[20,20,15,30,15]
+	u.core_angle=45.0
+	u.gear_angle=90.0
+	u.arms_angle=270.0
+	var curves=visual.phase_contours(u,P.PRESETS.DEFAULT.slice(1))
+	for r in range(3):
+		var curve=curves[r]
+		var bound=2*(T.PREVIEW_RADII[r]+T.PREVIEW_AMPLITUDES[r])*TAU/T.PREVIEW_SAMPLES
+		var worst=0.0
+		for i in range(curve.points.size()-1):
+			worst=maxf(worst,curve.points[i].distance_to(curve.points[i+1]))
+		_check(worst<bound,"partial agreement has no radial jump at role boundaries "+curve.role+" / "+str(worst))
 ## REQ-019-S05、NREQ-001-S04
 func _test_compact_layout() -> void:
 	var game=load("res://tests/map_orbit_audit.gd").new()

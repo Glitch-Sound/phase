@@ -42,3 +42,8 @@ func _bar(rect: Rect2,ratio: float,color: Color) -> void:
 	if in_info:
 		info_bars.append(rect)
 	super._bar(rect,ratio,color)
+# 比較画像の基準だけで枠を隠し、同じ状態の実描画の差を測る。
+var hide_cell_focus=false
+func _draw_cell_focus(rect: Rect2,color: Color,full_outline: bool=false,line_width: float=2.0) -> void:
+	if not hide_cell_focus:
+		super._draw_cell_focus(rect,color,full_outline,line_width)

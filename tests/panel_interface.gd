@@ -15,6 +15,7 @@ func _run() -> void:
 	_check(not game.drawn_text.any(func(t):return t.text in ["S+","L=","R-"]),"panel abbreviations are removed")
 	_check(game.has_method("panel_description"),"panel explanation is available on demand")
 	await _test_icons(game)
+	await _test_focus(game)
 	await _test_seed(game)
 	await _test_input(game)
 	game.queue_free()
@@ -23,6 +24,7 @@ func _run() -> void:
 	quit(0 if failures==0 else 1)
 ## REQ-018-S03、NREQ-002-S02
 func _test_icons(game) -> void:
+	_check(FileAccess.get_file_as_string("res://assets/lucide/diamond.svg").contains('fill="#ffffff"'),"RESET diamond has a filled interior")
 	var paths={"CLOCKWISE":"rotate-cw.svg","RESET":"diamond.svg","COUNTERCLOCKWISE":"rotate-ccw.svg"}
 	var meanings={"CLOCKWISE":"CLOCKWISE / COREをSPD × 1.5度、時計回り","RESET":"RESET / COREを戦闘開始角へ戻す","COUNTERCLOCKWISE":"COUNTERCLOCKWISE / COREをSPD × 1.5度、反時計回り"}
 	_check(game.drawn_icons.size()==game.battle.panels.size(),"exactly one icon per effect cell")
@@ -57,6 +59,39 @@ func _test_icons(game) -> void:
 	game._close_aux()
 	var notice=FileAccess.get_file_as_string("res://assets/lucide/NOTICE.md")
 	_check(notice.contains("diamond") and notice.contains("rotate-cw") and FileAccess.get_file_as_string("res://assets/lucide/LICENSE").contains("ISC License"),"bundled icon sources and licenses retained")
+## REQ-018-S04
+func _test_focus(game) -> void:
+	game.panel_seed_override=128
+	game._start_battle()
+	for cell in [Vector2i(0,0),Vector2i(9,0),Vector2i(0,9),Vector2i(9,9),Vector2i(4,4)]:
+		game.battle.units[0].pos=cell
+		game.battle.panels[cell]="RESET"
+		game.selected=0
+		game.timeline_hover=-1
+		game.battle.path=[]
+		game.queue_redraw()
+		await create_timer(0.04).timeout
+		var expected=Rect2(game.BOARD+Vector2(cell)*game.CELL+Vector2.ONE*game.T.CELL_BORDER_INSET*game.BOARD_SCALE,Vector2.ONE*(game.CELL-2*game.T.CELL_BORDER_INSET*game.BOARD_SCALE))
+		_check(game.drawn_brackets==[{"rect":expected,"color":game.MAGENTA}],"exact unit focus lies on its own cell border "+str(cell))
+		game.selected=-1
+		game.battle.path=[cell]
+		game.queue_redraw()
+		await create_timer(0.04).timeout
+		_check(game.drawn_brackets==[{"rect":expected,"color":game.CYAN}],"exact endpoint focus lies on cell border "+str(cell))
+	game._start_battle()
+	game.battle.units[0].pos=Vector2i(4,4)
+	game.battle.units[2].pos=Vector2i(5,4)
+	game.battle.mode="TARGET"
+	game.battle.selected_skill=game.C.DAMAGE
+	game.selected=-1
+	game.queue_redraw()
+	await create_timer(0.04).timeout
+	var origin=game.BOARD+Vector2(4,4)*game.CELL
+	var expected=[]
+	# 行の順番を含む全体集合。隣接4マスと有効対象の追加強調だけである。
+	for cell in [Vector2i(4,3),Vector2i(3,4),Vector2i(5,4),Vector2i(5,4),Vector2i(4,5)]:
+		expected.append(Rect2(game.BOARD+Vector2(cell)*game.CELL+Vector2.ONE*game.T.CELL_BORDER_INSET*game.BOARD_SCALE,Vector2.ONE*(game.CELL-2*game.T.CELL_BORDER_INSET*game.BOARD_SCALE)))
+	_check(game.full_focus.map(func(item):return item.rect)==expected,"all target outlines use the cell border with no inset duplicates")
 ## REQ-034-S06
 func _test_seed(game) -> void:
 	game.panel_seed_override=null

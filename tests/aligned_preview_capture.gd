@@ -19,9 +19,18 @@ func _run() -> void:
 		root.grab_focus()
 		await create_timer(0.02).timeout
 	for command in policy.commands.slice(0,17):
+		await process_frame
+		await RenderingServer.frame_post_draw
+		if not root.has_focus() or not game.window_focused:
+			root.grab_focus()
+			await create_timer(0.08).timeout
 		_check(game.battle.units[game.battle.actor].id==command.unit,"aligned scene replay actor "+command.unit)
+		if game.battle.units[game.battle.actor].id!=command.unit:
+			quit(1)
+			return
 		for pair in command.path:
 			_click_cell(Vector2i(pair[0],pair[1]))
+			await process_frame
 		if not command.path.is_empty():
 			var last=command.path[-1]
 			_click_cell(Vector2i(last[0],last[1]),true)
@@ -31,6 +40,7 @@ func _run() -> void:
 		else:
 			_click_button(game.overlay,game.C.SKILLS[command.skill].label)
 			await process_frame
+			await RenderingServer.frame_post_draw
 			_click_cell(game.battle.units[command.target].pos)
 		await process_frame
 		_check(game.battle.result.is_empty(),"all 17 actual actions precede battle end")

@@ -100,18 +100,27 @@ static func phase_contours(u: Dictionary, colors: Array) -> Array:
 	var curves=[]
 	for role in ["CORE","GEAR","ARMS","RESULT"]:
 		curves.append({"role":role,"points":PackedVector2Array(),"colors":PackedColorArray(),"width":T.PREVIEW_RESULT_LINE if role=="RESULT" else T.PREVIEW_LINE})
+	var clarity_sum=0.0
 	for sample in range(T.PREVIEW_SAMPLES+1):
 		# 最後の点は0度を再利用し、色と形の継ぎ目を一致させる。
 		var angle=(sample%T.PREVIEW_SAMPLES)*360.0/T.PREVIEW_SAMPLES
 		var field=_phase_field(sectors,angle,colors)
+		if sample<T.PREVIEW_SAMPLES:
+			clarity_sum+=clampf(field.clarity,0,1)
 		var paint=_phase_paint(sectors,boundaries,angle,colors,field)
+		var strength=sqrt(clampf(paint.clarity,0,1))
+		var gain=lerpf(T.PREVIEW_MIN_GAIN,1.0,strength)
 		var direction=Vector2.from_angle(deg_to_rad(angle)-PI/2)
 		for r in range(4):
 			var height=field.profiles[r] if r<3 else field.height
 			var color: Color=paint.colors[r]
-			color.a=lerpf(T.PREVIEW_BASE_ALPHA,T.PREVIEW_CLEAR_ALPHA,paint.clarity) if r<3 else lerpf(T.PREVIEW_RESULT_BASE_ALPHA,T.PREVIEW_RESULT_CLEAR_ALPHA,paint.clarity)
-			curves[r].points.append(direction*(T.PREVIEW_RADII[r]+height*T.PREVIEW_AMPLITUDES[r]))
+			color.a=lerpf(T.PREVIEW_BASE_ALPHA,T.PREVIEW_CLEAR_ALPHA,sqrt(clampf(paint.clarity,0,1))) if r<3 else lerpf(T.PREVIEW_RESULT_BASE_ALPHA,T.PREVIEW_RESULT_CLEAR_ALPHA,sqrt(clampf(paint.clarity,0,1)))
+			curves[r].points.append(direction*(T.PREVIEW_RADII[r]+height*T.PREVIEW_AMPLITUDES[r]*gain))
 			curves[r].colors.append(color)
+	# 線幅は実際の全周平均に従い、毎フレームの乱数や時間では変えない。
+	var mean_strength=sqrt(clarity_sum/T.PREVIEW_SAMPLES)
+	for r in range(4):
+		curves[r].width=lerpf(T.PREVIEW_LINE,T.PREVIEW_LINE_MAX,mean_strength) if r<3 else lerpf(T.PREVIEW_RESULT_LINE,T.PREVIEW_RESULT_LINE_MAX,mean_strength)
 	return curves
 
 static func _field_colors(field: Dictionary, colors: Array) -> Array:
