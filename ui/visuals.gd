@@ -221,3 +221,33 @@ static func route_segment(from: Vector2, to: Vector2, start_clear: float, end_cl
 		return PackedVector2Array()
 	var direction=(to-from)/distance
 	return PackedVector2Array([from+direction*start_clear,to-direction*end_clear])
+
+## 雲の形を返す。rectは1セル、previewは移動後の予測か。戻り値はセル内の各層のpointsとalpha。原本の状態を変更しない。
+static func cloud_shape(rect: Rect2, preview: bool) -> Array:
+	var layers=[]
+	var center=rect.get_center()+rect.size*T.FIELD_CLOUD_OFFSET
+	for layer in range(T.FIELD_CLOUD_LAYERS):
+		var points=[]
+		var shrink=1.0-layer*0.16
+		for i in range(T.FIELD_CLOUD_SAMPLES):
+			var angle=TAU*i/T.FIELD_CLOUD_SAMPLES
+			var ripple=1.0-0.055*(1+sin(5*angle+layer*0.7))-0.025*(1+cos(3*angle))
+			points.append(center+Vector2(cos(angle),sin(angle))*rect.size*T.FIELD_CLOUD_RADIUS*shrink*ripple)
+		layers.append({"points":points,"alpha":T.FIELD_CLOUD_ALPHA*(0.55 if preview else 1.0)})
+	return layers
+
+## 範囲の雲を描く。canvasは描画先、rectは1セル、previewは予測か、colorは設定色。戻り値なし。副作用はユニットより下の静的な描画だけ。
+static func field_cloud(canvas: CanvasItem, rect: Rect2, preview: bool, color: Color) -> void:
+	var layers=cloud_shape(rect,preview)
+	for layer in layers:
+		canvas.draw_colored_polygon(PackedVector2Array(layer.points),Color(color,layer.alpha))
+	var points=PackedVector2Array(layers[0].points)
+	points.append(points[0])
+	var scale_px=maxf(0.001,(canvas.get_viewport_transform()*canvas.get_global_transform()).get_scale().x)
+	var width=T.FIELD_CLOUD_PIXEL_MIN/scale_px
+	var ink=Color(color,T.FIELD_CLOUD_PREVIEW_ALPHA if preview else T.FIELD_CLOUD_LINE_ALPHA)
+	if preview:
+		for i in range(points.size()-1):
+			if i%6<3:canvas.draw_line(points[i],points[i+1],ink,width,true)
+	else:
+		canvas.draw_polyline(points,ink,width,true)

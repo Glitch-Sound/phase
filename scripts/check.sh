@@ -33,7 +33,7 @@ if rg 'SCRIPT ERROR|FAIL:|Failed to load script' artifacts/runtime/ui-output.txt
 fi
 rg 'UI CONNECTIONS: [0-9]+ checks / 0 failures' artifacts/runtime/ui-output.txt
 
-for suite in review_regressions contested_play display_flow design_flow restored_interface map_chrome unit_glyphs arc_strokes ring_palette phase_preview battle_labels time_axis side_information route_clearance panel_generation panel_interface core_panels core_panel_ui panel_play interface_hierarchy cpu_policy cpu_turn cpu_interface cpu_play decision_model decision_interface turn_follow tempo_risk skill_patterns skill_pattern_cpu skill_pattern_ui utility_skills utility_cpu utility_ui; do
+for suite in review_regressions contested_play display_flow design_flow restored_interface map_chrome unit_glyphs arc_strokes ring_palette phase_preview battle_labels time_axis side_information route_clearance panel_generation panel_interface core_panels core_panel_ui panel_play interface_hierarchy cpu_policy cpu_turn cpu_interface cpu_play decision_model decision_interface turn_follow tempo_risk skill_patterns skill_pattern_cpu skill_pattern_ui utility_skills utility_cpu utility_ui rotation_fields rotation_field_ui; do
   godot --headless --path . --script "tests/$suite.gd" --log-file "$PWD/artifacts/runtime/$suite.log" > "artifacts/runtime/$suite-output.txt" 2>&1
   cat "artifacts/runtime/$suite-output.txt"
   if rg 'SCRIPT ERROR|FAIL:|Failed to load script' "artifacts/runtime/$suite-output.txt"; then
@@ -82,9 +82,11 @@ rg 'SKILL PATTERN UI: [0-9]+ checks / 0 failures' artifacts/runtime/skill_patter
 rg 'UTILITY SKILLS: [0-9]+ checks / 0 failures' artifacts/runtime/utility_skills-output.txt
 rg 'UTILITY CPU: [0-9]+ checks / 0 failures' artifacts/runtime/utility_cpu-output.txt
 rg 'UTILITY UI: [0-9]+ checks / 0 failures' artifacts/runtime/utility_ui-output.txt
+rg 'ROTATION FIELDS: [0-9]+ checks / 0 failures' artifacts/runtime/rotation_fields-output.txt
+rg 'ROTATION FIELD UI: [0-9]+ checks / 0 failures' artifacts/runtime/rotation_field_ui-output.txt
 
 # macOS sandboxの証明書初期化警告を除き、エンジンの描画エラー等も失敗にする。
-for log in test-output smoke-output replay-output ui-output review_regressions-output contested_play-output display_flow-output design_flow-output restored_interface-output map_chrome-output unit_glyphs-output arc_strokes-output ring_palette-output phase_preview-output battle_labels-output time_axis-output side_information-output route_clearance-output panel_generation-output panel_interface-output core_panels-output core_panel_ui-output panel_play-output interface_hierarchy-output cpu_policy-output cpu_turn-output cpu_interface-output cpu_play-output decision_model-output decision_interface-output turn_follow-output tempo_risk-output skill_patterns-output skill_pattern_cpu-output skill_pattern_ui-output utility_skills-output utility_cpu-output utility_ui-output; do
+for log in test-output smoke-output replay-output ui-output review_regressions-output contested_play-output display_flow-output design_flow-output restored_interface-output map_chrome-output unit_glyphs-output arc_strokes-output ring_palette-output phase_preview-output battle_labels-output time_axis-output side_information-output route_clearance-output panel_generation-output panel_interface-output core_panels-output core_panel_ui-output panel_play-output interface_hierarchy-output cpu_policy-output cpu_turn-output cpu_interface-output cpu_play-output decision_model-output decision_interface-output turn_follow-output tempo_risk-output skill_patterns-output skill_pattern_cpu-output skill_pattern_ui-output utility_skills-output utility_cpu-output utility_ui-output rotation_fields-output rotation_field_ui-output; do
   if rg '^ERROR:' "artifacts/runtime/$log.txt" | rg -v '^ERROR: Condition "ret != noErr" is true. Returning: ""$'; then
     exit 1
   fi

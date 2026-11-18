@@ -4,6 +4,7 @@ const B=preload("res://game/battle.gd")
 const C=preload("res://game/catalog.gd")
 const M=preload("res://game/phase_math.gd")
 const T=preload("res://game/tuning.gd")
+const F=preload("res://game/rotation_field.gd")
 
 ## CPUの候補を選ぶ。battleは現在の戦闘、memoryは過去の選択。戻り値はpath、skill、target、scoreの辞書、終了時は空。原本と乱数を変えない。
 func choose(battle: RefCounted, memory: Array=[]) -> Dictionary:
@@ -14,7 +15,9 @@ func choose(battle: RefCounted, memory: Array=[]) -> Dictionary:
 	var routes=_routes(battle,actor)
 	if routes.is_empty():
 		return {"path":[],"skill":"","target":-1,"score":0.0}
-	var threats=_threats(battle,actor)
+	var field_context=F.has_fields(battle.units)
+	var threat_cache={}
+	var threats=[] if field_context else _threats(battle,actor)
 	var best={"score":-INF}
 	for route in routes:
 		var moved=_project(battle,actor,route)
@@ -52,7 +55,7 @@ func choose(battle: RefCounted, memory: Array=[]) -> Dictionary:
 						score+=(now.hp-old.hp)*weight
 				var kind=C.SKILLS.get(action.skill,{}).get("effect","")
 				score+=_utility_score(battle,after,actor,kind)
-				score-=_danger(after,actor,_threats(after,actor) if kind=="PUSH" else threats)
+				score-=_danger(after,actor,_threats_for(after,actor,threat_cache) if field_context or kind=="PUSH" else threats)
 				for recent in memory:
 					if recent.actor==actor and recent.pos==moved.pos:
 						score-=T.CPU_REPEAT_PENALTY
@@ -61,6 +64,17 @@ func choose(battle: RefCounted, memory: Array=[]) -> Dictionary:
 				plan.score=score
 				best=plan
 	return best
+
+func _threats_for(b, actor: int, cache: Dictionary) -> Array:
+	# このchoose内では装備と配分は不変。位置、生存と反撃側の角度で区別する。
+	var state=[]
+	for u in b.units:
+		state.append([u.pos,u.hp>0])
+		if u.camp!=b.units[actor].camp:
+			state.append([u.core_angle,u.gear_angle,u.arms_angle])
+	var key=var_to_str(state)
+	if not cache.has(key):cache[key]=_threats(b,actor)
+	return cache[key]
 
 func _threats(b, actor: int) -> Array:
 	var result=[]
@@ -197,7 +211,7 @@ func _simulate(b, plan: Dictionary):
 func _project(b, index: int, route: Array) -> Dictionary:
 	var u: Dictionary=b.units[index].duplicate(true)
 	for cell in route:
-		B.enter_cell(u,cell,b.panels.get(cell,"NORMAL"))
+		B.enter_cell(u,cell,b.panels.get(cell,"NORMAL"),b.units)
 	return u
 
 func _routes(b, index: int, vacated: int=-1) -> Array:

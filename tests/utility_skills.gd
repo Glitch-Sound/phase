@@ -187,7 +187,7 @@ func _inventory() -> void:
 	var path="res://artifacts/runtime/utility-save-%d.json" % Time.get_ticks_usec()
 	var copy=L.new()
 	_check(l.builds.all(func(build):return l.valid_build(build)) and l.save_to(path)=="" and copy.load_from(path)=="" and _normalized(copy.snapshot())==_normalized(l.snapshot()),"new skills round-trip in v1 with three slots and no runtime defense fields")
-	l.skills=C.SKILLS.keys().filter(func(skill):return skill not in [SWAP,PUSH,GUARD,IGNORE])
+	l.skills=[C.DAMAGE,C.HEAL,C.MOVE,C.DAMAGE_DIAGONAL,C.HEAL_DIAGONAL,C.DAMAGE_ORTHOGONAL_TWO,C.HEAL_ORTHOGONAL_TWO,C.DAMAGE_DIAGONAL_TWO,C.HEAL_DIAGONAL_TWO]
 	l.builds=C.player_builds()
 	var old=L.new()
 	_check(l.save_to(path)=="" and old.load_from(path)=="" and _normalized(old.snapshot())==_normalized(l.snapshot()),"old nine-skill v1 does not auto-unlock new utilities")

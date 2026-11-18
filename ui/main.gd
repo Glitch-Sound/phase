@@ -3,6 +3,7 @@ extends Control
 const C = preload("res://game/catalog.gd")
 const M = preload("res://game/phase_math.gd")
 const B = preload("res://game/battle.gd")
+const F = preload("res://game/rotation_field.gd")
 const TL = preload("res://ui/timeline.gd")
 const L = preload("res://game/collection.gd")
 const V = preload("res://ui/visuals.gd")
@@ -243,6 +244,7 @@ func _timeline_matches(event: Dictionary, inspected: Dictionary) -> bool:
 
 
 func _draw_board() -> void:
+	var fields=_field_view()
 	var effect_chips=[]
 	var target_cells=[]
 	var effect=C.SKILLS.get(battle.selected_skill,{}).get("effect","")
@@ -264,6 +266,8 @@ func _draw_board() -> void:
 				color=color.lightened(0.055)
 			draw_rect(rect,color)
 			draw_rect(rect,EDGE,false,1)
+			if fields.cells.has(cell):
+				_field_cloud(rect,fields.preview.has(cell))
 			if panel!="NORMAL":
 				var pc=MAGENTA if panel=="COUNTERCLOCKWISE" else (status_colors[3] if panel=="RESET" else CYAN)
 				_draw_panel_icon(panel,Rect2(pos+T.PANEL_ICON_OFFSET,Vector2.ONE*T.PANEL_ICON_SIZE),pc)
@@ -273,7 +277,7 @@ func _draw_board() -> void:
 			if cell==battle.stage.enemy_goal:
 				draw_rect(rect.grow(-4),status_colors[1],false,2)
 				_text("LOSS",pos+Vector2(6,62)*BOARD_SCALE,11,status_colors[1],mono)
-			if target_cells.has(cell):
+			if target_cells.has(cell) and effect!="GUARD":
 				var tc=_action_color(effect)
 				draw_rect(rect,Color(tc,0.12))
 				_draw_cell_focus(rect,Color(tc,0.7),true,1.5)
@@ -289,7 +293,7 @@ func _draw_board() -> void:
 					_draw_cell_focus(rect,MAGENTA)
 				if battle.mode=="TARGET" and battle.valid_target(battle.actor,i,battle.selected_skill):
 					var tc=_action_color(effect)
-					_draw_cell_focus(rect,tc,true)
+					_draw_cell_focus(rect,tc,effect!="GUARD")
 					var text=effect
 					if effect in ["DAMAGE","HEAL"]:
 						var amount=M.effect(battle.units[battle.actor],u,effect)
@@ -356,10 +360,41 @@ func _draw_cell_focus(rect: Rect2,color: Color,full_outline: bool=false,line_wid
 func _draw_panel_icon(kind: String, rect: Rect2, color: Color) -> void:
 	draw_texture_rect(ICONS[PANEL_VIEWS[kind].icon],rect,false,color)
 
-## セルの説明を返す。cellは盤面座標。戻り値は特殊効果の正確な意味、通常や盤外なら空文字。戦闘を変更しない。
+func _field_cloud(rect: Rect2, preview: bool) -> void:
+	V.field_cloud(self,rect,preview,CYAN)
+
+func _field_view() -> Dictionary:
+	var current=F.coverage(battle.units)
+	var world=battle.units
+	var forecast=_utility_preview()
+	if not forecast.is_empty():world=forecast.units
+	elif battle.mode=="MOVE" and not battle.path.is_empty():
+		world=battle.units.duplicate(true)
+		world[battle.actor]=battle.preview()
+	var cells=F.coverage(world)
+	var preview={}
+	for cell in cells:
+		if cells[cell]!=current.get(cell,{}):preview[cell]=true
+	return {"world":world,"cells":cells,"preview":preview}
+
+## セルの説明を返す。cellは盤面座標。戻り値はCOREパネルと現在または移動後の周囲回転の説明、対象がなければ空文字。戦闘を変更しない。
 func panel_description(cell: Vector2i) -> String:
-	var kind: String=battle.panels.get(cell,"NORMAL") if Rect2i(0,0,10,10).has_point(cell) else "NORMAL"
-	return PANEL_VIEWS[kind].text if PANEL_VIEWS.has(kind) else ""
+	if not Rect2i(0,0,10,10).has_point(cell):return ""
+	var kind: String=battle.panels.get(cell,"NORMAL")
+	var text=PANEL_VIEWS[kind].text if PANEL_VIEWS.has(kind) else ""
+	var view=_field_view()
+	if view.cells.has(cell):
+		var field: Dictionary=view.cells[cell]
+		var lines=[("AFTER MOVE / " if view.preview.has(cell) else "")+"EQUIPMENT x%.1f ON ENTRY" % field.factor]
+		for name in ["STOP","SLOW","FAST"]:
+			var ids=[]
+			for source in field.sources:
+				if source.kind==name:ids.append(V.unit_name(source))
+			if not ids.is_empty():lines.append(name+" / "+", ".join(ids))
+		if field.kinds.has("STOP"):lines.append("STOP takes priority.")
+		elif field.kinds.has("SLOW") and field.kinds.has("FAST"):lines.append("SLOW + FAST cancel.")
+		text+=("\n" if not text.is_empty() else "")+"\n".join(lines)
+	return text
 
 func _route_segments() -> Array:
 	var segments=[]
@@ -902,7 +937,23 @@ func _skill_help() -> void:
 	_label(panel,"PANEL IGNORE",Rect2(36,388,1048,32),20,CYAN)
 	_label(panel,"特殊パネルのCORE効果だけを無視。GEARとARMSの通常回転は維持。\nSWAPの両者とPUSHの対象にも、到着先への通常1歩と本人の受動を適用。",Rect2(36,433,1048,68),19,WHITE)
 	_label(panel,"位置操作と防御も攻撃や回復の代わりの1行動。移動の必須条件は同じ。\n有効対象へカーソルを置くと移動先と変化後のリングを予測。\n相手の待ち時刻は変えず、動いた全員の到達目標を確定後に判定。",Rect2(36,536,1048,88),18,MUTED)
-	_button(panel,"BACK",Rect2(36,670,800,44),_help)
+	_button(panel,"BACK",Rect2(36,670,552,44),_help)
+	_button(panel,"FIELDS",Rect2(608,670,228,44),_field_help)
+	_button(panel,"CLOSE / ESC",Rect2(856,670,228,44),_close_aux)
+
+func _field_help() -> void:
+	_close_aux()
+	var panel=_modal(Rect2(400,160,1120,760),true)
+	_label(panel,"FIELDS",Rect2(36,25,1048,48),32,WHITE)
+	_label(panel,"PASSIVE / ADJACENT",Rect2(36,88,1048,28),16,MUTED)
+	var names=["SLOW","STOP","FAST"]
+	for i in range(3):
+		_label(panel,"%s x%.1f" % [names[i],C.FIELD_FACTORS[names[i]]],Rect2(36+i*354,153,340,40),24,CYAN)
+		_label(panel,["装備の回転量を半分にする。","装備の回転量を0にする。","装備の回転量を1.5倍にする。"][i],Rect2(36+i*354,204,340,40),18,WHITE)
+	_label(panel,"上下左右1マス。本人を除く、味方と敵の両方。\nGEARとARMSの各SPDによる1歩分の回転だけに作用。\nCOREと能力値、手番の速度は変えない。",Rect2(36,285,1048,88),19,WHITE)
+	_label(panel,"同種は1回。停止を優先。減速と加速だけなら相殺して通常x1。\n各歩の着地で判定。範囲外へは持続せず、立っているだけでは回転しない。\n交換と押し出しも全到着位置をそろえてから、同じ1歩として判定。",Rect2(36,400,1048,90),19,WHITE)
+	_label(panel,"雲は現在の有効範囲。破線の雲は移動後の予測範囲。\nセルのホバーで倍率と作用元を確認できる。\nPANEL IGNOREはCOREパネルだけを無視し、周囲効果は無視しない。",Rect2(36,515,1048,88),18,MUTED)
+	_button(panel,"BACK",Rect2(36,670,800,44),_skill_help)
 	_button(panel,"CLOSE / ESC",Rect2(856,670,228,44),_close_aux)
 
 func _settings() -> void:

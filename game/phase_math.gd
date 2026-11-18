@@ -107,12 +107,12 @@ static func max_hp(u: Dictionary) -> float:
 static func delay(u: Dictionary) -> float:
 	return T.BASE_DELAY*sqrt(20.0/float(u.core[3]))
 
-## パネル進入を適用する。uは現在角と戦闘開始CORE角を持つユニット、panelはNORMAL、RESET、CLOCKWISE、COUNTERCLOCKWISE、ignore_specialはCOREの特殊効果を無視するか。戻り値はなく、3リングの現在角だけを更新する。
-static func enter_panel(u: Dictionary, panel: String, ignore_special: bool=false) -> void:
+## パネル進入を適用する。uは現在角と戦闘開始CORE角を持つユニット、panelはNORMAL、RESET、CLOCKWISE、COUNTERCLOCKWISE、ignore_specialはCOREの特殊効果を無視するか、rotation_scaleは装備回転量の倍率。戻り値はなく、3リングの現在角だけを更新する。
+static func enter_panel(u: Dictionary, panel: String, ignore_special: bool=false, rotation_scale: float=1.0) -> void:
 	if ignore_special:
 		panel="NORMAL"
-	var gear=-1.5*float(u.gear[3])
-	var arms=1.5*float(u.arms[3])
+	var gear=-1.5*float(u.gear[3])*rotation_scale
+	var arms=1.5*float(u.arms[3])*rotation_scale
 	var core=float(u.get("core_angle",0.0))
 	if panel=="RESET":
 		core=float(u.get("initial_core_angle",0.0))

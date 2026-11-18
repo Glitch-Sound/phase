@@ -4,6 +4,7 @@ const M = preload("res://game/phase_math.gd")
 const C = preload("res://game/catalog.gd")
 const PANEL_LAYOUT = preload("res://game/panel_layout.gd")
 const T = preload("res://game/tuning.gd")
+const F = preload("res://game/rotation_field.gd")
 const DIRS = [Vector2i.UP,Vector2i.RIGHT,Vector2i.DOWN,Vector2i.LEFT]
 const TIME_EPS := 0.00000001
 var units: Array=[]
@@ -96,7 +97,7 @@ func preview() -> Dictionary:
 	var u: Dictionary=units[actor].duplicate(true)
 	if mode=="MOVE":
 		for cell in path:
-			enter_cell(u,cell,panels.get(cell,"NORMAL"))
+			enter_cell(u,cell,panels.get(cell,"NORMAL"),units)
 	return u
 
 ## 経路を確定する。戻り値は成功可否。確定した位置と位相を保持し、移動目標を判定する。
@@ -170,9 +171,9 @@ func valid_target(source: int, target: int, skill: String) -> bool:
 		return _inside(landing) and at(landing)<0
 	return true
 
-## 1歩の進入を適用する。uは変更するユニット、cellは到着セル、panelは効果名。装備した受動に従う位相と位置を変更する。戻り値はない。
-static func enter_cell(u: Dictionary, cell: Vector2i, panel: String) -> void:
-	M.enter_panel(u,panel,u.skills.has(C.IGNORE_PANEL))
+## 1歩の進入を適用する。uは変更するユニット、cellは到着セル、panelは効果名、worldは全員の現在位置。装備した受動と周囲に従う位相と位置を変更する。戻り値はない。
+static func enter_cell(u: Dictionary, cell: Vector2i, panel: String, world: Array=[]) -> void:
+	M.enter_panel(u,panel,u.skills.has(C.IGNORE_PANEL),F.resolve(u,cell,world).factor)
 	u.pos=cell
 
 ## 位置操作と防御を予測する。targetは対象番号。戻り値はunits、moved、kind、targetを含む独立した辞書、無効または他の作用なら空。戦闘を変更しない。
@@ -191,15 +192,18 @@ func _apply_utility(target_units: Array, source: int, target: int, kind: String)
 	var origin: Vector2i=target_units[source].pos
 	var destination: Vector2i=target_units[target].pos
 	if kind=="SWAP":
-		enter_cell(target_units[source],destination,panels.get(destination,"NORMAL"))
-		enter_cell(target_units[target],origin,panels.get(origin,"NORMAL"))
+		target_units[source].pos=destination
+		target_units[target].pos=origin
 		moved=[source,target]
 	elif kind=="PUSH":
-		var landing=destination+(destination-origin)
-		enter_cell(target_units[target],landing,panels.get(landing,"NORMAL"))
+		target_units[target].pos=destination+(destination-origin)
 		moved=[target]
 	elif kind=="GUARD":
 		target_units[source].guard_active=true
+	# 全位置を先に決め、どちらから回転しても同じ周囲を見る。
+	for index in moved:
+		var cell: Vector2i=target_units[index].pos
+		enter_cell(target_units[index],cell,panels.get(cell,"NORMAL"),target_units)
 	return moved
 
 ## 効果を実行する。targetは番号。戻り値は成功可否。位置、角度、防御またはHPと手番、勝敗を更新する。
