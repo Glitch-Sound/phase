@@ -27,12 +27,12 @@ func _connection() -> void:
 	_check(not labels.has("Compare routes. Both sides are under your control."),"CPU stage hint does not falsely claim human control of the enemy")
 	game.panel_seed_override=128
 	game._start_battle()
-	game.battle.actor=2
+	game.battle.actor=3
 	game._cpu_tick(0.0)
 	game._cpu_tick(game.T.CPU_TIMES.THINK)
 	var before=[game.battle.units.duplicate(true),game.battle.path.duplicate(),game.battle.mode]
 	_check(not before[1].is_empty(),"input protection is checked against a real pending CPU route")
-	game._cell_input(game.battle.units[2].pos)
+	game._cell_input(game.battle.units[3].pos)
 	_check(before==[game.battle.units,game.battle.path,game.battle.mode],"human origin click preserves the entire pending CPU route")
 	var escape=InputEventKey.new()
 	escape.keycode=KEY_ESCAPE
@@ -57,7 +57,7 @@ func _connection() -> void:
 	_check(game.build_open and not game.cpu_turn.active and game.collection.snapshot()==saved,"restart returns BUILD and discards CPU work without save changes")
 	game.cpu_enabled=false
 	game._start_battle()
-	game.battle.actor=2
+	game.battle.actor=3
 	game._cpu_tick(100.0)
 	game._cell_input(Vector2i(5,4))
 	_check(not game.cpu_turn.active and game.battle.path==[Vector2i(5,4)],"manual enemy turn stays human controlled")
@@ -66,7 +66,7 @@ func _controls() -> void:
 	game.set_process(false)
 	game.cpu_enabled=true
 	game._start_battle()
-	game.battle.actor=2
+	game.battle.actor=3
 	game._cpu_tick(0)
 	for dimensions in [Vector2i(1152,648),Vector2i(1920,1080),Vector2i(2560,1440),Vector2i(1200,1600)]:
 		root.size=dimensions
@@ -93,11 +93,13 @@ func _controls() -> void:
 		_check(before==[game.battle.units,game.battle.path,game.cpu_turn.phase,game.cpu_turn.elapsed],"SETTINGS blocks CPU without saving "+str(dimensions))
 		game._close_aux()
 		await process_frame
-	# 同時刻のA、Bをそれぞれ一度だけ実行し、PLAYERへ返す。
+	# 同時刻のA、B、Cをそれぞれ一度だけ実行する。
 	game._start_battle()
 	game.battle.units[0].next_time=1000
 	game.battle.units[1].next_time=1000
-	game.battle.actor=2
+	game.battle.units[2].next_time=1000
+	for i in range(3,6):game.battle.units[i].next_time=100
+	game.battle.actor=3
 	var actors=[]
 	for tick in range(200):
 		var turn=game.battle.turn
@@ -107,9 +109,9 @@ func _controls() -> void:
 			actors.append(actor)
 		if game.battle.actor==0 and not game.cpu_turn.active:
 			break
-		if actors.size()>=2 and not game.cpu_turn.active:
+		if actors.size()>=3 and not game.cpu_turn.active:
 			break
-	_check(actors==[2,3],"consecutive same-time enemy turns each execute once in order")
+	_check(actors==[3,4,5],"consecutive same-time enemy turns each execute once in order")
 	game._restart()
 	_check(game.build_open and not game.cpu_turn.active,"final CPU interface check returns BUILD")
 func _check(ok: bool,message: String) -> void:

@@ -13,7 +13,7 @@ func _run() -> void:
 	root.add_child(game)
 	await process_frame
 	game.battle=B.new()
-	game.battle.start(0,C.player_builds(),1)
+	game.battle.start(0,C.player_builds().slice(0,2),1)
 	game.build_open=false
 	game._clear_overlay()
 	game.battle.actor=0

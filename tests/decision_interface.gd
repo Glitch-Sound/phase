@@ -46,7 +46,7 @@ func _entry_points() -> void:
 	game.cpu_enabled=true
 	game._start_battle()
 	await process_frame
-	game.battle.actor=2
+	game.battle.actor=3
 	game.battle.path_click(Vector2i(5,4))
 	game.battle.commit_path()
 	var before=[game.battle.units.duplicate(true),game.battle.history.duplicate(),game.battle.mode]
@@ -62,12 +62,12 @@ func _focus() -> void:
 	if not game.has_method("_turn_focus_cell"):
 		return
 	game._start_battle()
-	for actor in range(4):
+	for actor in range(game.battle.units.size()):
 		game.battle.actor=actor
 		game.selected=-1
-		game.timeline_hover=(actor+1)%4
+		game.timeline_hover=(actor+1)%game.battle.units.size()
 		_check(game._turn_focus_cell()==game.battle.units[actor].pos,"default focus follows actor independently of hover")
-		game.selected=(actor+1)%4
+		game.selected=(actor+1)%game.battle.units.size()
 		_check(game._turn_focus_cell()==Vector2i(-1,-1),"explicit inspection takes priority over automatic focus")
 	game.selected=-1
 	game.battle.path=[Vector2i(5,4)]

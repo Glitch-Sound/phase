@@ -150,9 +150,9 @@ func _test_help_terms(game) -> void:
 	await process_frame
 	var guides=[]
 	for label in game.auxiliary.find_children("*","Label",true,false):
-		if label.text.contains("SAVE / LOADは"):
+		if label.text.contains("SAVE / LOAD are explicit."):
 			guides.append(label.text)
-	_check(guides==["−はダメージ、＋は回復。\nINFは攻撃と回復、RESは抵抗。\nSAVE / LOADは明示操作。以前の保存は退避する。"],"HELP separates effect signs from INF and RES mechanics")
+	_check(guides==["Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage.\nSAVE / LOAD are explicit. Old saves are backed up."],"HELP separates effect signs from INF and RES mechanics")
 	game._close_aux()
 	game._settings()
 	await process_frame

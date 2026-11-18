@@ -21,12 +21,16 @@ var last_effect: Dictionary={}
 var history: Array=[]
 var _movement_undo: Dictionary={}
 
-## 戦闘を初期化する。stage_indexは0から3、buildsはPLAYER2体の構成、layout_seedは配置の再現用整数。既存戦闘を置換する。
+## 戦闘を初期化する。stage_indexは0から3、buildsはPLAYERの構成で通常は3体、layout_seedは配置の再現用整数。既存戦闘を置換する。
 func start(stage_index: int, builds: Array, layout_seed: int=0) -> void:
 	stage=C.stages()[stage_index].duplicate(true)
 	panel_seed=layout_seed
 	panels=PANEL_LAYOUT.generate(stage,panel_seed)
-	units=[C.unit("01","PLAYER",stage.spawns[0],builds[0]),C.unit("02","PLAYER",stage.spawns[1],builds[1]),C.unit("A","ENEMY",stage.spawns[2],C.starter_build()),C.unit("B","ENEMY",stage.spawns[3],C.starter_build())]
+	units=[]
+	var count=mini(builds.size(),C.SQUAD_SIZE)
+	var enemy_builds=C.player_builds() if count==C.SQUAD_SIZE else builds.map(func(_build):return C.starter_build())
+	for i in range(count):units.append(C.unit(C.PLAYER_IDS[i],"PLAYER",stage.spawns[i],builds[i]))
+	for i in range(count):units.append(C.unit(C.ENEMY_IDS[i],"ENEMY",stage.spawns[C.SQUAD_SIZE+i],enemy_builds[i]))
 	path=[]
 	result=""
 	turn=1

@@ -45,15 +45,15 @@ func _run()->void:
 	_check(game.selected==-1,"same actor in a new turn still follows once")
 	game.cpu_enabled=true
 	game.battle.path=[]
-	game.battle.actor=2
+	game.battle.actor=3
 	game.battle.turn+=1
 	game._process(0)
 	game.selected=0
 	game.cpu_turn.phase="RESULT"
-	game.battle.actor=3
+	game.battle.actor=4
 	game.battle.turn+=1
 	game._process(0)
-	_check(game.cpu_turn.active and game.cpu_turn.actor==2 and game.selected==-1,"CPU result hold follows real next actor despite old presentation owner")
+	_check(game.cpu_turn.active and game.cpu_turn.actor==3 and game.selected==-1,"CPU result hold follows real next actor despite old presentation owner")
 	game._cell_input(game.battle.units[1].pos)
 	game.cpu_paused=true
 	var snapshot=[game.battle.turn,game.battle.actor,game.battle.units.duplicate(true)]

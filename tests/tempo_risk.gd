@@ -4,7 +4,7 @@ func _run()->void:
 	policy=load("res://game/cpu_policy.gd").new()
 	var t=load("res://game/tuning.gd")
 	var b=B.new()
-	b.start(0,C.player_builds(),1)
+	b.start(0,C.player_builds().slice(0,2),1)
 	b.actor=2
 	b.units[1].hp=0
 	b.units[3].hp=0
@@ -24,7 +24,7 @@ func _run()->void:
 	if constants.has("CPU_CRITICAL_RISK_WEIGHT"):
 		_check(risk==t.CPU_KILL_BONUS*constants.CPU_CRITICAL_RISK_WEIGHT,"last-unit forecast uses the configured loss floor")
 	_check(before==_state(b),"risk evaluation never mutates actual units")
-	b.start(2,C.player_builds(),1)
+	b.start(2,C.player_builds().slice(0,2),1)
 	b.actor=2
 	b.units[2].pos=Vector2i(8,1)
 	b.units[0].pos=Vector2i(8,0)

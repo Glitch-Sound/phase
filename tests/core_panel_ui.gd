@@ -39,7 +39,7 @@ func _run() -> void:
 	game._help()
 	await process_frame
 	var labels=game.auxiliary.find_children("*","Label",true,false).map(func(label):return label.text)
-	_check(labels.any(func(text):return text.contains("全セルでGEAR ↶、ARMS ↷") and text.contains("CORE回転はSPD × 1.5度")),"HELP states normal rotation survives all special panels")
+	_check(labels.any(func(text):return text.contains("Every cell turns GEAR anticlockwise, ARMS clockwise.") and text.contains("CORE: SPD x 1.5 deg")),"HELP states normal rotation survives all special panels")
 	_check(not labels.any(func(text):return text.contains("GEAR固定") or text.contains("ARMS ×2") or text.contains("ARMS逆回転")),"old panel meanings are absent from HELP")
 	game._close_aux()
 	game._restart()

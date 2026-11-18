@@ -17,7 +17,7 @@ func _run() -> void:
 	await process_frame
 	game.build_open=false
 	game.battle=B.new()
-	game.battle.start(0,C.player_builds(),1)
+	game.battle.start(0,C.player_builds().slice(0,2),1)
 	game.battle.panels={}
 	game.battle.actor=0
 	game.battle.units[0].pos=Vector2i(4,4)
@@ -61,7 +61,7 @@ func _run() -> void:
 		game._field_help()
 		await process_frame
 		var text="\n".join(game.auxiliary.find_children("*","Label",true,false).map(func(label):return label.text))
-		_check(text.contains("STOP") and text.contains("SLOW") and text.contains("FAST") and text.contains("停止を優先") and text.contains("相殺"),"HELP explains every field and the full overlap rule")
+		_check(text.contains("STOP") and text.contains("SLOW") and text.contains("FAST") and text.contains("STOP wins") and text.contains("SLOW + FAST cancel"),"HELP explains every field and the full overlap rule")
 	game._close_aux()
 	game._restart()
 	_check(game.build_open,"field UI returns BUILD without saving")

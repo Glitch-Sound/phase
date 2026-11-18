@@ -12,15 +12,15 @@ func _run() -> void:
 	_check(game.P.BG==Color("040506"),"restore original dark background")
 	_check(game.P.SURFACE==Color("090b0e"),"restore original surfaces")
 	_check(game.P.TEXT==Color("e8ebed"),"restore original readable text")
-	_check(game.overlay.find_children("*","OptionButton",true,false).size()==9,"BUILD exposes all original selectors")
+	_check(game.overlay.find_children("*","Button",true,false).filter(func(button):return button.has_meta("build_choice")).size()==9,"BUILD exposes all original selectors")
 	_check(game.core_controls.size()==5,"BUILD exposes all five core values")
 	game._help()
 	await process_frame
 	var guides=[]
 	for label in game.auxiliary.find_children("*","Label",true,false):
-		if label.text.contains("SAVE / LOADは"):
+		if label.text.contains("SAVE / LOAD are explicit."):
 			guides.append(label.text)
-	_check(guides==["−はダメージ、＋は回復。\nINFは攻撃と回復、RESは抵抗。\nSAVE / LOADは明示操作。以前の保存は退避する。"],"keep corrected INF and RES explanation")
+	_check(guides==["Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage.\nSAVE / LOAD are explicit. Old saves are backed up."],"keep corrected INF and RES explanation")
 	game._close_aux()
 	game._start_battle()
 	game._cell_input(Vector2i(4,4))

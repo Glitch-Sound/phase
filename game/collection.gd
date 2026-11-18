@@ -147,10 +147,19 @@ func load_from(path: String) -> String:
 	f.close()
 	if status!=OK:
 		return "Invalid JSON. Current build is preserved."
-	var error=_validate_snapshot(parser.data)
+	var error=_validate_snapshot(parser.data,true)
 	if not error.is_empty():
 		return error
 	var data: Dictionary=parser.data
+	if data.builds.size()==2:
+		# 読込元は書き換えず、所持品だけで有効な3体目をメモリへ補う。
+		var third=C.player_builds()[2]
+		for key in ["arms","gear"]:
+			var inventory: Dictionary=data.items[key.to_upper()]
+			if not inventory.has(C.serial(key.to_upper(),third[key])):
+				third[key]=inventory.values()[0].duplicate()
+		third.skills=third.skills.filter(func(skill):return data.skills.has(skill))
+		data.builds.append(third)
 	items=data.items.duplicate(true)
 	mutations=data.mutations.duplicate()
 	skills=data.skills.duplicate()
@@ -158,7 +167,7 @@ func load_from(path: String) -> String:
 	stage_index=int(data.stage_index)
 	return ""
 
-func _validate_snapshot(data: Variant) -> String:
+func _validate_snapshot(data: Variant,allow_two: bool=false) -> String:
 	if not data is Dictionary or data.get("version",-1)!=T.SAVE_VERSION:
 		return "Unsupported save version."
 	for key in ["items","mutations","skills","builds","stage_index"]:
@@ -187,8 +196,8 @@ func _validate_snapshot(data: Variant) -> String:
 		if not C.SKILLS.has(skill) or seen.has(skill):
 			return "Unknown or duplicate skill."
 		seen.append(skill)
-	if data.builds.size()!=2:
-		return "Expected two PLAYER builds."
+	if data.builds.size()!=C.SQUAD_SIZE and not (allow_two and data.builds.size()==2):
+		return "Expected three PLAYER builds."
 	for build in data.builds:
 		if not valid_build(build,data):
 			return "Invalid or locked build element."

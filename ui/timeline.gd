@@ -27,7 +27,7 @@ static func layout(units: Array, actor: int, rows: Array, finished: bool=false) 
 		for row in rows:
 			if units[row.index].hp<=0:
 				continue
-			events.append({"index":row.index,"time":row.time,"rank":events.size()+1,"repeated":seen.has(row.index)})
+			events.append({"index":row.index,"time":row.time,"rank":events.size()+1,"repeated":seen.has(row.index),"name":units[row.index].id.trim_prefix("0") if units[row.index].camp=="PLAYER" else units[row.index].id})
 			if not seen.has(row.index):
 				seen.append(row.index)
 			if events.size()>=T.TIMELINE_EVENTS and seen.size()==alive:
@@ -52,17 +52,21 @@ static func layout(units: Array, actor: int, rows: Array, finished: bool=false) 
 			if e.index==i:
 				event=e
 				break
-		cards.append({"index":i,"unit":units[i].duplicate(true),"event":event,"center":Vector2(T.TIMELINE_CARD_X.x if i<2 else T.TIMELINE_CARD_X.y,clampf(event.point.y if not event.is_empty() else T.TIMELINE_CARD_MAX,T.TIMELINE_CARD_MIN,T.TIMELINE_CARD_MAX))})
-	for side in [[0,1],[2,3]]:
+		cards.append({"index":i,"unit":units[i].duplicate(true),"event":event,"center":Vector2(T.TIMELINE_CARD_X.x if units[i].camp=="PLAYER" else T.TIMELINE_CARD_X.y,clampf(event.point.y if not event.is_empty() else T.TIMELINE_CARD_MAX,T.TIMELINE_CARD_MIN,T.TIMELINE_CARD_MAX))})
+	for camp in ["PLAYER","ENEMY"]:
+		var side=range(cards.size()).filter(func(index):return cards[index].unit.camp==camp)
 		side.sort_custom(func(a,b):return cards[a].center.y<cards[b].center.y if cards[a].center.y!=cards[b].center.y else a<b)
-		cards[side[0]].center.y=minf(cards[side[0]].center.y,T.TIMELINE_CARD_MAX-T.TIMELINE_CARD_GAP)
-		cards[side[1]].center.y=maxf(cards[side[1]].center.y,cards[side[0]].center.y+T.TIMELINE_CARD_GAP)
+		for position in range(side.size()):
+			var remaining=side.size()-1-position
+			cards[side[position]].center.y=minf(cards[side[position]].center.y,T.TIMELINE_CARD_MAX-T.TIMELINE_CARD_GAP*remaining)
+			if position>0:
+				cards[side[position]].center.y=maxf(cards[side[position]].center.y,cards[side[position-1]].center.y+T.TIMELINE_CARD_GAP)
 	for card in cards:
 		card.rect=Rect2(card.center-Vector2(T.TIMELINE_CARD_SIZE.x/2,26),T.TIMELINE_CARD_SIZE)
 	var links=[]
 	for event in events:
 		var card=cards[event.index]
-		var sign=-1.0 if card.index<2 else 1.0
+		var sign=-1.0 if card.unit.camp=="PLAYER" else 1.0
 		links.append({"index":card.index,"event":event,"points":PackedVector2Array([event.point+Vector2(sign*event.radius,0),Vector2(T.TIMELINE_AXIS_X+sign*20,event.point.y),Vector2(card.center.x-sign*44,card.center.y),Vector2(card.center.x-sign*24,card.center.y)])})
 	return {"now":now,"span":span,"events":events,"links":links,"cards":cards,"finished":finished}
 
@@ -73,14 +77,14 @@ static func hit(view: Dictionary, point: Vector2) -> Dictionary:
 			return event
 	for card in view.cards:
 		if card.rect.has_point(point):
-			return card.event if not card.event.is_empty() else {"index":card.index}
+			return card.event if not card.event.is_empty() else {"index":card.index,"name":card.unit.id.trim_prefix("0") if card.unit.camp=="PLAYER" else card.unit.id}
 	return {}
 
 ## eventは節点、actorは行動番号。戻り値は正確な相対待ち量と0の意味。副作用なし。
 static func caption(event: Dictionary, actor: int) -> String:
 	if event.is_empty():
 		return "FINISHED"
-	var name=["1","2","A","B"][event.index]
+	var name=str(event.get("name",str(event.index+1)))
 	if not event.has("remaining"):
 		return name+" / DEFEATED"
 	var number=("%.12f" % event.remaining).rstrip("0").rstrip(".")

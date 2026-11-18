@@ -26,7 +26,7 @@ func _run() -> void:
 func _test_icons(game) -> void:
 	_check(FileAccess.get_file_as_string("res://assets/lucide/diamond.svg").contains('fill="none"'),"RESET diamond returns to its unfilled outline")
 	var paths={"CLOCKWISE":"rotate-cw.svg","RESET":"diamond.svg","COUNTERCLOCKWISE":"rotate-ccw.svg"}
-	var meanings={"CLOCKWISE":"CLOCKWISE / COREをSPD × 1.5度、時計回り","RESET":"RESET / COREを戦闘開始角へ戻す","COUNTERCLOCKWISE":"COUNTERCLOCKWISE / COREをSPD × 1.5度、反時計回り"}
+	var meanings={"CLOCKWISE":"CORE CLOCKWISE\nCORE +SPD x 1.5 deg. Equipment turns normally.","RESET":"CORE RESET\nRestore the battle-start CORE angle. Equipment still turns.","COUNTERCLOCKWISE":"CORE COUNTERCLOCKWISE\nCORE -SPD x 1.5 deg. Equipment turns normally."}
 	_check(game.drawn_icons.size()==game.battle.panels.size(),"exactly one icon per effect cell")
 	var current_kinds=game.battle.panels.values().all(func(kind):return paths.has(kind))
 	_check(current_kinds,"only the three CORE effect kinds exist")
@@ -40,7 +40,7 @@ func _test_icons(game) -> void:
 		_check(icon.rect==Rect2(game.BOARD+Vector2(cell)*game.CELL+game.T.PANEL_ICON_OFFSET,Vector2.ONE*game.T.PANEL_ICON_SIZE),"icon uses configured corner size "+str(cell))
 		_check(game.panel_description(cell)==meanings[icon.kind],"correct targeted ring meaning "+icon.kind)
 		var point=Vector2(cell)*game.CELL+Vector2.ONE*game.CELL/2
-		_check(game.panel_probe._get_tooltip(point)==meanings[icon.kind],"real hover control connects to meaning "+icon.kind)
+		_check(game.panel_probe._get_tooltip(point)=="","native tooltip stays suppressed so panel focus remains visible "+icon.kind)
 	_check(observed==game.battle.panels and observed.size()==game.drawn_icons.size(),"complete cell-to-effect set, with no duplicate or normal-cell icon")
 	var colors={"CLOCKWISE":game.CYAN,"RESET":game.status_colors[3],"COUNTERCLOCKWISE":game.MAGENTA}
 	_check(game.drawn_icons.all(func(icon):return icon.color==colors[icon.kind]),"all glyphs retain configured role colors")
@@ -50,7 +50,7 @@ func _test_icons(game) -> void:
 	game._help()
 	await process_frame
 	var labels=game.auxiliary.find_children("*","Label",true,false)
-	_check(["CORE ↷","CORE開始角へ","CORE ↶"].all(func(s):return labels.any(func(l):return l.text==s)),"HELP maps all three icon meanings")
+	_check(["CORE ↷","CORE RESET","CORE ↶"].all(func(s):return labels.any(func(l):return l.text==s)),"HELP maps all three icon meanings")
 	_check(labels.any(func(l):return l.text=="%s / SEED 128" % game.battle.stage.name),"HELP discloses exact seed")
 	var legend_icons=game.auxiliary.find_children("*","TextureRect",true,false).map(func(icon):return icon.texture.resource_path.get_file()).filter(func(name):return name in ["diamond.svg","undo-2.svg","rotate-cw.svg","rotate-ccw.svg"])
 	legend_icons.sort()
@@ -80,7 +80,7 @@ func _test_focus(game) -> void:
 		_check(game.drawn_brackets==[{"rect":expected,"color":game.CYAN}],"exact endpoint focus lies on cell border "+str(cell))
 	game._start_battle()
 	game.battle.units[0].pos=Vector2i(4,4)
-	game.battle.units[2].pos=Vector2i(5,4)
+	game.battle.units[3].pos=Vector2i(5,4)
 	game.battle.mode="TARGET"
 	game.battle.selected_skill=game.C.DAMAGE
 	game.selected=-1

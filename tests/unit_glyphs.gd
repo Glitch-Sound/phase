@@ -67,10 +67,10 @@ func _test_guard(visual) -> void:
 	_check(visual.glyph(22.0,u,false,P.PRESETS.DEFAULT.slice(1),P.PRESETS.DEFAULT[0]).guard.is_empty(),"consumed guard removes only the polygon")
 ## REQ-031-S01
 func _test_names(visual) -> void:
-	var ids=["01","02","A","B"]
-	var expected=["1","2","A","B"]
-	for i in range(4):
-		var u=C.unit(ids[i],"PLAYER" if i<2 else "ENEMY",Vector2i.ZERO,C.default_build())
+	var ids=["01","02","03","A","B","C"]
+	var expected=["1","2","3","A","B","C"]
+	for i in range(ids.size()):
+		var u=C.unit(ids[i],"PLAYER" if i<3 else "ENEMY",Vector2i.ZERO,C.default_build())
 		_check(visual.unit_name(u)==expected[i] and u.id==ids[i],"display mapping preserves internal identity: "+ids[i])
 ## REQ-031-S02、REQ-030-S01
 func _test_screens() -> void:
@@ -85,13 +85,13 @@ func _test_screens() -> void:
 	await process_frame
 	var texts=game.overlay.find_children("*","Label",true,false).map(func(l):return l.text)
 	_check(texts.has("1 REACH (9,0) / KEEP 1 ALIVE / STOP B (0,9)"),"BUILD objective uses display names")
-	_check(texts.has("Lose if 1 falls. A guards the exit; 2 can intercept B."),"BUILD hint uses display names")
-	var stages=game.overlay.find_children("*","OptionButton",true,false)
-	_check(stages.any(func(o):return o.get_item_text(0)=="01 / INTERFERENCE" and o.get_item_text(1)=="02 / SEVERANCE"),"stage numbering remains unchanged")
+	_check(texts.has("Lose if 1 falls. A guards the exit; 2 and 3 can intercept B."),"BUILD hint uses display names")
+	var stages=game.C.stages()
+	_check(stages.map(func(stage):return stage.name).slice(0,2)==["01 / INTERFERENCE","02 / SEVERANCE"],"stage numbering remains unchanged")
 	game._help()
 	await process_frame
 	texts=game.auxiliary.find_children("*","Label",true,false).map(func(l):return l.text)
-	_check(texts.any(func(s):return s.begins_with("1と2を編集し")),"HELP refers to 1 and 2")
+	_check(texts.any(func(s):return s.begins_with("Edit units 1, 2 and 3.")),"HELP refers to 1 and 2")
 	game._close_aux()
 	game.collection.stage_index=0
 	game._start_battle()

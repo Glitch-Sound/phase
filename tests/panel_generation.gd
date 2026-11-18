@@ -65,7 +65,12 @@ func _test_spread(generator) -> void:
 		var quarter=floori(100*T.new().get("PANEL_EFFECT_RATE")+0.5)/4.0
 		_check(quadrants.all(func(q):return q==floori(quarter) or q==ceili(quarter)) and quadrants.reduce(func(total,q):return total+q,0)==floori(100*T.new().get("PANEL_EFFECT_RATE")+0.5),"coarse spread for seed "+str(layout_seed))
 	_check(signatures.size()==512,"different seeds change actual coordinates and types")
-	_check(heat.size()==96 and heat.values().min()>512*0.1 and heat.values().max()<512*0.35,"every eligible cell appears without gross selection bias: "+str([heat.size(),heat.values().min(),heat.values().max()]))
+	var eligible=[]
+	for y in range(10):
+		for x in range(10):
+			var cell=Vector2i(x,y)
+			if cell not in stage.spawns and cell!=stage.goal and cell!=stage.enemy_goal:eligible.append(cell)
+	_check(heat.size()==eligible.size() and eligible.all(func(cell):return heat.has(cell)) and heat.values().min()>512*0.1 and heat.values().max()<512*0.35,"every eligible cell appears without gross selection bias: "+str([heat.size(),heat.values().min(),heat.values().max()]))
 	_check(neighbors>0,"adjacent and clustered panels are allowed")
 	print("PANEL HEAT: eligible ",heat.size()," / min ",heat.values().min()," / max ",heat.values().max()," / adjacent ",neighbors)
 ## REQ-034-S04

@@ -195,7 +195,7 @@ func _test_equipment(game: Control) -> void:
 		_check(false,"decimal equipment comparison exists")
 		return
 	var comparison=game._equipment_comparison([25,15,20,30,10],[20,20,20,20,20])
-	_check(comparison=="VIT 25 (+5)\nINF 15 (-5)\nRES 20 (0)\nSPD 30 (+10)\nLUK 10 (-10)","all five values and signed deltas")
+	_check(comparison=="CURRENT / VIT 20   INF 20   RES 20   SPD 20   LUK 20\nCANDIDATE / VIT 25   INF 15   RES 20   SPD 30   LUK 10","all five current and candidate values, without bracket deltas")
 
 ## REQ-025-S01
 func _test_chips(game: Control) -> void:

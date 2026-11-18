@@ -7,7 +7,7 @@ const T = preload("res://game/tuning.gd")
 
 ## 表示名を返す。uは内部IDと陣営を持つユニット。戻り値は表示専用の名前。副作用なし。
 static func unit_name(u: Dictionary) -> String:
-	return str(int(u.id)) if u.camp=="PLAYER" and u.id in ["01","02"] else u.id
+	return str(int(u.id)) if u.camp=="PLAYER" and u.id in ["01","02","03"] else u.id
 
 ## ユニット記号を記述する。radiusは基準半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色。戻り値は円弧と目盛り、中央名と防御図形の描画データ。副作用なし。
 static func glyph(radius: float, u: Dictionary, selected: bool, colors: Array, accent: Color) -> Dictionary:

@@ -18,7 +18,8 @@
 ## 配置原則
 
 モデルから画面へ依存しない。
-ビルドと収集の保存をgame/collection.gdに集約する。
+ビルドと収集の保存をgame/collection.gdに集約する。\
+構成候補と可否、原本から独立したプレビューはgame/build_choices.gd、共通の選択画面はui/build_dialog.gdへ置く。
 リングと波形はui/visuals.gdで手続き的に描く。
 配色と判読性はui/palette.gd、操作アイコンと権利表示はassets/lucide/に集約する。
 CPUの判断はgame/cpu_policy.gd、段階と表示時間はui/cpu_turn.gdへ分離し、どちらも既存のbattleを操作する。

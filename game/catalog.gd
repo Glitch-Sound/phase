@@ -45,6 +45,9 @@ const SKILLS = {
 	FIELD_STOP:{"type":"PASSIVE","effect":"STOP FIELD","area":"SURROUNDING","field":"STOP","label":"STOP FIELD / SURROUNDING","description":"Surrounding others: equipment rotation x0."},
 	FIELD_FAST:{"type":"PASSIVE","effect":"FAST FIELD","area":"SURROUNDING","field":"FAST","label":"FAST FIELD / SURROUNDING","description":"Surrounding others: equipment rotation x1.5."}
 }
+const SQUAD_SIZE = 3
+const PLAYER_IDS = ["01","02","03"]
+const ENEMY_IDS = ["A","B","C"]
 const STARTER_STATS = [[20,20,20,20,20],[20,30,10,20,20],[20,10,30,20,20],[30,10,20,30,10]]
 
 ## 新規装備の全配分を返す。戻り値は各値10以上の10刻みで合計100の126配列。呼び出しごとに独立し、副作用なし。
@@ -110,7 +113,7 @@ static func starter_build() -> Dictionary:
 	build.skills=[DAMAGE,HEAL]
 	return build
 
-## 初期PLAYER構成を返す。戻り値はランナーと迎撃役の独立した2ビルド。
+## 初期PLAYER構成を返す。戻り値はランナー、迎撃役と支援役の独立した3ビルド。
 static func player_builds() -> Array:
 	var runner=starter_build()
 	runner.core=[20,20,15,30,15]
@@ -118,7 +121,11 @@ static func player_builds() -> Array:
 	interceptor.core=[20,30,15,20,15]
 	interceptor.gear=STARTER_STATS[1].duplicate()
 	interceptor.arms=STARTER_STATS[1].duplicate()
-	return [runner,interceptor]
+	var support=starter_build()
+	support.core=[20,15,30,20,15]
+	support.gear=STARTER_STATS[2].duplicate()
+	support.arms=STARTER_STATS[2].duplicate()
+	return [runner,interceptor,support]
 
 ## 戦闘ユニットを作る。idは内部識別子、campは陣営、posは座標、buildは構成。戻り値はHPと角度を初期化した辞書。
 static func unit(id: String, camp: String, pos: Vector2i, build: Dictionary) -> Dictionary:
@@ -135,28 +142,29 @@ static func unit(id: String, camp: String, pos: Vector2i, build: Dictionary) -> 
 static func stages() -> Array:
 	var result=[
 		{"name":"01 / INTERFERENCE","type":"ELIMINATE","goal":Vector2i(-1,-1),"brief":"ELIMINATE ALL ENEMY UNITS","hint":"Compare routes. Both sides are under your control."},
-		{"name":"02 / SEVERANCE","type":"TARGET","goal":Vector2i(-1,-1),"brief":"DEFEAT A / KEEP 01 ALIVE","hint":"Lose if 01 falls. 02 can screen the enemy guard."},
-		{"name":"03 / BREACH","type":"REACH","goal":Vector2i(9,0),"brief":"01 REACH (9,0) / KEEP 01 ALIVE / STOP B (0,9)","hint":"Lose if 01 falls. A guards the exit; 02 can intercept B."},
+		{"name":"02 / SEVERANCE","type":"TARGET","goal":Vector2i(-1,-1),"brief":"DEFEAT A / KEEP 01 ALIVE","hint":"Lose if 01 falls. 02 and 03 can screen the guards."},
+		{"name":"03 / BREACH","type":"REACH","goal":Vector2i(9,0),"brief":"01 REACH (9,0) / KEEP 01 ALIVE / STOP B (0,9)","hint":"Lose if 01 falls. A guards the exit; 02 and 03 can intercept B."},
 		{"name":"04 / ANCHOR","type":"OCCUPY","goal":Vector2i(8,0),"brief":"PLAYER HOLD (8,0) / DENY ENEMY (0,9)","hint":"Occupation resolves at turn end. Moving every turn opens gaps."}
 	]
 	for stage in result:
-		stage.spawns=[Vector2i(3,4),Vector2i(3,6),Vector2i(6,4),Vector2i(6,6)]
+		stage.spawns=[Vector2i(3,4),Vector2i(3,6),Vector2i(3,2),Vector2i(6,4),Vector2i(6,6),Vector2i(6,2)]
 		stage.enemy_goal=Vector2i(-1,-1)
 		stage.victory=[{"type":"ELIMINATE","camp":"ENEMY"}]
 		stage.defeat=[{"type":"ELIMINATE","camp":"PLAYER"}]
 		if stage.type=="TARGET":
-			stage.spawns[2]=Vector2i(7,2)
-			stage.spawns[3]=Vector2i(6,4)
+			stage.spawns[3]=Vector2i(7,2)
+			stage.spawns[4]=Vector2i(6,4)
+			stage.spawns[5]=Vector2i(6,6)
 			stage.victory.append({"type":"TARGET","camp":"ENEMY","unit":"A"})
 			stage.defeat.append({"type":"TARGET","camp":"PLAYER","unit":"01"})
 		elif stage.type=="REACH":
-			stage.spawns[2]=stage.goal
+			stage.spawns[3]=stage.goal
 			stage.enemy_goal=Vector2i(0,9)
 			stage.victory=[{"type":"REACH","camp":"PLAYER","unit":"01","cell":stage.goal}]
 			stage.defeat.append({"type":"TARGET","camp":"PLAYER","unit":"01"})
 			stage.defeat.append({"type":"REACH","camp":"ENEMY","unit":"B","cell":stage.enemy_goal})
 		elif stage.type=="OCCUPY":
-			stage.spawns[2]=stage.goal
+			stage.spawns[3]=stage.goal
 			stage.enemy_goal=Vector2i(0,9)
 			stage.victory=[{"type":"OCCUPY","camp":"PLAYER","cell":stage.goal}]
 			stage.defeat.append({"type":"OCCUPY","camp":"ENEMY","cell":stage.enemy_goal})

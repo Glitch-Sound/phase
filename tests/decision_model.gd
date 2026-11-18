@@ -19,7 +19,7 @@ func _run() -> void:
 ## REQ-010-S01、REQ-010-S02、REQ-010-S03
 func _reselection() -> void:
 	var b=B.new()
-	b.start(0,C.player_builds(),1)
+	b.start(0,C.player_builds().slice(0,2),1)
 	b.units[0].core_angle=45.0
 	b.units[0].initial_core_angle=17.0
 	b.units[0].gear_angle=300.0
@@ -49,13 +49,13 @@ func _reselection() -> void:
 ## REQ-010-S04
 func _boundaries() -> void:
 	var b=B.new()
-	b.start(0,C.player_builds(),1)
+	b.start(0,C.player_builds().slice(0,2),1)
 	b.path_click(Vector2i(4,4))
 	b.commit_path()
 	b.wait_turn()
 	var state=[b.units.duplicate(true),b.history.duplicate(),b.turn,b.actor]
 	_check(not b.reselect_path() and state==[b.units,b.history,b.turn,b.actor],"WAIT is irreversible")
-	b.start(0,C.player_builds(),1)
+	b.start(0,C.player_builds().slice(0,2),1)
 	b.path_click(Vector2i(4,4))
 	b.path_click(Vector2i(5,4))
 	b.commit_path()
@@ -63,17 +63,17 @@ func _boundaries() -> void:
 	b.act(2)
 	state=[b.units.duplicate(true),b.history.duplicate(),b.turn,b.actor]
 	_check(not b.reselect_path() and state==[b.units,b.history,b.turn,b.actor],"applied damage and next turn are irreversible")
-	b.start(2,C.player_builds(),1)
+	b.start(2,C.player_builds().slice(0,2),1)
 	b.units[0].pos=Vector2i(8,0)
 	b.units[2].hp=0
 	b.path_click(Vector2i(9,0))
 	b.commit_path()
 	state=[b.units.duplicate(true),b.history.duplicate(),b.result,b.turn]
 	_check(b.result=="VICTORY" and not b.reselect_path() and state==[b.units,b.history,b.result,b.turn],"movement victory cannot be rolled back")
-	b.start(0,C.player_builds(),1)
+	b.start(0,C.player_builds().slice(0,2),1)
 	b.path_click(Vector2i(4,4))
 	b.commit_path()
-	b.start(0,C.player_builds(),1)
+	b.start(0,C.player_builds().slice(0,2),1)
 	b.mode="CHOICE"
 	_check(not b.reselect_path(),"restart clears old same-actor same-turn rollback data")
 ## REQ-005-S01、REQ-005-S02

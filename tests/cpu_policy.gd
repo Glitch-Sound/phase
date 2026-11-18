@@ -65,19 +65,19 @@ func _tactics() -> void:
 	b.units[3].hp=b.units[3].max_hp
 	_check(policy.choose(b,[]).skill!=C.HEAL,"full HP is never healed")
 	b=B.new()
-	b.start(2,C.player_builds(),128)
+	b.start(2,C.player_builds().slice(0,2),128)
 	b.actor=3
 	b.units[3].pos=Vector2i(0,8)
 	plan=policy.choose(b,[])
 	_check(_execute(b,plan) and b.result=="DEFEAT","BREACH CPU reaches its own goal and stops before an extra action")
 	b=B.new()
-	b.start(3,C.player_builds(),128)
+	b.start(3,C.player_builds().slice(0,2),128)
 	b.actor=3
 	b.units[3].pos=Vector2i(0,8)
 	plan=policy.choose(b,[])
 	_check(_execute(b,plan) and b.result=="DEFEAT","ANCHOR CPU ends its turn on the counter objective")
 	b=B.new()
-	b.start(1,C.player_builds(),128)
+	b.start(1,C.player_builds().slice(0,2),128)
 	b.actor=2
 	b.units[0].pos=Vector2i(5,2)
 	b.units[0].hp=1
@@ -85,7 +85,7 @@ func _tactics() -> void:
 	plan=policy.choose(b,[])
 	_check(plan.target==0 and _execute(b,plan) and b.result=="DEFEAT","SEVERANCE targets the actual protected PLAYER")
 	b=B.new()
-	b.start(2,C.player_builds(),1)
+	b.start(2,C.player_builds().slice(0,2),1)
 	b.actor=2
 	b.units[0].pos=Vector2i(8,0)
 	b.units[1].hp=0
@@ -102,7 +102,7 @@ func _tactics() -> void:
 	_check(alternate.path!=plan.path or alternate.skill!=plan.skill or alternate.target!=plan.target,"recent identical decisions are penalized")
 func _battle(layout_seed: int=128):
 	var b=B.new()
-	b.start(0,C.player_builds(),layout_seed)
+	b.start(0,C.player_builds().slice(0,2),layout_seed)
 	b.actor=2
 	b.units[0].pos=Vector2i(4,4)
 	b.units[1].hp=0

@@ -153,7 +153,7 @@ func _guard() -> void:
 	b.commit_path()
 	b.reselect_path()
 	_check(b.units[0].guard_active,"moving and reselecting preserve existing guard")
-	b.start(0,C.player_builds(),1)
+	b.start(0,C.player_builds().slice(0,2),1)
 	_check(b.units.all(func(u):return not u.guard_active),"new battle resets all runtime guard states")
 ## REQ-013-S05
 func _goals() -> void:

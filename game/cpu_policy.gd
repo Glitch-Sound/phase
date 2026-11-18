@@ -127,7 +127,7 @@ func _position_score(b, actor: int) -> float:
 		if condition.type in ["REACH","OCCUPY"] and (not condition.has("unit") or condition.unit==u.id):
 			score-=_distance(u.pos,condition.cell)*12.0
 	# Aの守備は脅威が近いときに強め、Bは反対側の目標へ進む。
-	if u.camp=="ENEMY" and b.stage.type in ["REACH","OCCUPY"] and u.id=="A" and b.units[3].hp>0:
+	if u.camp=="ENEMY" and b.stage.type in ["REACH","OCCUPY"] and u.id=="A" and b.units.any(func(unit):return unit.id=="B" and unit.hp>0):
 		var approach=100
 		for target in b.units:
 			if target.hp>0 and target.camp=="PLAYER":

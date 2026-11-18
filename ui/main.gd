@@ -7,6 +7,8 @@ const F = preload("res://game/rotation_field.gd")
 const TL = preload("res://ui/timeline.gd")
 const L = preload("res://game/collection.gd")
 const DEBUG_SESSION = preload("res://game/debug_session.gd")
+const BUILD_CHOICES = preload("res://game/build_choices.gd")
+const BUILD_DIALOG = preload("res://ui/build_dialog.gd")
 const V = preload("res://ui/visuals.gd")
 const T = preload("res://game/tuning.gd")
 const P = preload("res://ui/palette.gd")
@@ -18,9 +20,9 @@ const BG = P.BG
 const PANEL = P.SURFACE
 const EDGE = P.EDGE
 const PANEL_VIEWS = {
- "CLOCKWISE":{"icon":"rotate_cw","text":"CLOCKWISE / COREをSPD × 1.5度、時計回り","short":"CORE ↷"},
- "RESET":{"icon":"diamond","text":"RESET / COREを戦闘開始角へ戻す","short":"CORE開始角へ"},
- "COUNTERCLOCKWISE":{"icon":"restart","text":"COUNTERCLOCKWISE / COREをSPD × 1.5度、反時計回り","short":"CORE ↶"}
+ "CLOCKWISE":{"icon":"rotate_cw","text":"CORE CLOCKWISE\nCORE +SPD x 1.5 deg. Equipment turns normally.","short":"CORE ↷"},
+ "RESET":{"icon":"diamond","text":"CORE RESET\nRestore the battle-start CORE angle. Equipment still turns.","short":"CORE RESET"},
+ "COUNTERCLOCKWISE":{"icon":"restart","text":"CORE COUNTERCLOCKWISE\nCORE -SPD x 1.5 deg. Equipment turns normally.","short":"CORE ↶"}
 }
 const ICONS = {
  "gear":preload("res://assets/lucide/shield.svg"),
@@ -83,6 +85,7 @@ var message := ""
 var message_time := 0.0
 var toasts: Array=[]
 var drops: Array=[]
+var build_dialog: Control
 var build_preview: Control
 var build_summary: Label
 var core_controls: Array=[]
@@ -93,6 +96,7 @@ var loot_rng := RandomNumberGenerator.new()
 var panel_rng := RandomNumberGenerator.new()
 var panel_seed_override: Variant=null
 var last_panel_seed: int=-1
+var panel_hint: Control
 var panel_probe: Control
 var notice: Label
 var preview_contours: Array=[]
@@ -149,6 +153,20 @@ func _ready() -> void:
 	panel_probe.focus_mode=Control.FOCUS_NONE
 	panel_probe.visible=false
 	add_child(panel_probe)
+	panel_hint=Control.new()
+	panel_hint.position=T.PANEL_HINT_RECT.position
+	panel_hint.size=T.PANEL_HINT_RECT.size
+	panel_hint.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	add_child(panel_hint)
+	_label(panel_hint,"",Rect2(0,0,T.PANEL_HINT_RECT.size.x,22),T.PANEL_HINT_TITLE_FONT,WHITE)
+	var hint_scroll=ScrollContainer.new()
+	hint_scroll.position=Vector2(0,24);hint_scroll.size=Vector2(T.PANEL_HINT_RECT.size.x,48)
+	hint_scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED
+	hint_scroll.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	panel_hint.add_child(hint_scroll)
+	var detail=_label(hint_scroll,"",Rect2(0,0,T.PANEL_HINT_RECT.size.x-14,48),T.PANEL_HINT_DETAIL_FONT,MUTED,true)
+	detail.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	panel_hint.visible=false
 	battle.start(collection.stage_index,collection.builds)
 	_hud()
 	_build()
@@ -159,6 +177,7 @@ func _process(delta: float) -> void:
 	_cpu_tick(delta)
 	_follow_turn()
 	panel_probe.visible=not build_open
+	_update_panel_hint()
 	clock+=delta if not reduced_motion else 0.0
 	message_time=maxf(0,message_time-delta)
 	notice.visible=message_time>0 and build_open
@@ -423,6 +442,19 @@ func panel_description(cell: Vector2i) -> String:
 		text+=("\n" if not text.is_empty() else "")+"\n".join(lines)
 	return text
 
+func _update_panel_hint() -> void:
+	if not is_instance_valid(panel_hint):return
+	var hint=panel_description(hover_cell) if not build_open and window_focused and not is_instance_valid(overlay) and not is_instance_valid(auxiliary) else ""
+	panel_hint.visible=not hint.is_empty()
+	if hint.is_empty():return
+	var lines=hint.split("\n",false)
+	var detail=panel_hint.get_child(1).get_child(0)
+	var body=" | ".join(Array(lines).slice(1))
+	if panel_hint.get_child(0).text!=lines[0] or detail.text!=body:
+		panel_hint.get_child(1).scroll_vertical=0
+	panel_hint.get_child(0).text=lines[0]
+	detail.text=body
+
 func _route_segments() -> Array:
 	var segments=[]
 	var pixel_scale=maxf(0.001,get_viewport_transform().get_scale().x*get_global_transform().get_scale().x)
@@ -491,6 +523,7 @@ func _equipment_icon(key: String, rect: Rect2, tint: Color) -> void:
 	draw_texture_rect(ICONS[key],rect,false,tint)
 
 func _draw_preview() -> void:
+	_text("PREVIEW",T.PREVIEW_HEADING_CENTER-Vector2(mono.get_string_size("PREVIEW",HORIZONTAL_ALIGNMENT_LEFT,-1,T.TIMELINE_TURN_FONT).x/2,0),T.TIMELINE_TURN_FONT,MUTED,mono)
 	var forecast=_utility_preview()
 	var u=battle.preview() if forecast.is_empty() else forecast.units[battle.actor]
 	var signature=[u.core,u.gear,u.arms,u.class_name,u.gear_mutation,u.arms_mutation,u.get("core_angle",0.0),u.gear_angle,u.arms_angle,status_colors]
@@ -520,6 +553,11 @@ func _timeline_mouse_exited() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	_follow_turn()
 	if not window_focused:
+		return
+	if event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN] and panel_hint.visible:
+		var detail_scroll=panel_hint.get_child(1)
+		detail_scroll.scroll_vertical+=-24 if event.button_index==MOUSE_BUTTON_WHEEL_UP else 24
+		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode==KEY_F1:
@@ -707,22 +745,16 @@ func _build() -> void:
 	var middle=T.BUILD_COLUMNS[1]
 	var right=T.BUILD_COLUMNS[2]
 	_label(panel,"BUILD",Rect2(left,20,200,45),32,WHITE)
-	for i in range(2):
-		_button(panel,"UNIT %d" % (i+1),Rect2(260+i*156,22,140,43),func():edit_unit=i;_build(),"",i==edit_unit)
-	var cpu_choice=CheckButton.new()
-	cpu_choice.text="ENEMY CPU"
-	cpu_choice.position=Vector2(right,22)
-	cpu_choice.size=Vector2(342,43)
-	cpu_choice.button_pressed=cpu_enabled
-	panel.add_child(cpu_choice)
-	cpu_choice.toggled.connect(func(value):cpu_enabled=value;_build())
+	for i in range(collection.builds.size()):
+		_button(panel,"UNIT %d" % (i+1),Rect2(210+i*110,22,100,43),func():edit_unit=i;_build(),"",i==edit_unit)
+	_toggle(panel,"ENEMY CPU",Rect2(right,22,342,43),cpu_enabled,func(value):cpu_enabled=value;_build())
 	if debug_session.available():
-		_button(panel,"EXIT DEBUG" if collection.temporary else "UNLOCK ALL",T.DEBUG_TOGGLE_RECT,func():_toggle_debug(not collection.temporary))
+		_toggle(panel,"UNLOCK ALL",T.DEBUG_TOGGLE_RECT,collection.temporary,func(value):_toggle_debug(value))
 	_label(panel,"SHARED ARCHIVE   %d ARMS / %d GEAR / %d MUTATIONS     %s" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size(),"PLAYER: HUMAN / ENEMY: CPU" if cpu_enabled else "BOTH SIDES: HUMAN"],Rect2(left,83,1240,26),14,MUTED)
 	var b: Dictionary=collection.builds[edit_unit]
 	_label(panel,"CORE / TOTAL 100",Rect2(left,136,400,28),17,WHITE)
 	_label(panel,"CLASS",Rect2(left,184,96,28),14,MUTED)
-	_option(panel,["STANDARD","REVERSE"],b.class_name,Rect2(left+100,176,300,43),func(value):b.class_name=value;_refresh_build())
+	_choice_button(panel,"class_name",b.class_name,Rect2(left+100,176,300,43))
 	core_controls=[]
 	equipment_views={}
 	for k in range(5):
@@ -746,7 +778,6 @@ func _build() -> void:
 		var y=T.BUILD_EQUIPMENT_ROWS[r]
 		_icon(panel,key,Rect2(middle,y+3,20,20),MUTED)
 		_label(panel,key.to_upper(),Rect2(middle+32,y,T.BUILD_EQUIPMENT_WIDTH-32,28),17,WHITE)
-		var choices: Array=collection.items[key.to_upper()].keys()
 		var view=Control.new()
 		view.position=Vector2(middle,y+99)
 		view.size=Vector2(T.BUILD_EQUIPMENT_WIDTH,62)
@@ -761,33 +792,20 @@ func _build() -> void:
 				view.draw_string(font,Vector2(x,16),["VIT","INF","RES","SPD","LUK"][status],HORIZONTAL_ALIGNMENT_LEFT,-1,T.BUILD_EQUIPMENT_LABEL_FONT,status_colors[status])
 				view.draw_string(mono,Vector2(x,40),values[status],HORIZONTAL_ALIGNMENT_LEFT,-1,T.BUILD_EQUIPMENT_VALUE_FONT,WHITE)
 				view.draw_line(Vector2(x,54),Vector2(x+minf(b[key][status],100)*0.6,54),status_colors[status],2))
-		var option=_option(panel,choices,C.serial(key.to_upper(),b[key]),Rect2(middle,y+39,T.BUILD_EQUIPMENT_WIDTH,44),func(value):
-			view.set_meta("before",b[key].duplicate())
-			b[key]=collection.items[key.to_upper()][value].duplicate()
-			_refresh_build())
-		for index in range(choices.size()):
-			option.get_popup().set_item_tooltip(index,_equipment_comparison(collection.items[key.to_upper()][choices[index]],b[key]))
-		option.item_selected.connect(func(_index):
-			for index in range(choices.size()):
-				option.get_popup().set_item_tooltip(index,_equipment_comparison(collection.items[key.to_upper()][choices[index]],b[key])))
+		_choice_button(panel,key,C.serial(key.to_upper(),b[key]),Rect2(middle,y+39,T.BUILD_EQUIPMENT_WIDTH,44))
 		_label(panel,"MUTATION",Rect2(middle,y+184,100,24),14,MUTED)
-		_option(panel,collection.mutations,b[key+"_mutation"],Rect2(middle+116,y+176,T.BUILD_EQUIPMENT_WIDTH-116,40),func(value):b[key+"_mutation"]=value;_refresh_build())
-	_wrapped_label(panel,"MODEL: hover to compare / Δ: previous equipment",Rect2(middle,656,T.BUILD_EQUIPMENT_WIDTH,42),13,MUTED)
+		_choice_button(panel,key+"_mutation",b[key+"_mutation"],Rect2(middle+116,y+176,T.BUILD_EQUIPMENT_WIDTH-116,40))
+	_wrapped_label(panel,"Choose equipment to compare rings and stat values.",Rect2(middle,656,T.BUILD_EQUIPMENT_WIDTH,42),13,MUTED)
 	_label(panel,"SKILLS / 3 SLOTS",Rect2(right,136,342,30),15,MUTED)
 	for i in range(3):
-		var choices=["NONE"]
-		choices.append_array(collection.skills)
 		var current: String=b.skills[i] if i<b.skills.size() else "NONE"
-		_option(panel,choices,current,Rect2(right,176+i*53,342,43),func(value):_skill_change(i,value))
+		_choice_button(panel,"skill",C.SKILLS[current].label if C.SKILLS.has(current) else "NONE",Rect2(right,176+i*53,342,43),i)
 	_label(panel,"OPERATION",Rect2(right,390,342,26),15,MUTED)
-	var stages=[]
-	for stage in C.stages():
-		stages.append(stage.name)
-	_option(panel,stages,C.stages()[collection.stage_index].name,Rect2(right,432,342,44),func(value):collection.stage_index=stages.find(value);_build())
+	_choice_button(panel,"operation",C.stages()[collection.stage_index].name,Rect2(right,432,342,44))
 	_wrapped_label(panel,_unit_references(C.stages()[collection.stage_index].brief),Rect2(right,496,342,52),17,WHITE)
 	var stage_hint=C.stages()[collection.stage_index].hint
 	if cpu_enabled and collection.stage_index==0:
-		stage_hint="Compare routes. The CPU controls A and B."
+		stage_hint="Compare routes. The CPU controls A, B and C."
 	_wrapped_label(panel,_unit_references(stage_hint),Rect2(right,564,342,120),16,MUTED)
 	build_preview=Control.new()
 	build_preview.position=Vector2(left,400)
@@ -805,7 +823,9 @@ func _build() -> void:
 	for row in [["SAVE",36,108,_save],["LOAD",158,108,_load],["HELP",280,108,_help],["SETTINGS",402,150,_settings],["QUIT",566,108,_quit]]:
 		var button=_button(panel,row[0],Rect2(row[1],730,row[2],44),row[3])
 		button.disabled=collection.temporary and row[0] in ["SAVE","LOAD"]
-	_button(panel,"START",Rect2(934,730,342,48),_start_battle)
+	var start=_button(panel,"START",Rect2(934,730,342,48),_start_battle)
+	start.alignment=HORIZONTAL_ALIGNMENT_CENTER
+	start.icon_alignment=HORIZONTAL_ALIGNMENT_LEFT
 	_refresh_build()
 
 func _toggle_debug(enabled: bool) -> bool:
@@ -884,20 +904,58 @@ func _refresh_build() -> void:
 		if is_instance_valid(view):
 			view.queue_redraw()
 
-func _equipment_values(candidate: Array, previous: Array) -> Array:
-	var values=[]
-	for status in range(5):
-		var delta=int(candidate[status])-int(previous[status])
-		values.append(str(int(candidate[status]))+(" (%+d)" % delta if delta!=0 else ""))
-	return values
+func _equipment_values(candidate: Array, _previous: Array) -> Array:
+	return candidate.map(func(value):return str(int(value)))
 
 func _equipment_comparison(candidate: Array, equipped: Array) -> String:
-	var lines=[]
-	for index in range(5):
-		var delta=int(candidate[index])-int(equipped[index])
-		var change="0" if delta==0 else "%+d" % delta
-		lines.append("%s %d (%s)" % [["VIT","INF","RES","SPD","LUK"][index],candidate[index],change])
-	return "\n".join(lines)
+	return "CURRENT / "+BUILD_CHOICES._stats_text(equipped)+"\nCANDIDATE / "+BUILD_CHOICES._stats_text(candidate)
+
+func _toggle(parent: Control,text: String,rect: Rect2,value: bool,callback: Callable) -> CheckButton:
+	var button=CheckButton.new()
+	button.text=text
+	button.position=rect.position
+	button.size=rect.size
+	button.button_pressed=value
+	button.add_theme_font_size_override("font_size",17)
+	parent.add_child(button)
+	button.toggled.connect(callback)
+	_label(button,"ON" if value else "OFF",Rect2(rect.size.x-82,8,40,28),13,CYAN if value else MUTED)
+	return button
+
+func _choice_button(parent: Control,kind: String,text: String,rect: Rect2,slot: int=0) -> Button:
+	var button=_button(parent,text,rect,func():_open_build_choice(kind,slot))
+	button.set_meta("build_choice",kind)
+	button.set_meta("skill_slot",slot)
+	button.alignment=HORIZONTAL_ALIGNMENT_LEFT
+	button.tooltip_text="Choose "+kind.replace("_"," ").to_upper()
+	var style=StyleBoxFlat.new()
+	style.bg_color=Color.TRANSPARENT
+	style.border_color=EDGE
+	style.border_width_bottom=T.UI_FIELD_LINE
+	button.add_theme_stylebox_override("normal",style)
+	return button
+
+func _open_build_choice(kind: String,slot: int=0) -> void:
+	if not build_open:return
+	_close_aux()
+	var panel=_modal(T.CHOICE_RECT,true)
+	build_dialog=BUILD_DIALOG.new()
+	panel.add_child(build_dialog)
+	build_dialog.configure(self,collection,edit_unit,kind,slot)
+	build_dialog.applied.connect(func():_apply_build_choice(kind,slot))
+	build_dialog.cancelled.connect(_close_aux)
+
+func _apply_build_choice(kind: String,slot: int) -> void:
+	_close_aux()
+	_build()
+	_focus_build_choice.call_deferred(kind,slot)
+
+func _focus_build_choice(kind: String,slot: int) -> void:
+	if not is_instance_valid(overlay):return
+	for button in overlay.find_children("*","Button",true,false):
+		if button.get_meta("build_choice","")==kind and button.get_meta("skill_slot",-1)==slot:
+			button.grab_focus()
+			return
 
 func _start_battle() -> void:
 	for b in collection.builds:
@@ -956,11 +1014,11 @@ func _help() -> void:
 	_close_aux()
 	var panel=_modal(Rect2(400,135,1120,810),true)
 	_label(panel,"HELP",Rect2(36,25,1048,48),32,WHITE)
-	_wrapped_label(panel,"BUILDのENEMY CPUで敵を自動操作。OFFは両陣営手動。\nSPEEDで早送り、PAUSEで停止。HELP中と非アクティブは自動停止。",Rect2(36,85,1048,56),17,MUTED)
+	_wrapped_label(panel,"ENEMY CPU automates enemy turns. OFF lets you play both sides.\nSPEED accelerates; PAUSE stops. Help and focus loss pause the CPU.",Rect2(36,85,1048,56),17,MUTED)
 	var steps=[
-		["move","01 / ROUTE","手番開始で角枠と詳細が追従。\n経路上のクリックで後続を取消。"],
-		["target","02 / ALIGN","3波は各SPDで揺れ、全体へ合成。\n色は実位相。戦闘角度は不変。"],
-		["check","03 / ACT","終点をダブルクリックして確定。\nWAITかスキルを選び、対象をクリック。\nORTHOは上下左右、DIAGONALは斜め。\n数字は1/2マス先。ADJACENTは1。"]
+		["move","01 / ROUTE","Focus follows the acting unit.\nClick route cells to undo later steps.\nScroll over a panel for long details."],
+		["target","02 / ALIGN","3 contours move at different rates.\nTheir colors follow the actual phase.\nAnimation does not change combat."],
+		["check","03 / ACT","Double-click the endpoint to move.\nChoose WAIT or a skill, then a target.\nORTHO = cardinal; DIAGONAL = diagonal.\n1 / 2 = exact cell distance."]
 	]
 	for i in range(3):
 		var x=36+i*354
@@ -969,9 +1027,9 @@ func _help() -> void:
 		_label(panel,steps[i][2],Rect2(x,201,340,96 if i==2 else 76),16 if i==2 else 18,MUTED)
 	_separator(panel,Rect2(36,300,1048,1))
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
-	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\n行動BACK/Escは経路へ。対象BACKは移動保持。\n白は相対進捗、灰は残り。満周は待ち0。\n表示最大の待ち量で再計算。個別周期ではない。\n縦は順番。中心点が手番。満周でも順番待ち。",Rect2(36,377,500,174),18,WHITE)
+	_label(panel,"Move to cardinal neighbors; avoid occupied cells.\nAt least 1 step per turn; no-move WAIT if trapped.\nOrigin / Esc clears the route. No revisits.\nAction BACK / Esc edits the route; target BACK keeps it.\nWhite = progress; gray = wait, scaled to the visible maximum.\nNot a per-unit timer; full circle = zero wait, even if queued.\nVertical spacing is order, not time.",Rect2(36,377,500,174),18,WHITE)
 	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
-	_label(panel,"一致ほど振幅大。最終補正とは別。\nINF / RESはLUK補助後の最終補正(最大200%)。\n全セルでGEAR ↶、ARMS ↷\nCORE回転はSPD × 1.5度、リセットは戦闘開始角。\n×5: 生INF完全一致 + CORE INF ≤10",Rect2(580,377,510,152),18,WHITE)
+	_label(panel,"More alignment makes a larger contour.\nINF / RES: final LUK-assisted factors, up to 200%.\nEvery cell turns GEAR anticlockwise, ARMS clockwise.\nCORE: SPD x 1.5 deg; RESET: battle-start angle.\nx5: exact raw INF match and CORE INF <= 10.",Rect2(580,377,510,152),18,WHITE)
 	var panel_kinds=["CLOCKWISE","RESET","COUNTERCLOCKWISE"]
 	for i in range(panel_kinds.size()):
 		var view=PANEL_VIEWS[panel_kinds[i]]
@@ -981,9 +1039,9 @@ func _help() -> void:
 		_label(panel,"%s / SEED %d" % [battle.stage.name,battle.panel_seed],Rect2(36,704,1048,24),13,MUTED)
 	_separator(panel,Rect2(36,560,1048,1))
 	_label(panel,"BUILD / ARCHIVE",Rect2(36,589,490,28),16,CYAN)
-	_label(panel,"1と2を編集し、装備の5値と差分を比較する。\nスキルは最大3。NONEも可。取得品と変異は共有。",Rect2(36,631,500,66),18,WHITE)
+	_label(panel,"Edit units 1, 2 and 3. Compare rings and stats.\nUp to 3 skills; NONE is allowed. Unlocks are shared.\nUNLOCK ALL is temporary, debug only and never saved.",Rect2(36,631,500,66),18,WHITE)
 	_label(panel,"READING THE SIGNAL",Rect2(580,589,500,28),16,CYAN)
-	_label(panel,"−はダメージ、＋は回復。\nINFは攻撃と回復、RESは抵抗。\nSAVE / LOADは明示操作。以前の保存は退避する。",Rect2(580,631,510,66),18,WHITE)
+	_label(panel,"Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage.\nSAVE / LOAD are explicit. Old saves are backed up.",Rect2(580,631,510,66),18,WHITE)
 	_button(panel,"CLOSE / ESC",Rect2(36,736,800,44),_close_aux)
 	_button(panel,"SKILLS",Rect2(856,736,228,44),_skill_help)
 
@@ -992,12 +1050,12 @@ func _skill_help() -> void:
 	var panel=_modal(Rect2(400,160,1120,760),true)
 	_label(panel,"SKILLS",Rect2(36,25,1048,48),32,WHITE)
 	_label(panel,"SWAP / PUSH",Rect2(36,102,1048,32),20,CYAN)
-	_label(panel,"SWAP: 上下左右の隣接味方1体と位置交換。\nPUSH: 隣接敵1体を外側の空きセルへ1マス。無傷、盤外と連鎖押しは不可。",Rect2(36,147,1048,68),19,WHITE)
+	_label(panel,"SWAP: exchange positions with one cardinally adjacent ally.\nPUSH: move one adjacent enemy 1 cell outward into an empty cell. No damage, edges or chain pushes.",Rect2(36,147,1048,68),19,WHITE)
 	_label(panel,"GUARD",Rect2(36,245,1048,32),20,CYAN)
-	_label(panel,"移動後に自分を選択。次の1攻撃を%d%%軽減。0ダメージでも消費。\n薄い八角形が防御中の印。重ね掛け不可。移動や回復では消えず、新しい戦闘で解除。" % roundi((1-T.GUARD_DAMAGE_MULTIPLIER)*100),Rect2(36,290,1048,68),19,WHITE)
+	_label(panel,"After moving, target yourself. Reduce the next attack by %d%%; even zero damage consumes it.\nThe octagon means guarded. No stacking. Moving / healing keeps it; a new battle clears it." % roundi((1-T.GUARD_DAMAGE_MULTIPLIER)*100),Rect2(36,290,1048,68),19,WHITE)
 	_label(panel,"PANEL IGNORE",Rect2(36,388,1048,32),20,CYAN)
-	_label(panel,"特殊パネルのCORE効果だけを無視。GEARとARMSの通常回転は維持。\nSWAPの両者とPUSHの対象にも、到着先への通常1歩と本人の受動を適用。",Rect2(36,433,1048,68),19,WHITE)
-	_label(panel,"位置操作と防御も攻撃や回復の代わりの1行動。移動の必須条件は同じ。\n有効対象へカーソルを置くと移動先と変化後のリングを予測。\n相手の待ち時刻は変えず、動いた全員の到達目標を確定後に判定。",Rect2(36,536,1048,88),18,MUTED)
+	_label(panel,"Ignore special CORE panels only. GEAR and ARMS still turn normally.\nSWAP moves both units; PUSH moves its target. Each receives one normal entry and its own passives.",Rect2(36,433,1048,68),19,WHITE)
+	_label(panel,"These actions replace damage or healing; moving first is still required.\nHover a valid target to preview positions and rings.\nForced movement keeps the target clock. All landings resolve before objectives.",Rect2(36,536,1048,88),18,MUTED)
 	_button(panel,"BACK",Rect2(36,670,552,44),_help)
 	_button(panel,"FIELDS",Rect2(608,670,228,44),_field_help)
 	_button(panel,"CLOSE / ESC",Rect2(856,670,228,44),_close_aux)
@@ -1010,10 +1068,10 @@ func _field_help() -> void:
 	var names=["SLOW","STOP","FAST"]
 	for i in range(3):
 		_label(panel,"%s x%.1f" % [names[i],C.FIELD_FACTORS[names[i]]],Rect2(36+i*354,153,340,40),24,CYAN)
-		_label(panel,["装備の回転量を半分にする。","装備の回転量を0にする。","装備の回転量を1.5倍にする。"][i],Rect2(36+i*354,204,340,40),18,WHITE)
-	_label(panel,"斜めを含む周囲8マス。本人を除く、味方と敵の両方。\nGEARとARMSの各SPDによる1歩分の回転だけに作用。\nCOREと能力値、手番の速度は変えない。",Rect2(36,285,1048,88),19,WHITE)
-	_label(panel,"同種は1回。停止を優先。減速と加速だけなら相殺して通常x1。\n各歩の着地で判定。範囲外へは持続せず、立っているだけでは回転しない。\n交換と押し出しも全到着位置をそろえてから、同じ1歩として判定。",Rect2(36,400,1048,90),19,WHITE)
-	_label(panel,"雲は発生源の周囲を漂う。薄い破線の雲は移動後の予測。\n作用は周囲8マス。セルのホバーで正確な倍率と作用元を確認。\nPANEL IGNOREはCOREパネルだけを無視し、周囲効果は無視しない。",Rect2(36,515,1048,88),18,MUTED)
+		_label(panel,["Half equipment rotation.","Stop equipment rotation.","Speed up equipment rotation."][i],Rect2(36+i*354,204,340,40),18,WHITE)
+	_label(panel,"Affects the 8 surrounding cells, including diagonals. Both camps, excluding the source.\nChanges only the GEAR and ARMS rotation for each step.\nCORE, stat values and turn speed stay unchanged.",Rect2(36,285,1048,88),19,WHITE)
+	_label(panel,"Same type applies once. STOP wins; SLOW + FAST cancel to normal x1.\nChecked on each landing; no lingering effect outside the field. Standing still does not rotate rings.\nSWAP and PUSH use the same entry rule after all landing positions are set.",Rect2(36,400,1048,90),19,WHITE)
+	_label(panel,"Clouds drift around the source. Faint broken clouds preview a moved source.\nHover cells to inspect the exact multiplier and source units.\nPANEL IGNORE skips CORE panels, not fields.",Rect2(36,515,1048,88),18,MUTED)
 	_button(panel,"BACK",Rect2(36,670,800,44),_skill_help)
 	_button(panel,"CLOSE / ESC",Rect2(856,670,228,44),_close_aux)
 
@@ -1134,7 +1192,7 @@ func _set_theme() -> void:
 	self.theme=skin
 
 func _unit_references(text: String) -> String:
-	return RegEx.create_from_string("\\b0([12])\\b").sub(text,"$1",true)
+	return RegEx.create_from_string("\\b0([123])\\b").sub(text,"$1",true)
 
 func _ring(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,active: bool=false) -> void:
 	V.ring(canvas,center,radius,u,active,ring_colors,CYAN,mono)
@@ -1206,6 +1264,7 @@ func _close_aux() -> void:
 		previous=auxiliary.get_meta("previous_focus") if auxiliary.has_meta("previous_focus") else null
 		auxiliary.queue_free()
 	auxiliary=null
+	build_dialog=null
 	_restore_focus.call_deferred(previous)
 
 func _clear_overlay() -> void:

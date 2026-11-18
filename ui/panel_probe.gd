@@ -1,11 +1,9 @@
 ## 盤面のホバー説明だけを提供し、既存の盤面入力へ接続し、フォーカスを取得しない。
 extends Control
 var host: Control
-func _get_tooltip(at_position: Vector2) -> String:
-	if not is_instance_valid(host) or host.build_open or not host.window_focused or is_instance_valid(host.overlay) or is_instance_valid(host.auxiliary):
-		return ""
-	var cell=Vector2i(floori(at_position.x/host.CELL),floori(at_position.y/host.CELL))
-	return host.panel_description(cell)
+# パネル説明は盤外の2段表示へ集約し、標準ツールチップでアイコンと枠を隠さない。
+func _get_tooltip(_at_position: Vector2) -> String:
+	return ""
 
 func _gui_input(event: InputEvent) -> void:
 	if not is_instance_valid(host) or not (event is InputEventMouseButton or event is InputEventMouseMotion):

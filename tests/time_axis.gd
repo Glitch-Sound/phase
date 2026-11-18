@@ -260,8 +260,8 @@ func _test_input() -> void:
 	_check(game.timeline_hover==-1 and game.battle.path==path,"window exit clears hover without changing route")
 	game._help()
 	await process_frame
-	var guide=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text.contains("白は相対進捗"))
-	_check(guide.size()==1 and guide[0].text.contains("表示最大の待ち量で再計算") and guide[0].text.contains("個別周期ではない"),"HELP defines relative progress and changing maximum")
+	var guide=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text.contains("White = progress"))
+	_check(guide.size()==1 and guide[0].text.contains("scaled to the visible maximum") and guide[0].text.contains("Not a per-unit timer"),"HELP defines relative progress and changing maximum")
 	if guide.size()==1:
 		_check(Array(guide[0].text.split("\n")).all(func(line):return game.font.get_string_size(line,HORIZONTAL_ALIGNMENT_LEFT,-1,18).x<=guide[0].size.x),"progress explanation stays within HELP column")
 	var click=InputEventMouseButton.new()
