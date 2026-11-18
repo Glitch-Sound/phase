@@ -10,7 +10,12 @@ const DAMAGE_ORTHOGONAL_TWO = "ACTIVE_DAMAGE_ORTHOGONAL_TWO"
 const HEAL_ORTHOGONAL_TWO = "ACTIVE_HEAL_ORTHOGONAL_TWO"
 const DAMAGE_DIAGONAL_TWO = "ACTIVE_DAMAGE_DIAGONAL_TWO"
 const HEAL_DIAGONAL_TWO = "ACTIVE_HEAL_DIAGONAL_TWO"
+const SWAP = "ACTIVE_SWAP_ADJACENT"
+const PUSH = "ACTIVE_PUSH_ADJACENT"
+const GUARD = "ACTIVE_GUARD_SELF"
+const IGNORE_PANEL = "PASSIVE_IGNORE_PANEL_SELF"
 const TARGET_PATTERNS = {
+	"SELF":[Vector2i.ZERO],
 	"ADJACENT":[Vector2i(0,-1),Vector2i(1,0),Vector2i(0,1),Vector2i(-1,0)],
 	"DIAGONAL_ONE":[Vector2i(-1,-1),Vector2i(1,-1),Vector2i(1,1),Vector2i(-1,1)],
 	"ORTHOGONAL_TWO":[Vector2i(0,-2),Vector2i(2,0),Vector2i(0,2),Vector2i(-2,0)],
@@ -25,12 +30,18 @@ const SKILLS = {
 	DAMAGE_ORTHOGONAL_TWO:{"type":"ACTIVE","effect":"DAMAGE","area":"ORTHOGONAL_TWO","label":"DAMAGE / ORTHO 2","description":"Damage one enemy exactly 2 orthogonal cells away."},
 	HEAL_ORTHOGONAL_TWO:{"type":"ACTIVE","effect":"HEAL","area":"ORTHOGONAL_TWO","label":"HEAL / ORTHO 2","description":"Heal one wounded ally exactly 2 orthogonal cells away."},
 	DAMAGE_DIAGONAL_TWO:{"type":"ACTIVE","effect":"DAMAGE","area":"DIAGONAL_TWO","label":"DAMAGE / DIAGONAL 2","description":"Damage one enemy exactly 2 diagonal cells away."},
-	HEAL_DIAGONAL_TWO:{"type":"ACTIVE","effect":"HEAL","area":"DIAGONAL_TWO","label":"HEAL / DIAGONAL 2","description":"Heal one wounded ally exactly 2 diagonal cells away."}
+	HEAL_DIAGONAL_TWO:{"type":"ACTIVE","effect":"HEAL","area":"DIAGONAL_TWO","label":"HEAL / DIAGONAL 2","description":"Heal one wounded ally exactly 2 diagonal cells away."},
+	SWAP:{"type":"ACTIVE","effect":"SWAP","area":"ADJACENT","label":"SWAP / ADJACENT","description":"Exchange positions with one adjacent ally."},
+	PUSH:{"type":"ACTIVE","effect":"PUSH","area":"ADJACENT","label":"PUSH / ADJACENT","description":"Push one enemy 1 cell outward. No damage."},
+	GUARD:{"type":"ACTIVE","effect":"GUARD","area":"SELF","label":"GUARD / SELF","description":"Reduce the next attack once. Cannot stack."},
+	IGNORE_PANEL:{"type":"PASSIVE","effect":"IGNORE PANEL","area":"SELF","label":"PANEL IGNORE / SELF","description":"Ignore special CORE effects. Equipment still turns."}
 }
 const STARTER_STATS = [[20,20,20,20,20],[20,30,15,20,15],[20,10,30,20,20],[25,15,20,30,10]]
 
-## 対象位置を返す。skillはスキルID。戻り値は4方向の座標差の独立した配列であり、不明または受動なら空。
+## 対象位置を返す。skillはスキルID。戻り値は指定位置の座標差の独立した配列であり、不明または受動なら空。
 static func target_offsets(skill: String) -> Array:
+	if SKILLS.get(skill,{}).get("type","")!="ACTIVE":
+		return []
 	var area=SKILLS.get(skill,{}).get("area","")
 	return TARGET_PATTERNS.get(area,[]).duplicate()
 
@@ -38,9 +49,16 @@ static func target_offsets(skill: String) -> Array:
 static func target_matches(skill: String, source: Dictionary, target: Dictionary) -> bool:
 	if SKILLS.get(skill,{}).get("type","")!="ACTIVE" or source.hp<=0 or target.hp<=0 or not target_offsets(skill).has(target.pos-source.pos):
 		return false
-	if SKILLS[skill].effect=="DAMAGE":
-		return source.camp!=target.camp
-	return source.camp==target.camp and target.hp<target.max_hp
+	match SKILLS[skill].effect:
+		"DAMAGE","PUSH":
+			return source.camp!=target.camp
+		"HEAL":
+			return source.camp==target.camp and target.hp<target.max_hp
+		"SWAP":
+			return source.camp==target.camp
+		"GUARD":
+			return source.id==target.id and source.camp==target.camp and not source.get("guard_active",false)
+	return false
 
 ## 型番を返す。kindはARMSかGEAR、statsは配分、mutationはNORMALか配置文字列。戻り値は型番。
 static func serial(kind: String, stats: Array, mutation: String="NORMAL") -> String:
@@ -74,7 +92,7 @@ static func unit(id: String, camp: String, pos: Vector2i, build: Dictionary) -> 
 	var u=build.duplicate(true)
 	# 開始角は従来どおり0度であり、戦闘中のリセット基準だけを別に保持する。
 	var core_start=0.0
-	u.merge({"id":id,"camp":camp,"pos":pos,"core_angle":core_start,"initial_core_angle":core_start,"gear_angle":0.0,"arms_angle":0.0,"moved":0},true)
+	u.merge({"id":id,"camp":camp,"pos":pos,"core_angle":core_start,"initial_core_angle":core_start,"gear_angle":0.0,"arms_angle":0.0,"moved":0,"guard_active":false},true)
 	u.max_hp=M.max_hp(u)
 	u.hp=u.max_hp
 	u.next_time=M.delay(u)

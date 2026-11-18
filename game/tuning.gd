@@ -5,6 +5,8 @@ const BASE_HP := 100.0
 # 位相の落差と有限の反撃評価を組み合わせ、通常対戦を短くする比較値。
 const BASE_DAMAGE := 72.0
 const BASE_HEAL := 24.0
+# 行動1回を使う防御。次の1攻撃だけ残存倍率を掛け、完全無効にはしない暫定値。
+const GUARD_DAMAGE_MULTIPLIER := 0.5
 const BASE_MOVE := 3
 const BASE_DELAY := 100.0
 # 完全同期の上限を保ち、低一致の攻撃、回復と抵抗との差だけを控えめに広げる。
@@ -12,6 +14,9 @@ const SYNC_SIGMA_SCALE := 0.85
 # CPUの評価は実効量を基準とし、終局を最優先する。戦闘式には使わない。
 const CPU_DAMAGE_WEIGHT := 1.2
 const CPU_HEAL_WEIGHT := 0.85
+# 位置操作だけの補助評価。確定した終局と即時ダメージより控えめに比較する。
+const CPU_UTILITY_GOAL_WEIGHT := 12.0
+const CPU_UTILITY_PRESSURE_WEIGHT := 0.25
 const CPU_KILL_BONUS := 120.0
 const CPU_DANGER_WEIGHT := 0.35
 # 可能性のある致命傷を、確定した終局のスコアと混同しない。

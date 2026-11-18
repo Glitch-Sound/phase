@@ -107,8 +107,10 @@ static func max_hp(u: Dictionary) -> float:
 static func delay(u: Dictionary) -> float:
 	return T.BASE_DELAY*sqrt(20.0/float(u.core[3]))
 
-## パネル進入を適用する。uは現在角と戦闘開始CORE角を持つユニット、panelはNORMAL、RESET、CLOCKWISE、COUNTERCLOCKWISE。戻り値はなく、3リングの現在角だけを更新する。
-static func enter_panel(u: Dictionary, panel: String) -> void:
+## パネル進入を適用する。uは現在角と戦闘開始CORE角を持つユニット、panelはNORMAL、RESET、CLOCKWISE、COUNTERCLOCKWISE、ignore_specialはCOREの特殊効果を無視するか。戻り値はなく、3リングの現在角だけを更新する。
+static func enter_panel(u: Dictionary, panel: String, ignore_special: bool=false) -> void:
+	if ignore_special:
+		panel="NORMAL"
 	var gear=-1.5*float(u.gear[3])
 	var arms=1.5*float(u.arms[3])
 	var core=float(u.get("core_angle",0.0))
@@ -122,7 +124,7 @@ static func enter_panel(u: Dictionary, panel: String) -> void:
 	u.gear_angle=fposmod(u.gear_angle+gear,360.0)
 	u.arms_angle=fposmod(u.arms_angle+arms,360.0)
 
-## 効果量を返す。sourceは行動側、targetは対象、kindはDAMAGEまたはHEAL。戻り値は切捨て後の非負整数。
+## 効果量を返す。sourceは行動側、targetは対象、kindはDAMAGEまたはHEAL。戻り値は防御の最終軽減と切捨て後の非負整数。予測では防御を消費しない。
 static func effect(source: Dictionary, target: Dictionary, kind: String) -> int:
 	var inf=(float(source.core[1])+source.gear[1]+source.arms[1])/60.0
 	var power=(T.BASE_DAMAGE if kind=="DAMAGE" else T.BASE_HEAL)*inf*sync(source,1).factor
@@ -131,4 +133,5 @@ static func effect(source: Dictionary, target: Dictionary, kind: String) -> int:
 		power/=1.0+resistance*sync(target,2).factor
 	if singularity(source):
 		power*=5.0
-	return floori(power)
+	var amount=floori(power)
+	return floori(amount*T.GUARD_DAMAGE_MULTIPLIER) if kind=="DAMAGE" and target.get("guard_active",false) else amount

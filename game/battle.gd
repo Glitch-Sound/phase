@@ -96,8 +96,7 @@ func preview() -> Dictionary:
 	var u: Dictionary=units[actor].duplicate(true)
 	if mode=="MOVE":
 		for cell in path:
-			M.enter_panel(u,panels.get(cell,"NORMAL"))
-			u.pos=cell
+			enter_cell(u,cell,panels.get(cell,"NORMAL"))
 	return u
 
 ## 経路を確定する。戻り値は成功可否。確定した位置と位相を保持し、移動目標を判定する。
@@ -164,38 +163,85 @@ func valid_target(source: int, target: int, skill: String) -> bool:
 		return false
 	var s: Dictionary=units[source]
 	var t: Dictionary=units[target]
-	return _inside(s.pos) and _inside(t.pos) and C.target_matches(skill,s,t)
+	if not _inside(s.pos) or not _inside(t.pos) or not C.target_matches(skill,s,t):
+		return false
+	if C.SKILLS[skill].effect=="PUSH":
+		var landing: Vector2i=t.pos+(t.pos-s.pos)
+		return _inside(landing) and at(landing)<0
+	return true
 
-## 効果を実行する。targetは番号。戻り値は成功可否。HPと手番と勝敗を更新する。
+## 1歩の進入を適用する。uは変更するユニット、cellは到着セル、panelは効果名。装備した受動に従う位相と位置を変更する。戻り値はない。
+static func enter_cell(u: Dictionary, cell: Vector2i, panel: String) -> void:
+	M.enter_panel(u,panel,u.skills.has(C.IGNORE_PANEL))
+	u.pos=cell
+
+## 位置操作と防御を予測する。targetは対象番号。戻り値はunits、moved、kind、targetを含む独立した辞書、無効または他の作用なら空。戦闘を変更しない。
+func action_preview(target: int) -> Dictionary:
+	if mode!="TARGET" or not valid_target(actor,target,selected_skill):
+		return {}
+	var kind: String=C.SKILLS[selected_skill].effect
+	if kind not in ["SWAP","PUSH","GUARD"]:
+		return {}
+	var projected=units.duplicate(true)
+	var moved=_apply_utility(projected,actor,target,kind)
+	return {"units":projected,"moved":moved,"kind":kind,"target":target}
+
+func _apply_utility(target_units: Array, source: int, target: int, kind: String) -> Array:
+	var moved=[]
+	var origin: Vector2i=target_units[source].pos
+	var destination: Vector2i=target_units[target].pos
+	if kind=="SWAP":
+		enter_cell(target_units[source],destination,panels.get(destination,"NORMAL"))
+		enter_cell(target_units[target],origin,panels.get(origin,"NORMAL"))
+		moved=[source,target]
+	elif kind=="PUSH":
+		var landing=destination+(destination-origin)
+		enter_cell(target_units[target],landing,panels.get(landing,"NORMAL"))
+		moved=[target]
+	elif kind=="GUARD":
+		target_units[source].guard_active=true
+	return moved
+
+## 効果を実行する。targetは番号。戻り値は成功可否。位置、角度、防御またはHPと手番、勝敗を更新する。
 func act(target: int) -> bool:
 	if mode!="TARGET" or not valid_target(actor,target,selected_skill):
 		return false
 	var kind: String=C.SKILLS[selected_skill].effect
-	var amount=M.effect(units[actor],units[target],kind)
-	var old_hp: float=units[target].hp
-	units[target].hp=maxf(0,old_hp-amount) if kind=="DAMAGE" else minf(units[target].max_hp,old_hp+amount)
-	last_effect={"target":target,"kind":kind,"amount":amount,"actual":absf(old_hp-units[target].hp),"dead":units[target].hp<=0,"singularity":M.singularity(units[actor])}
-	history.append("%s %s %s %d (HP %.2f)" % [units[actor].id,kind,units[target].id,amount,units[target].hp])
-	if units[target].hp<=0:
-		check_result("DEATH")
+	if kind in ["SWAP","PUSH","GUARD"]:
+		var moved=_apply_utility(units,actor,target,kind)
+		last_effect={"target":target,"kind":kind,"amount":0,"actual":0.0,"dead":false,"singularity":false}
+		history.append("%s %s %s %s" % [units[actor].id,kind,units[target].id,units[target].pos])
+		if not moved.is_empty():
+			check_result("MOVE",moved)
+	else:
+		var amount=M.effect(units[actor],units[target],kind)
+		var old_hp: float=units[target].hp
+		var guarded=kind=="DAMAGE" and units[target].get("guard_active",false)
+		units[target].hp=maxf(0,old_hp-amount) if kind=="DAMAGE" else minf(units[target].max_hp,old_hp+amount)
+		if guarded:
+			units[target].guard_active=false
+		last_effect={"target":target,"kind":kind,"amount":amount,"actual":absf(old_hp-units[target].hp),"dead":units[target].hp<=0,"singularity":M.singularity(units[actor]),"guard_used":guarded}
+		history.append("%s %s %s %d (HP %.2f)" % [units[actor].id,kind,units[target].id,amount,units[target].hp])
+		if units[target].hp<=0:
+			check_result("DEATH")
 	if result.is_empty():
 		_end_turn()
 	return true
 
-## 目標を判定する。eventはDEATH、MOVE、END。成立するとRESULTへ移る。
-func check_result(event: String) -> void:
+## 目標を判定する。eventはDEATH、MOVE、END、moved_indicesはMOVEで動いた番号の配列で空なら行動者。成立するとRESULTへ移る。
+func check_result(event: String, moved_indices: Array=[]) -> void:
 	if not result.is_empty():
 		return
 	for entry in [["defeat","DEFEAT"],["victory","VICTORY"]]:
 		for condition in stage[entry[0]]:
-			if _condition_met(condition,event):
+			if _condition_met(condition,event,moved_indices):
 				result=entry[1]
 				mode="RESULT"
 				return
 	if not result.is_empty():
 		mode="RESULT"
 
-func _condition_met(condition: Dictionary, event: String) -> bool:
+func _condition_met(condition: Dictionary, event: String, moved_indices: Array=[]) -> bool:
 	var kind: String=condition.type
 	if (kind in ["ELIMINATE","TARGET"] and event!="DEATH") or (kind=="REACH" and event!="MOVE") or (kind=="OCCUPY" and event!="END"):
 		return false
@@ -212,8 +258,11 @@ func _condition_met(condition: Dictionary, event: String) -> bool:
 			if _matches_condition(u,condition):
 				return u.hp<=0
 	if kind=="REACH":
-		var u: Dictionary=units[actor]
-		return u.hp>0 and _matches_condition(u,condition) and u.pos==condition.cell
+		for index in moved_indices if not moved_indices.is_empty() else [actor]:
+			var u: Dictionary=units[index]
+			if u.hp>0 and _matches_condition(u,condition) and u.pos==condition.cell:
+				return true
+		return false
 	if kind=="OCCUPY":
 		var occupant=at(condition.cell)
 		return occupant>=0 and _matches_condition(units[occupant],condition)

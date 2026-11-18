@@ -14,12 +14,7 @@ func choose(battle: RefCounted, memory: Array=[]) -> Dictionary:
 	var routes=_routes(battle,actor)
 	if routes.is_empty():
 		return {"path":[],"skill":"","target":-1,"score":0.0}
-	var threats=[]
-	for i in range(battle.units.size()):
-		if battle.units[i].hp>0 and battle.units[i].camp!=source.camp:
-			for route in _routes(battle,i,actor):
-				var projected=_project(battle,i,route)
-				threats.append({"index":i,"path":route,"unit":projected})
+	var threats=_threats(battle,actor)
 	var best={"score":-INF}
 	for route in routes:
 		var moved=_project(battle,actor,route)
@@ -28,7 +23,7 @@ func choose(battle: RefCounted, memory: Array=[]) -> Dictionary:
 			if C.SKILLS.get(skill,{}).get("type","")!="ACTIVE":
 				continue
 			for i in range(battle.units.size()):
-				var target: Dictionary=battle.units[i]
+				var target: Dictionary=moved if i==actor else battle.units[i]
 				if C.target_matches(skill,moved,target):
 					options.append({"skill":skill,"target":i})
 		for action in options:
@@ -49,13 +44,15 @@ func choose(battle: RefCounted, memory: Array=[]) -> Dictionary:
 						score+=(old.hp-now.hp)*T.CPU_DAMAGE_WEIGHT
 						if now.hp<=0:
 							score+=T.CPU_KILL_BONUS
-					else:
+					elif C.SKILLS[action.skill].effect=="HEAL":
 						var weight=T.CPU_HEAL_WEIGHT
 						for recent in memory.slice(-2):
 							if recent.actor==actor and C.SKILLS.get(recent.skill,{}).get("effect","")=="HEAL":
 								weight*=0.5
 						score+=(now.hp-old.hp)*weight
-				score-=_danger(after,actor,threats)
+				var kind=C.SKILLS.get(action.skill,{}).get("effect","")
+				score+=_utility_score(battle,after,actor,kind)
+				score-=_danger(after,actor,_threats(after,actor) if kind=="PUSH" else threats)
 				for recent in memory:
 					if recent.actor==actor and recent.pos==moved.pos:
 						score-=T.CPU_REPEAT_PENALTY
@@ -64,6 +61,45 @@ func choose(battle: RefCounted, memory: Array=[]) -> Dictionary:
 				plan.score=score
 				best=plan
 	return best
+
+func _threats(b, actor: int) -> Array:
+	var result=[]
+	for i in range(b.units.size()):
+		if b.units[i].hp>0 and b.units[i].camp!=b.units[actor].camp:
+			for route in _routes(b,i,actor):
+				result.append({"index":i,"path":route,"unit":_project(b,i,route)})
+	return result
+
+func _utility_score(before, after, actor: int, kind: String) -> float:
+	if kind not in ["SWAP","PUSH"]:
+		return 0.0
+	var camp: String=after.units[actor].camp
+	var own=after.stage.defeat if camp=="ENEMY" else after.stage.victory
+	var opposing=after.stage.victory if camp=="ENEMY" else after.stage.defeat
+	var score=0.0
+	for pair in [[own,1.0],[opposing,-1.0]]:
+		for condition in pair[0]:
+			if condition.type not in ["REACH","OCCUPY"]:
+				continue
+			for i in range(after.units.size()):
+				var u: Dictionary=after.units[i]
+				if i==actor or u.hp<=0 or u.camp!=condition.camp or (condition.has("unit") and condition.unit!=u.id):
+					continue
+				score+=(_distance(before.units[i].pos,condition.cell)-_distance(u.pos,condition.cell))*pair[1]*T.CPU_UTILITY_GOAL_WEIGHT
+	return score+(_pressure(after,camp)-_pressure(before,camp))*T.CPU_UTILITY_PRESSURE_WEIGHT
+
+func _pressure(b, camp: String) -> float:
+	var value=0.0
+	for u in b.units:
+		if u.hp<=0 or u.camp!=camp:
+			continue
+		var hit=0
+		for target in b.units:
+			for skill in u.skills:
+				if C.SKILLS.get(skill,{}).get("effect","")=="DAMAGE" and C.target_matches(skill,u,target):
+					hit=maxi(hit,mini(M.effect(u,target,"DAMAGE"),ceili(target.hp)))
+		value+=hit
+	return value
 
 func _position_score(b, actor: int) -> float:
 	var u: Dictionary=b.units[actor]
@@ -161,8 +197,7 @@ func _simulate(b, plan: Dictionary):
 func _project(b, index: int, route: Array) -> Dictionary:
 	var u: Dictionary=b.units[index].duplicate(true)
 	for cell in route:
-		M.enter_panel(u,b.panels.get(cell,"NORMAL"))
-		u.pos=cell
+		B.enter_cell(u,cell,b.panels.get(cell,"NORMAL"))
 	return u
 
 func _routes(b, index: int, vacated: int=-1) -> Array:

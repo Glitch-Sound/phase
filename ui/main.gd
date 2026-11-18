@@ -274,7 +274,7 @@ func _draw_board() -> void:
 				draw_rect(rect.grow(-4),status_colors[1],false,2)
 				_text("LOSS",pos+Vector2(6,62)*BOARD_SCALE,11,status_colors[1],mono)
 			if target_cells.has(cell):
-				var tc=status_colors[1] if effect=="DAMAGE" else status_colors[2]
+				var tc=_action_color(effect)
 				draw_rect(rect,Color(tc,0.12))
 				_draw_cell_focus(rect,Color(tc,0.7),true,1.5)
 			var i=battle.at(cell)
@@ -285,12 +285,15 @@ func _draw_board() -> void:
 				if i==selected or i==timeline_hover:
 					_draw_cell_focus(rect,MAGENTA)
 				if battle.mode=="TARGET" and battle.valid_target(battle.actor,i,battle.selected_skill):
-					var tc=status_colors[1] if effect=="DAMAGE" else status_colors[2]
+					var tc=_action_color(effect)
 					_draw_cell_focus(rect,tc,true)
-					var amount=M.effect(battle.units[battle.actor],u,C.SKILLS[battle.selected_skill].effect)
-					if effect=="HEAL":
-						amount=mini(amount,ceili(u.max_hp-u.hp))
-					effect_chips.append({"cell":cell,"text":("-" if effect=="DAMAGE" else "+")+str(amount),"color":tc})
+					var text=effect
+					if effect in ["DAMAGE","HEAL"]:
+						var amount=M.effect(battle.units[battle.actor],u,effect)
+						if effect=="HEAL":
+							amount=mini(amount,ceili(u.max_hp-u.hp))
+						text=("-" if effect=="DAMAGE" else "+")+str(amount)
+					effect_chips.append({"cell":cell,"text":text,"color":tc,"font_size":16 if effect in ["DAMAGE","HEAL"] else 14})
 				if cpu_turn.active and cpu_turn.phase=="TARGET" and cpu_turn.command.target==i:
 					_draw_cell_focus(rect,WHITE)
 	if battle.mode=="MOVE":
@@ -305,12 +308,16 @@ func _draw_board() -> void:
 	var turn_cell=_turn_focus_cell()
 	if turn_cell!=Vector2i(-1,-1):
 		_draw_cell_focus(_cell_rect(turn_cell),CYAN)
+	var forecast=_utility_preview()
+	if not forecast.is_empty():
+		for index in forecast.moved:
+			_draw_cell_focus(_cell_rect(forecast.units[index].pos),WHITE)
 	# 全セルの描画後に重ね、次の行の背景で数字を隠さない。
 	for chip in effect_chips:
 		var rect=_effect_chip_rect(chip.cell)
 		draw_rect(rect,BG)
 		draw_rect(rect,chip.color,false,1)
-		_center(chip.text,rect.position+Vector2(rect.size.x/2,16*BOARD_SCALE),roundi(16*BOARD_SCALE),chip.color,mono)
+		_center(chip.text,rect.position+Vector2(rect.size.x/2,16*BOARD_SCALE),roundi(chip.font_size*BOARD_SCALE),chip.color,mono)
 
 func _turn_focus_cell() -> Vector2i:
 	if build_open or not battle.result.is_empty() or battle.actor<0 or battle.units[battle.actor].hp<=0 or selected>=0 or (battle.mode=="MOVE" and not battle.path.is_empty()):
@@ -371,9 +378,26 @@ func _effect_chip_rect(cell: Vector2i) -> Rect2:
 func _board_point(cell: Vector2i, offset: Vector2=Vector2.ZERO) -> Vector2:
 	return BOARD+Vector2(cell)*CELL+offset*BOARD_SCALE
 
+func _action_color(kind: String) -> Color:
+	return status_colors[1] if kind=="DAMAGE" else (status_colors[2] if kind=="HEAL" else CYAN)
+
+func _utility_preview() -> Dictionary:
+	if build_open or battle.mode!="TARGET" or not battle.result.is_empty():
+		return {}
+	var target=battle.at(hover_cell)
+	if cpu_turn.active and cpu_turn.phase=="TARGET":
+		target=cpu_turn.command.target
+	return battle.action_preview(target) if target>=0 else {}
+
 func _draw_info() -> void:
 	var index=selected if selected>=0 else battle.actor
-	var u: Dictionary=battle.units[index]
+	var forecast=_utility_preview()
+	if not forecast.is_empty():
+		index=forecast.target
+		_text("%s PREVIEW / UNIT %s" % [forecast.kind,V.unit_name(forecast.units[index])],T.BATTLE_INFO_CLASS-Vector2(0,24),13,MUTED,mono)
+	var u: Dictionary=forecast.units[index] if not forecast.is_empty() else battle.units[index]
+	if u.get("guard_active",false):
+		_text("GUARD / NEXT HIT -%d%%" % roundi((1-T.GUARD_DAMAGE_MULTIPLIER)*100),T.BATTLE_INFO_CLASS+Vector2(0,24),13,WHITE,mono)
 	var camp_color=CYAN if u.camp=="PLAYER" else status_colors[1]
 	_text("CLASS: "+u.class_name,T.BATTLE_INFO_CLASS,17,camp_color,mono)
 	_ring(self,T.BATTLE_INFO_RING,81,u,index==battle.actor)
@@ -403,7 +427,8 @@ func _equipment_icon(key: String, rect: Rect2, tint: Color) -> void:
 	draw_texture_rect(ICONS[key],rect,false,tint)
 
 func _draw_preview() -> void:
-	var u=battle.preview()
+	var forecast=_utility_preview()
+	var u=battle.preview() if forecast.is_empty() else forecast.units[battle.actor]
 	var signature=[u.core,u.gear,u.arms,u.class_name,u.gear_mutation,u.arms_mutation,u.get("core_angle",0.0),u.gear_angle,u.arms_angle,status_colors]
 	if signature!=preview_signature:
 		preview_signature=signature.duplicate(true)
@@ -529,6 +554,9 @@ func _after_action() -> void:
 func _feedback() -> void:
 	var e: Dictionary=battle.last_effect
 	var u: Dictionary=battle.units[e.target]
+	if e.kind in ["SWAP","PUSH","GUARD"]:
+		toasts.append({"cell":u.pos,"text":e.kind,"color":CYAN,"age":0.0})
+		return
 	var shown=str(e.amount) if e.kind=="DAMAGE" else _hp(e.actual)
 	toasts.append({"cell":u.pos,"text":("-" if e.kind=="DAMAGE" else "+")+shown,"color":status_colors[1] if e.kind=="DAMAGE" else status_colors[2],"age":0.0})
 	if e.dead:
@@ -586,7 +614,7 @@ func _action_dialog() -> void:
 			if battle.valid_target(battle.actor,target,skill):
 				available=true
 		button.disabled=not available
-		button.tooltip_text="No valid target in this pattern." if not available else ""
+		button.tooltip_text="No valid target in this pattern." if not available else C.SKILLS[skill].description
 	_button(panel,"BACK",Rect2(25,126+active.size()*63,370,48),_reselect_path)
 
 func _reselect_path() -> void:
@@ -856,7 +884,22 @@ func _help() -> void:
 	_label(panel,"1と2を編集し、装備の5値と差分を比較する。\nスキルは最大3。NONEも可。取得品と変異は共有。",Rect2(36,631,500,66),18,WHITE)
 	_label(panel,"READING THE SIGNAL",Rect2(580,589,500,28),16,CYAN)
 	_label(panel,"−はダメージ、＋は回復。\nINFは攻撃と回復、RESは抵抗。\nSAVE / LOADは明示操作。以前の保存は退避する。",Rect2(580,631,510,66),18,WHITE)
-	_button(panel,"CLOSE / ESC",Rect2(36,736,1048,44),_close_aux)
+	_button(panel,"CLOSE / ESC",Rect2(36,736,800,44),_close_aux)
+	_button(panel,"SKILLS",Rect2(856,736,228,44),_skill_help)
+
+func _skill_help() -> void:
+	_close_aux()
+	var panel=_modal(Rect2(400,160,1120,760),true)
+	_label(panel,"SKILLS",Rect2(36,25,1048,48),32,WHITE)
+	_label(panel,"SWAP / PUSH",Rect2(36,102,1048,32),20,CYAN)
+	_label(panel,"SWAP: 上下左右の隣接味方1体と位置交換。\nPUSH: 隣接敵1体を外側の空きセルへ1マス。無傷、盤外と連鎖押しは不可。",Rect2(36,147,1048,68),19,WHITE)
+	_label(panel,"GUARD",Rect2(36,245,1048,32),20,CYAN)
+	_label(panel,"移動後に自分を選択。次の1攻撃を%d%%軽減。0ダメージでも消費。\n盾が防御中の印。重ね掛け不可。移動や回復では消えず、新しい戦闘で解除。" % roundi((1-T.GUARD_DAMAGE_MULTIPLIER)*100),Rect2(36,290,1048,68),19,WHITE)
+	_label(panel,"PANEL IGNORE",Rect2(36,388,1048,32),20,CYAN)
+	_label(panel,"特殊パネルのCORE効果だけを無視。GEARとARMSの通常回転は維持。\nSWAPの両者とPUSHの対象にも、到着先への通常1歩と本人の受動を適用。",Rect2(36,433,1048,68),19,WHITE)
+	_label(panel,"位置操作と防御も攻撃や回復の代わりの1行動。移動の必須条件は同じ。\n有効対象へカーソルを置くと移動先と変化後のリングを予測。\n相手の待ち時刻は変えず、動いた全員の到達目標を確定後に判定。",Rect2(36,536,1048,88),18,MUTED)
+	_button(panel,"BACK",Rect2(36,670,800,44),_help)
+	_button(panel,"CLOSE / ESC",Rect2(856,670,228,44),_close_aux)
 
 func _settings() -> void:
 	_close_aux()
@@ -978,6 +1021,9 @@ func _unit_references(text: String) -> String:
 
 func _ring(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,active: bool=false) -> void:
 	V.ring(canvas,center,radius,u,active,ring_colors,CYAN,mono)
+	if u.get("guard_active",false):
+		var size_px=clampf(radius*0.3,8,20)
+		canvas.draw_texture_rect(ICONS.gear,Rect2(center+Vector2(radius*0.70,-radius*0.70)-Vector2.ONE*size_px/2,Vector2.ONE*size_px),false,WHITE)
 
 func _restart() -> void:
 	cpu_turn.reset()
@@ -1095,6 +1141,10 @@ func _button(parent: Control, text: String, rect: Rect2, callback: Callable, ico
 			key="attack"
 		elif text.contains("HEAL"):
 			key="heal"
+		elif text.begins_with("GUARD"):
+			key="gear"
+		elif text.begins_with("SWAP") or text.begins_with("PUSH"):
+			key="move"
 	if ICONS.has(key):
 		button.icon=ICONS[key]
 		button.expand_icon=true

@@ -84,11 +84,11 @@ func _boundaries()->void:
 	_check(not b.choose_skill(heal),"unowned skill cannot be selected")
 ## REQ-026-S01、REQ-026-S02、REQ-026-S03
 func _inventory()->void:
-	var expected=CASES.map(func(row):return row[0])+[C.MOVE]
+	var expected=CASES.map(func(row):return row[0])+[C.MOVE,"ACTIVE_SWAP_ADJACENT","ACTIVE_PUSH_ADJACENT","ACTIVE_GUARD_SELF","PASSIVE_IGNORE_PANEL_SELF"]
 	expected.sort()
 	var actual=C.SKILLS.keys()
 	actual.sort()
-	_check(actual==expected,"exact eight actives plus unchanged MOVE; no line or area skill")
+	_check(actual==expected,"exact eight damage/heal actives, MOVE and four utilities; no line or area skill")
 	var inventory=L.new()
 	_check(inventory.skills==[C.DAMAGE,C.HEAL] and inventory.builds.all(func(b):return b.skills==[C.DAMAGE,C.HEAL]),"initial builds and unlocks preserve the old IDs")
 	var obtained=true
