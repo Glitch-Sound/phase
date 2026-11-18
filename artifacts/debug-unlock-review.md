@@ -1,6 +1,9 @@
 # 全解放と10刻みの検証
 
-## 状態
+最新の確認は末尾の再開後の検証に記録する。\
+実装コードは644183aから変更していない。
+
+## 初回の中断状態(644183a時点)
 
 実装と全体検査は完了したが、実画面操作の最終確認は完了していない。\
 MacのロックによりGodotへ接続できず、REQ-041-S05とtasksの3.2、4.1は保留とする。\
@@ -85,7 +88,7 @@ headlessのUI接続とGPUの描画標本、自然な対戦の実プレイを混�
 artifacts/runtime/unlock-real-data-before.jsonとunlock-real-data-after.jsonで、実セーブのSHA256と更新時刻、実設定ファイルの不存在が一致した。\
 通常の実セーブと設定は保存、削除と上書きを行っていない。
 
-## verifyの照合
+## 初回verifyの照合(644183a時点)
 
 | 観点 | 結果 |
 | --- | --- |
@@ -109,3 +112,63 @@ artifacts/runtime/unlock-real-data-before.jsonとunlock-real-data-after.jsonで�
 重大な未完了は上表の2タスクであり、実画面確認を省略して完了へ変更しない。\
 実装の欠落と設計の矛盾は確認した範囲で見つからないが、実機のシナリオを合格とは判断できない。\
 Macのロック解除後、許可済みのGodotで装備選択と終了を検証し、新規キャプチャとLibrary画像、最終verifyを更新する必要がある。
+
+## 再開後の検証
+
+利用者のロック解除後に、許可済みGodotで最終コード644183aのGPUと入力を確認した。\
+プロダクトコードと自動テストは変更していない。\
+Godotの実画面を通常BUILDへ戻し、画面操作を終了した。
+
+| 観点 | 実際の結果と証拠 |
+| --- | --- |
+| ネイティブGPU | 202検査中0失敗。artifacts/runtime/unlock-resume-standalone-gpu-result.json |
+| サイズ | 1152x648、1920x1080、2560x1440、縦長1200x1600の要求ウィンドウ。縦長の描画内容は1200x675の16:9で、余白全体の画像検証とは区別する |
+| 選択 | 各サイズで126装備と120変異の先頭と末尾、GUARDとFIELD_FAST、開始と対象、再スタートと終了をネイティブ入力で検査 |
+| 物理操作 | Godotの埋め込み画面でマウスとキーボードからUNLOCK ALL、ARMSとGEAR末尾、ARMS変異LSRIV、GUARDの装備、STARTを操作 |
+| 実戦 | 両陣営を手動操作し4行動完了、TURN 05。移動4回、GUARD1回とDAMAGE3回を実行。リリースやCPUの完全な一戦ではない |
+| 通常復帰 | RESTART後も検証装備を保持し、EXIT DEBUGで通常のARMS4、GEAR4、変異1と初期スキルに復帰。normal_unchanged=true、build_open=true、debug=false |
+| 実データ | unlock-resume-real-data-before.jsonとunlock-resume-real-data-after.jsonでSHA256、更新時刻と設定の不存在が一致 |
+| 全体検査 | npm run check成功。artifacts/runtime/unlock-resume-check.txt |
+
+実戦ではユニット1を(5,4)へ動かしてGUARD、ユニット2を(5,6)へ動かしてBを攻撃した。\
+AとBも移動と攻撃を行い、TURN 05ではユニット1のHPが886/900、ユニット2が72/100、Bが81/100となった。\
+GUARDの消費と装備の実戦反映を確認した。\
+今回の目的は全解放で装備を試せることと復元の確認であり、自然なCPU戦の完走やバランス、別Macの動作は未検証である。
+
+初回の埋め込みドライバーでは202検査中1失敗となった。\
+終了時の通常参照の完全復元は成功したが、追加の通常SAVEとLOADの完全一致でJSONの整数から浮動小数への変換差を検出した。\
+ネイティブ検証では既に作成した検証専用の保存を読んだ正常な開始状態へ揃え、同じ完全一致の期待を変更せず202検査すべてが成功した。\
+プロダクトやコミット対象テストの期待値を緩めていない。\
+埋め込みではウィンドウのサイズ要求が描画サイズへ反映されないため、4サイズの合格証拠は別のネイティブGPU検査とした。
+
+## 最終キャプチャ
+
+| 内容 | ローカルパス |
+| --- | --- |
+| 全解放BUILD、1920x1080 | artifacts/runtime/unlock-resume-standalone-gpu-build-1920x1080.png |
+| 物理操作で進めたTURN 05、4442x2498 | artifacts/runtime/unlock-resume-manual-battle-turn05.png |
+| 通常へ復帰したBUILD、4442x2498 | artifacts/runtime/unlock-resume-manual-normal-return.png |
+
+各PNGの実ピクセルを見て、全解放の識別と通常復帰、装備と戦闘内容を確認した。\
+デスクトップと個人情報を含まない。\
+新規画像2枚をLibraryの正式なPythonヘルパーで保存しようとしたが、既定のネットワークではtools/listのDNS解決に失敗した。\
+同じ処理のネットワーク許可実行は、自動承認レビューが画像と送信先への明示承認を確認できないとして拒否し、実行されなかった。\
+別経路への迂回は行わず、この2枚の新規Library IDはまだない。\
+利用者へ、確認済みの全解放BUILDとTURN 05をChatGPT Libraryへ新規保存してよいか具体的な確認を出した。
+
+## 最終verify
+
+前表の8シナリオの対応を再照合した。\
+REQ-041-S05は今回のネイティブ202検査と物理入力、戦闘画像、通常復帰画像で開発側の確認を完了した。\
+manual-checks.mdの利用者による最終確認は未確認のまま維持する。\
+D-01の共通カタログ、D-02の保存境界と復元、D-03の最小入口と既存3列を維持し、実装の欠落や設計違反は見つからなかった。\
+Libraryへの転送承認は成果物配送の障害として区別し、ゲーム仕様と実装の未検証とは扱わない。
+
+strict差分とstrictトレースが成功した後、build-collectionのREQ-015を変更し、REQ-041を追加した。\
+既存のPurposeと他要件が不変で、差分2ブロックが正式仕様へ完全一致することを比較した。\
+全5仕様のstrict検証も成功し、2026-11-19-debug-unlocks-ten-step-lootへアーカイブした。\
+CLIはproposalのWhyとWhat Changesという英語見出しがない旨の非停止警告を出したが、プロジェクトの日本語雛形に従った提案に目的と変更内容が存在し、仕様検証の問題ではない。
+
+アーカイブ後のnpm run checkも成功した。\
+証拠はartifacts/runtime/unlock-resume-check-archived.txtである。\
+今回の開発側確認は完了し、利用者の最終確認と画像転送の承認が残る。
