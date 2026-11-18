@@ -47,6 +47,13 @@ const UNIT_HP_COLOR := Color.WHITE
 const UNIT_HP_RADIUS := 0.41
 const UNIT_HP_WIDTH := 0.022
 const UNIT_HP_MIN_LINE := 0.65
+# 防御はHPとCOREの空間へ薄い八角形を重ね、リングの情報と外形を保つ。
+const UNIT_GUARD_SIDES := 8
+const UNIT_GUARD_RADIUS := 0.52
+const UNIT_GUARD_WIDTH := 0.018
+const UNIT_GUARD_PIXEL_MIN := 0.85
+const UNIT_GUARD_FILL_ALPHA := 0.045
+const UNIT_GUARD_LINE_ALPHA := 0.55
 const UNIT_NAME_SIZE := 0.52
 const UNIT_NAME_MIN := 14
 const UNIT_TICK_RADII := Vector2(0.80,0.94)

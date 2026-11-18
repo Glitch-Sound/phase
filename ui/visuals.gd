@@ -9,7 +9,7 @@ const T = preload("res://game/tuning.gd")
 static func unit_name(u: Dictionary) -> String:
 	return str(int(u.id)) if u.camp=="PLAYER" and u.id in ["01","02"] else u.id
 
-## ユニット記号を記述する。radiusは基準半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色。戻り値は円弧と目盛りと中央名の描画データ。副作用なし。
+## ユニット記号を記述する。radiusは基準半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色。戻り値は円弧と目盛り、中央名と防御図形の描画データ。副作用なし。
 static func glyph(radius: float, u: Dictionary, selected: bool, colors: Array, accent: Color) -> Dictionary:
 	var arcs=[]
 	for r in range(3):
@@ -23,13 +23,26 @@ static func glyph(radius: float, u: Dictionary, selected: bool, colors: Array, a
 	var health=clampf(u.hp/maxf(1.0,u.max_hp),0.0,1.0)
 	if health>0:
 		arcs.append({"role":"HP","radius":radius*T.UNIT_HP_RADIUS,"start":-PI/2,"end":-PI/2+TAU*health,"color":T.UNIT_HP_COLOR,"width":maxf(T.UNIT_HP_MIN_LINE,radius*T.UNIT_HP_WIDTH)})
-	return {"arcs":arcs,"tick":{"from":Vector2(0,-radius*T.UNIT_TICK_RADII.x),"to":Vector2(0,-radius*T.UNIT_TICK_RADII.y),"color":accent if selected else TEXT,"width":maxf(T.UNIT_MIN_LINE,radius*T.UNIT_TICK_WIDTH)},"name":unit_name(u),"font_size":maxi(T.UNIT_NAME_MIN,roundi(radius*T.UNIT_NAME_SIZE))}
+	var guard={}
+	if u.get("guard_active",false) and u.hp>0:
+		var points=[]
+		for i in range(T.UNIT_GUARD_SIDES):
+			points.append(Vector2.from_angle(-PI/2-PI/T.UNIT_GUARD_SIDES+TAU*i/T.UNIT_GUARD_SIDES)*radius*T.UNIT_GUARD_RADIUS)
+		guard={"points":points,"fill":Color(TEXT,T.UNIT_GUARD_FILL_ALPHA),"color":Color(TEXT,T.UNIT_GUARD_LINE_ALPHA),"width":radius*T.UNIT_GUARD_WIDTH}
+	return {"guard":guard,"arcs":arcs,"tick":{"from":Vector2(0,-radius*T.UNIT_TICK_RADII.x),"to":Vector2(0,-radius*T.UNIT_TICK_RADII.y),"color":accent if selected else TEXT,"width":maxf(T.UNIT_MIN_LINE,radius*T.UNIT_TICK_WIDTH)},"name":unit_name(u),"font_size":maxi(T.UNIT_NAME_MIN,roundi(radius*T.UNIT_NAME_SIZE))}
 
 ## 記号を描く。canvasは描画先、centerは中心、radiusは基準半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色、typefaceは名前のフォント。戻り値なし。副作用は描画。
 static func ring(canvas: CanvasItem, center: Vector2, radius: float, u: Dictionary, selected: bool, colors: Array, accent: Color, typeface: Font) -> void:
 	var g=glyph(radius,u,selected,colors,accent)
 	# viewport_transformはRetinaを含む実描画倍率を既に持つ。OSのDPIを追加で掛けない。
 	var scale_px=(canvas.get_viewport_transform()*canvas.get_global_transform()).get_scale().x
+	if not g.guard.is_empty():
+		var points=PackedVector2Array()
+		for point in g.guard.points:
+			points.append(center+point)
+		canvas.draw_colored_polygon(points,g.guard.fill)
+		points.append(points[0])
+		canvas.draw_polyline(points,g.guard.color,maxf(g.guard.width,T.UNIT_GUARD_PIXEL_MIN/maxf(0.001,scale_px)),true)
 	for arc in g.arcs:
 		var style=stroke_style(arc,scale_px)
 		canvas.draw_arc(center,arc.radius,arc.start,arc.end,style.points,arc.color,style.width,true)

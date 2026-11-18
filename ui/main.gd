@@ -280,6 +280,9 @@ func _draw_board() -> void:
 			var i=battle.at(cell)
 			if i>=0:
 				var u: Dictionary=battle.units[i]
+				if effect=="GUARD" and battle.mode=="TARGET" and battle.valid_target(battle.actor,i,battle.selected_skill):
+					u=u.duplicate(true)
+					u.guard_active=true
 				var center=pos+T.UNIT_BOARD_CENTER*BOARD_SCALE
 				_ring(self,center,T.UNIT_BOARD_RADIUS*BOARD_SCALE,u,i==battle.actor)
 				if i==selected or i==timeline_hover:
@@ -293,7 +296,8 @@ func _draw_board() -> void:
 						if effect=="HEAL":
 							amount=mini(amount,ceili(u.max_hp-u.hp))
 						text=("-" if effect=="DAMAGE" else "+")+str(amount)
-					effect_chips.append({"cell":cell,"text":text,"color":tc,"font_size":16 if effect in ["DAMAGE","HEAL"] else 14})
+					if effect!="GUARD":
+						effect_chips.append({"cell":cell,"text":text,"color":tc,"font_size":16 if effect in ["DAMAGE","HEAL"] else 14})
 				if cpu_turn.active and cpu_turn.phase=="TARGET" and cpu_turn.command.target==i:
 					_draw_cell_focus(rect,WHITE)
 	if battle.mode=="MOVE":
@@ -394,10 +398,8 @@ func _draw_info() -> void:
 	var forecast=_utility_preview()
 	if not forecast.is_empty():
 		index=forecast.target
-		_text("%s PREVIEW / UNIT %s" % [forecast.kind,V.unit_name(forecast.units[index])],T.BATTLE_INFO_CLASS-Vector2(0,24),13,MUTED,mono)
+		_text("%sPREVIEW / UNIT %s" % ["" if forecast.kind=="GUARD" else forecast.kind+" ",V.unit_name(forecast.units[index])],T.BATTLE_INFO_CLASS-Vector2(0,24),13,MUTED,mono)
 	var u: Dictionary=forecast.units[index] if not forecast.is_empty() else battle.units[index]
-	if u.get("guard_active",false):
-		_text("GUARD / NEXT HIT -%d%%" % roundi((1-T.GUARD_DAMAGE_MULTIPLIER)*100),T.BATTLE_INFO_CLASS+Vector2(0,24),13,WHITE,mono)
 	var camp_color=CYAN if u.camp=="PLAYER" else status_colors[1]
 	_text("CLASS: "+u.class_name,T.BATTLE_INFO_CLASS,17,camp_color,mono)
 	_ring(self,T.BATTLE_INFO_RING,81,u,index==battle.actor)
@@ -554,7 +556,9 @@ func _after_action() -> void:
 func _feedback() -> void:
 	var e: Dictionary=battle.last_effect
 	var u: Dictionary=battle.units[e.target]
-	if e.kind in ["SWAP","PUSH","GUARD"]:
+	if e.kind=="GUARD":
+		return
+	if e.kind in ["SWAP","PUSH"]:
 		toasts.append({"cell":u.pos,"text":e.kind,"color":CYAN,"age":0.0})
 		return
 	var shown=str(e.amount) if e.kind=="DAMAGE" else _hp(e.actual)
@@ -894,7 +898,7 @@ func _skill_help() -> void:
 	_label(panel,"SWAP / PUSH",Rect2(36,102,1048,32),20,CYAN)
 	_label(panel,"SWAP: 上下左右の隣接味方1体と位置交換。\nPUSH: 隣接敵1体を外側の空きセルへ1マス。無傷、盤外と連鎖押しは不可。",Rect2(36,147,1048,68),19,WHITE)
 	_label(panel,"GUARD",Rect2(36,245,1048,32),20,CYAN)
-	_label(panel,"移動後に自分を選択。次の1攻撃を%d%%軽減。0ダメージでも消費。\n盾が防御中の印。重ね掛け不可。移動や回復では消えず、新しい戦闘で解除。" % roundi((1-T.GUARD_DAMAGE_MULTIPLIER)*100),Rect2(36,290,1048,68),19,WHITE)
+	_label(panel,"移動後に自分を選択。次の1攻撃を%d%%軽減。0ダメージでも消費。\n薄い八角形が防御中の印。重ね掛け不可。移動や回復では消えず、新しい戦闘で解除。" % roundi((1-T.GUARD_DAMAGE_MULTIPLIER)*100),Rect2(36,290,1048,68),19,WHITE)
 	_label(panel,"PANEL IGNORE",Rect2(36,388,1048,32),20,CYAN)
 	_label(panel,"特殊パネルのCORE効果だけを無視。GEARとARMSの通常回転は維持。\nSWAPの両者とPUSHの対象にも、到着先への通常1歩と本人の受動を適用。",Rect2(36,433,1048,68),19,WHITE)
 	_label(panel,"位置操作と防御も攻撃や回復の代わりの1行動。移動の必須条件は同じ。\n有効対象へカーソルを置くと移動先と変化後のリングを予測。\n相手の待ち時刻は変えず、動いた全員の到達目標を確定後に判定。",Rect2(36,536,1048,88),18,MUTED)
@@ -1021,9 +1025,6 @@ func _unit_references(text: String) -> String:
 
 func _ring(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,active: bool=false) -> void:
 	V.ring(canvas,center,radius,u,active,ring_colors,CYAN,mono)
-	if u.get("guard_active",false):
-		var size_px=clampf(radius*0.3,8,20)
-		canvas.draw_texture_rect(ICONS.gear,Rect2(center+Vector2(radius*0.70,-radius*0.70)-Vector2.ONE*size_px/2,Vector2.ONE*size_px),false,WHITE)
 
 func _restart() -> void:
 	cpu_turn.reset()

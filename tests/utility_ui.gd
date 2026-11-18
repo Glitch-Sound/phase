@@ -44,7 +44,20 @@ func _run() -> void:
 	game.hover_cell=Vector2i(-1,-1)
 	game.queue_redraw()
 	await create_timer(0.08).timeout
-	_check(game.info_text.any(func(text):return text.begins_with("GUARD /")),"guard state is readable in detail without relying on color")
+	_check(not game.info_text.any(func(text):return text.begins_with("GUARD / NEXT")),"guard state no longer adds a prose status line")
+	game.battle.actor=0
+	game.battle.mode="CHOICE"
+	game.battle.units[0].guard_active=false
+	game.battle.choose_skill(C.GUARD)
+	game._follow_turn()
+	game.hover_cell=game.battle.units[0].pos
+	game.queue_redraw()
+	await create_timer(0.08).timeout
+	_check(not game.drawn_text.any(func(record):return record.text=="GUARD") and game.info_text.has("PREVIEW / UNIT 1") and not game.battle.units[0].guard_active,"GUARD target uses a graphic-only preview without mutating live defense")
+	game.toasts=[]
+	game.battle.act(0)
+	game._feedback()
+	_check(game.battle.units[0].guard_active and not game.toasts.any(func(toast):return toast.text=="GUARD"),"defense activates without a GUARD word toast")
 	game._help()
 	await process_frame
 	_check(game.auxiliary.find_children("*","Button",true,false).any(func(button):return button.text=="SKILLS"),"existing HELP links to the new skill explanations")

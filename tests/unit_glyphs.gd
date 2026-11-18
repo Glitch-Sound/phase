@@ -12,6 +12,7 @@ func _run() -> void:
 	if visual.has_method("glyph") and visual.has_method("unit_name"):
 		_test_glyph(visual)
 		_test_names(visual)
+		_test_guard(visual)
 	else:
 		_check(false,"common glyph geometry and presentation-only names are implemented")
 	await _test_screens()
@@ -49,6 +50,21 @@ func _test_glyph(visual) -> void:
 	u.core=[1,96,1,1,1]
 	g=visual.glyph(22.0,u,false,P.PRESETS.DEFAULT.slice(1),P.PRESETS.DEFAULT[0])
 	_check(g.arcs[0].end>g.arcs[0].start and g.arcs[1].end>g.arcs[1].start,"smallest valid sectors survive the gap")
+## REQ-018-S07
+func _test_guard(visual) -> void:
+	var u=C.unit("A","ENEMY",Vector2i.ZERO,C.default_build())
+	var normal=visual.glyph(22.0,u,false,P.PRESETS.DEFAULT.slice(1),P.PRESETS.DEFAULT[0])
+	u.guard_active=true
+	var guarded=visual.glyph(22.0,u,false,P.PRESETS.DEFAULT.slice(1),P.PRESETS.DEFAULT[0])
+	_check(guarded.has("guard") and normal.has("guard"),"guard has a shared procedural polygon description")
+	if not guarded.has("guard"): return
+	var shape=guarded.guard
+	var tuning=load("res://game/tuning.gd").get_script_constant_map()
+	_check(normal.guard.is_empty() and not shape.is_empty() and guarded.arcs==normal.arcs and guarded.name==normal.name,"only the guard polygon changes; HP, phase and identity stay identical")
+	if shape.is_empty(): return
+	_check(shape.points.size()==int(tuning.UNIT_GUARD_SIDES) and shape.points.all(func(point):return point.length()>22.0*T.UNIT_HP_RADIUS and point.length()<22.0*T.UNIT_RING_RADII[0]) and shape.fill.a<shape.color.a and shape.color.a<1.0,"translucent polygon remains between HP and CORE")
+	u.guard_active=false
+	_check(visual.glyph(22.0,u,false,P.PRESETS.DEFAULT.slice(1),P.PRESETS.DEFAULT[0]).guard.is_empty(),"consumed guard removes only the polygon")
 ## REQ-031-S01
 func _test_names(visual) -> void:
 	var ids=["01","02","A","B"]
