@@ -183,7 +183,7 @@ func _test_notifications() -> void:
 			game._clear_overlay()
 			game._hud()
 			game._cell_input(Vector2i(0,0))
-			expected="Choose a highlighted adjacent target. BACK keeps your movement."
+			expected="Choose a highlighted target. BACK keeps your movement."
 		await create_timer(0.08).timeout
 		var messages=game.drawn_text.filter(func(item):return item.text==expected)
 		_check(game.message==expected and game.message_time>0 and messages.size()==1,"real notification is visible: "+state)

@@ -339,8 +339,7 @@ func test_skill_limits() -> void:
 ## REQ-015-S02
 func test_skill_unlock_and_distribution() -> void:
 	var l=L.new()
-	if not l.skills.has(C.MOVE):
-		l.skills.append(C.MOVE)
+	l.skills=C.SKILLS.keys()
 	l.skills.erase(C.HEAL)
 	var rng=RandomNumberGenerator.new()
 	rng.seed=918

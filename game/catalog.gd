@@ -4,12 +4,43 @@ const M = preload("res://game/phase_math.gd")
 const DAMAGE = "ACTIVE_DAMAGE_ADJACENT"
 const HEAL = "ACTIVE_HEAL_ADJACENT"
 const MOVE = "PASSIVE_MOVE_PLUS_ONE_SELF"
+const DAMAGE_DIAGONAL = "ACTIVE_DAMAGE_DIAGONAL_ONE"
+const HEAL_DIAGONAL = "ACTIVE_HEAL_DIAGONAL_ONE"
+const DAMAGE_ORTHOGONAL_TWO = "ACTIVE_DAMAGE_ORTHOGONAL_TWO"
+const HEAL_ORTHOGONAL_TWO = "ACTIVE_HEAL_ORTHOGONAL_TWO"
+const DAMAGE_DIAGONAL_TWO = "ACTIVE_DAMAGE_DIAGONAL_TWO"
+const HEAL_DIAGONAL_TWO = "ACTIVE_HEAL_DIAGONAL_TWO"
+const TARGET_PATTERNS = {
+	"ADJACENT":[Vector2i(0,-1),Vector2i(1,0),Vector2i(0,1),Vector2i(-1,0)],
+	"DIAGONAL_ONE":[Vector2i(-1,-1),Vector2i(1,-1),Vector2i(1,1),Vector2i(-1,1)],
+	"ORTHOGONAL_TWO":[Vector2i(0,-2),Vector2i(2,0),Vector2i(0,2),Vector2i(-2,0)],
+	"DIAGONAL_TWO":[Vector2i(-2,-2),Vector2i(2,-2),Vector2i(2,2),Vector2i(-2,2)]
+}
 const SKILLS = {
 	DAMAGE:{"type":"ACTIVE","effect":"DAMAGE","area":"ADJACENT","label":"DAMAGE / ADJACENT","description":"Damage one adjacent enemy."},
 	HEAL:{"type":"ACTIVE","effect":"HEAL","area":"ADJACENT","label":"HEAL / ADJACENT","description":"Heal one adjacent wounded ally."},
-	MOVE:{"type":"PASSIVE","effect":"MOVE +1","area":"SELF","label":"MOVE +1 / SELF","description":"Adds 1 cell to movement."}
+	MOVE:{"type":"PASSIVE","effect":"MOVE +1","area":"SELF","label":"MOVE +1 / SELF","description":"Adds 1 cell to movement."},
+	DAMAGE_DIAGONAL:{"type":"ACTIVE","effect":"DAMAGE","area":"DIAGONAL_ONE","label":"DAMAGE / DIAGONAL 1","description":"Damage one enemy 1 diagonal cell away."},
+	HEAL_DIAGONAL:{"type":"ACTIVE","effect":"HEAL","area":"DIAGONAL_ONE","label":"HEAL / DIAGONAL 1","description":"Heal one wounded ally 1 diagonal cell away."},
+	DAMAGE_ORTHOGONAL_TWO:{"type":"ACTIVE","effect":"DAMAGE","area":"ORTHOGONAL_TWO","label":"DAMAGE / ORTHO 2","description":"Damage one enemy exactly 2 orthogonal cells away."},
+	HEAL_ORTHOGONAL_TWO:{"type":"ACTIVE","effect":"HEAL","area":"ORTHOGONAL_TWO","label":"HEAL / ORTHO 2","description":"Heal one wounded ally exactly 2 orthogonal cells away."},
+	DAMAGE_DIAGONAL_TWO:{"type":"ACTIVE","effect":"DAMAGE","area":"DIAGONAL_TWO","label":"DAMAGE / DIAGONAL 2","description":"Damage one enemy exactly 2 diagonal cells away."},
+	HEAL_DIAGONAL_TWO:{"type":"ACTIVE","effect":"HEAL","area":"DIAGONAL_TWO","label":"HEAL / DIAGONAL 2","description":"Heal one wounded ally exactly 2 diagonal cells away."}
 }
 const STARTER_STATS = [[20,20,20,20,20],[20,30,15,20,15],[20,10,30,20,20],[25,15,20,30,10]]
+
+## 対象位置を返す。skillはスキルID。戻り値は4方向の座標差の独立した配列であり、不明または受動なら空。
+static func target_offsets(skill: String) -> Array:
+	var area=SKILLS.get(skill,{}).get("area","")
+	return TARGET_PATTERNS.get(area,[]).duplicate()
+
+## 単体対象の条件を返す。skillはID、sourceとtargetは位置、陣営、HPを持つユニット。戻り値は作用と位置の適否であり、装備と操作状態は呼び出し側で制限する。
+static func target_matches(skill: String, source: Dictionary, target: Dictionary) -> bool:
+	if SKILLS.get(skill,{}).get("type","")!="ACTIVE" or source.hp<=0 or target.hp<=0 or not target_offsets(skill).has(target.pos-source.pos):
+		return false
+	if SKILLS[skill].effect=="DAMAGE":
+		return source.camp!=target.camp
+	return source.camp==target.camp and target.hp<target.max_hp
 
 ## 型番を返す。kindはARMSかGEAR、statsは配分、mutationはNORMALか配置文字列。戻り値は型番。
 static func serial(kind: String, stats: Array, mutation: String="NORMAL") -> String:
@@ -18,7 +49,7 @@ static func serial(kind: String, stats: Array, mutation: String="NORMAL") -> Str
 		result+="%02X" % int(value)
 	return result if mutation=="NORMAL" else result+"-M-"+mutation
 
-## 全スキルを持つ検査用ビルドを返す。戻り値は編集可能な独立した辞書。
+## 従来3種を持つ検査用ビルドを返す。戻り値は編集可能な独立した辞書。
 static func default_build() -> Dictionary:
 	return {"class_name":"STANDARD","core":[20,20,20,20,20],"gear":[20,20,20,20,20],"arms":[20,20,20,20,20],"gear_mutation":"NORMAL","arms_mutation":"NORMAL","skills":[DAMAGE,HEAL,MOVE]}
 

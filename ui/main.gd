@@ -244,6 +244,11 @@ func _timeline_matches(event: Dictionary, inspected: Dictionary) -> bool:
 
 func _draw_board() -> void:
 	var effect_chips=[]
+	var target_cells=[]
+	var effect=C.SKILLS.get(battle.selected_skill,{}).get("effect","")
+	if battle.mode=="TARGET":
+		for offset in C.target_offsets(battle.selected_skill):
+			target_cells.append(battle.units[battle.actor].pos+offset)
 	for y in range(10):
 		for x in range(10):
 			var cell=Vector2i(x,y)
@@ -268,8 +273,8 @@ func _draw_board() -> void:
 			if cell==battle.stage.enemy_goal:
 				draw_rect(rect.grow(-4),status_colors[1],false,2)
 				_text("LOSS",pos+Vector2(6,62)*BOARD_SCALE,11,status_colors[1],mono)
-			if battle.mode=="TARGET" and _distance(cell,battle.units[battle.actor].pos)==1:
-				var tc=status_colors[1] if battle.selected_skill==C.DAMAGE else status_colors[2]
+			if target_cells.has(cell):
+				var tc=status_colors[1] if effect=="DAMAGE" else status_colors[2]
 				draw_rect(rect,Color(tc,0.12))
 				_draw_cell_focus(rect,Color(tc,0.7),true,1.5)
 			var i=battle.at(cell)
@@ -280,12 +285,12 @@ func _draw_board() -> void:
 				if i==selected or i==timeline_hover:
 					_draw_cell_focus(rect,MAGENTA)
 				if battle.mode=="TARGET" and battle.valid_target(battle.actor,i,battle.selected_skill):
-					var tc=status_colors[1] if battle.selected_skill==C.DAMAGE else status_colors[2]
+					var tc=status_colors[1] if effect=="DAMAGE" else status_colors[2]
 					_draw_cell_focus(rect,tc,true)
 					var amount=M.effect(battle.units[battle.actor],u,C.SKILLS[battle.selected_skill].effect)
-					if battle.selected_skill==C.HEAL:
+					if effect=="HEAL":
 						amount=mini(amount,ceili(u.max_hp-u.hp))
-					effect_chips.append({"cell":cell,"text":("-" if battle.selected_skill==C.DAMAGE else "+")+str(amount),"color":tc})
+					effect_chips.append({"cell":cell,"text":("-" if effect=="DAMAGE" else "+")+str(amount),"color":tc})
 				if cpu_turn.active and cpu_turn.phase=="TARGET" and cpu_turn.command.target==i:
 					_draw_cell_focus(rect,WHITE)
 	if battle.mode=="MOVE":
@@ -493,7 +498,7 @@ func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 			_feedback()
 			_after_action()
 		else:
-			_notify("Choose a highlighted adjacent target. BACK keeps your movement.")
+			_notify("Choose a highlighted target. BACK keeps your movement.")
 	elif battle.mode=="MOVE":
 		if index>=0 and cell!=battle.units[battle.actor].pos:
 			selected=index
@@ -581,7 +586,7 @@ func _action_dialog() -> void:
 			if battle.valid_target(battle.actor,target,skill):
 				available=true
 		button.disabled=not available
-		button.tooltip_text="No valid adjacent target." if not available else ""
+		button.tooltip_text="No valid target in this pattern." if not available else ""
 	_button(panel,"BACK",Rect2(25,126+active.size()*63,370,48),_reselect_path)
 
 func _reselect_path() -> void:
@@ -827,13 +832,13 @@ func _help() -> void:
 	var steps=[
 		["move","01 / ROUTE","手番開始で角枠と詳細が追従。\n経路上のクリックで後続を取消。"],
 		["target","02 / ALIGN","3波は各SPDで揺れ、全体へ合成。\n色は実位相。戦闘角度は不変。"],
-		["check","03 / ACT","終点をダブルクリックして確定。\nWAITかスキルを選び、対象をクリック。"]
+		["check","03 / ACT","終点をダブルクリックして確定。\nWAITかスキルを選び、対象をクリック。\nORTHOは上下左右、DIAGONALは斜め。\n数字は1/2マス先。ADJACENTは1。"]
 	]
 	for i in range(3):
 		var x=36+i*354
 		_icon(panel,steps[i][0],Rect2(x,153,28,28),CYAN)
 		_label(panel,steps[i][1],Rect2(x+42,149,298,32),20,WHITE)
-		_label(panel,steps[i][2],Rect2(x,201,340,76),18,MUTED)
+		_label(panel,steps[i][2],Rect2(x,201,340,96 if i==2 else 76),16 if i==2 else 18,MUTED)
 	_separator(panel,Rect2(36,300,1048,1))
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
 	_label(panel,"上下左右のみ。生存ユニットのマスは通れない。\n毎手番1歩以上。無移動WAITは閉塞時のみ。\n開始マスかEscで全取消。同じマスへ再進入不可。\n行動BACK/Escは経路へ。対象BACKは移動保持。\n白は相対進捗、灰は残り。満周は待ち0。\n表示最大の待ち量で再計算。個別周期ではない。\n縦は順番。中心点が手番。満周でも順番待ち。",Rect2(36,377,500,174),18,WHITE)

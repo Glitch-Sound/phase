@@ -158,19 +158,13 @@ func back() -> void:
 		mode="CHOICE"
 		selected_skill=""
 
-## 対象の適否を返す。sourceとtargetは番号、skillはID。戻り値は距離、生存、陣営の条件を満たすか。
+## 対象の適否を返す。sourceとtargetは番号、skillはID。戻り値は指定位置、生存、陣営の条件を満たすか。
 func valid_target(source: int, target: int, skill: String) -> bool:
-	if source<0 or target<0 or target>=units.size() or not C.SKILLS.has(skill):
+	if source<0 or source>=units.size() or target<0 or target>=units.size():
 		return false
 	var s: Dictionary=units[source]
 	var t: Dictionary=units[target]
-	if s.hp<=0 or t.hp<=0 or _distance(s.pos,t.pos)!=1:
-		return false
-	if skill==C.DAMAGE:
-		return s.camp!=t.camp
-	if skill==C.HEAL:
-		return s.camp==t.camp and t.hp<t.max_hp
-	return false
+	return _inside(s.pos) and _inside(t.pos) and C.target_matches(skill,s,t)
 
 ## 効果を実行する。targetは番号。戻り値は成功可否。HPと手番と勝敗を更新する。
 func act(target: int) -> bool:

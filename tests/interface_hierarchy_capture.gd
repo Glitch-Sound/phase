@@ -60,7 +60,7 @@ func _capture(suffix: String) -> void:
 	game.collection.items.ARMS[game.C.serial("ARMS",[96,1,1,1,1])]=[96,1,1,1,1]
 	game.collection.builds[0].arms_mutation="LSRIV"
 	game.collection.builds[0].gear_mutation="IVRSL"
-	game.collection.builds[0].skills=game.C.SKILLS.keys()
+	game.collection.builds[0].skills=[game.C.DAMAGE,game.C.HEAL,game.C.MOVE]
 	game._build()
 	game.equipment_views.arms.set_meta("before",[1,96,1,1,1])
 	for dimensions in [Vector2i(1152,648),Vector2i(1920,1080),Vector2i(2560,1440),Vector2i(1200,1600)]:

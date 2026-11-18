@@ -25,13 +25,11 @@ func choose(battle: RefCounted, memory: Array=[]) -> Dictionary:
 		var moved=_project(battle,actor,route)
 		var options=[{"skill":"","target":-1}]
 		for skill in source.skills:
-			if skill not in [C.DAMAGE,C.HEAL]:
+			if C.SKILLS.get(skill,{}).get("type","")!="ACTIVE":
 				continue
 			for i in range(battle.units.size()):
 				var target: Dictionary=battle.units[i]
-				if i==actor or target.hp<=0 or _distance(moved.pos,target.pos)!=1:
-					continue
-				if (skill==C.DAMAGE and target.camp!=source.camp) or (skill==C.HEAL and target.camp==source.camp and target.hp<target.max_hp):
+				if C.target_matches(skill,moved,target):
 					options.append({"skill":skill,"target":i})
 		for action in options:
 			var plan={"path":route,"skill":action.skill,"target":action.target}
@@ -47,14 +45,14 @@ func choose(battle: RefCounted, memory: Array=[]) -> Dictionary:
 				if action.target>=0:
 					var old: Dictionary=battle.units[action.target]
 					var now: Dictionary=after.units[action.target]
-					if action.skill==C.DAMAGE:
+					if C.SKILLS[action.skill].effect=="DAMAGE":
 						score+=(old.hp-now.hp)*T.CPU_DAMAGE_WEIGHT
 						if now.hp<=0:
 							score+=T.CPU_KILL_BONUS
 					else:
 						var weight=T.CPU_HEAL_WEIGHT
 						for recent in memory.slice(-2):
-							if recent.actor==actor and recent.skill==C.HEAL:
+							if recent.actor==actor and C.SKILLS.get(recent.skill,{}).get("effect","")=="HEAL":
 								weight*=0.5
 						score+=(now.hp-old.hp)*weight
 				score-=_danger(after,actor,threats)
@@ -107,11 +105,15 @@ func _danger(after, actor: int, threats: Array) -> float:
 		for condition in opposing:
 			if condition.type in ["REACH","OCCUPY"] and condition.camp==attacker.camp and (not condition.has("unit") or condition.unit==attacker.id) and entry.unit.pos==condition.cell:
 				risk=maxf(risk,T.CPU_TERMINAL_SCORE*0.5)
-		if not attacker.skills.has(C.DAMAGE):
-			continue
 		for j in range(after.units.size()):
 			var victim: Dictionary=after.units[j]
-			if victim.hp<=0 or victim.camp!=u.camp or _distance(entry.unit.pos,victim.pos)!=1:
+			if victim.camp!=u.camp:
+				continue
+			var reachable=false
+			for skill in attacker.skills:
+				if C.SKILLS.get(skill,{}).get("effect","")=="DAMAGE" and C.target_matches(skill,entry.unit,victim):
+					reachable=true
+			if not reachable:
 				continue
 			var hit=M.effect(entry.unit,victim,"DAMAGE")
 			var key=Vector2i(i,j)
