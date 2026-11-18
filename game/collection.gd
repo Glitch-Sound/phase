@@ -9,6 +9,7 @@ var skills: Array=[C.DAMAGE,C.HEAL]
 var builds: Array=[]
 var stage_index := 0
 var last_backup := ""
+var temporary := false
 
 func _init() -> void:
 	for kind in ["ARMS","GEAR"]:
@@ -66,7 +67,9 @@ func accept_drop(drop: Dictionary) -> bool:
 
 ## 戦利品を生成し開放する。rngは注入した乱数生成器。戻り値は0から2件の新規候補。
 func roll_loot(rng: RandomNumberGenerator) -> Array:
+	if temporary:return []
 	var result=[]
+	var candidates=C.equipment_catalog()
 	var count=rng.randi_range(0,2)
 	for slot in range(count):
 		for attempt in range(128):
@@ -78,15 +81,7 @@ func roll_loot(rng: RandomNumberGenerator) -> Array:
 			if not locked.is_empty() and rng.randi_range(0,2)==0:
 				drop={"skill":locked[rng.randi_range(0,locked.size()-1)]}
 			else:
-				var cuts=[0,100]
-				while cuts.size()<6:
-					var cut=rng.randi_range(1,99)
-					if not cuts.has(cut):
-						cuts.append(cut)
-				cuts.sort()
-				var stats=[]
-				for i in range(5):
-					stats.append(cuts[i+1]-cuts[i])
+				var stats: Array=candidates[rng.randi_range(0,candidates.size()-1)].duplicate()
 				var mutation="NORMAL"
 				if rng.randf()<T.MUTANT_CHANCE:
 					var letters=["V","I","R","S","L"]
@@ -110,6 +105,7 @@ func snapshot() -> Dictionary:
 
 ## 状態を保存する。pathは保存先。戻り値は成功時空文字、失敗時説明。既存ファイルを別名バックアップする。
 func save_to(path: String) -> String:
+	if temporary:return "DEBUG / NOT SAVED"
 	var data=snapshot()
 	var error=_validate_snapshot(data)
 	if not error.is_empty():
@@ -138,6 +134,7 @@ func save_to(path: String) -> String:
 
 ## 状態を読み込む。pathは候補ファイル。戻り値は成功時空文字、失敗時説明。検証成功後にだけ現在データを更新する。
 func load_from(path: String) -> String:
+	if temporary:return "DEBUG / NOT SAVED"
 	if not FileAccess.file_exists(path):
 		return "No saved build. Use SAVE first."
 	var f=FileAccess.open(path,FileAccess.READ)

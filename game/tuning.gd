@@ -124,6 +124,9 @@ const BATTLE_HP_GAP := 16.0
 const BATTLE_HP_RIGHT := 360.0
 # BUILDは左から構成と結果、装備の比較、スキルと出撃の3列。
 const BUILD_RECT := Rect2(300,115,1320,810)
+const DEBUG_TOGGLE_RECT := Rect2(604,22,300,43)
+const DEBUG_BADGE_RECT := Rect2(40,8,500,28)
+const DEBUG_BADGE_FONT := 18
 const BUILD_COLUMNS := [36.0,480.0,934.0]
 const BUILD_EQUIPMENT_WIDTH := 400.0
 const BUILD_STAT_STEP := 84.0

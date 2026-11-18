@@ -6,6 +6,7 @@ const B = preload("res://game/battle.gd")
 const F = preload("res://game/rotation_field.gd")
 const TL = preload("res://ui/timeline.gd")
 const L = preload("res://game/collection.gd")
+const DEBUG_SESSION = preload("res://game/debug_session.gd")
 const V = preload("res://ui/visuals.gd")
 const T = preload("res://game/tuning.gd")
 const P = preload("res://ui/palette.gd")
@@ -61,6 +62,9 @@ const SAVE_PATH = "res://artifacts/runtime/phase-save.json"
 var save_path=SAVE_PATH
 var battle=B.new()
 var collection=L.new()
+var debug_session=DEBUG_SESSION.new()
+var debug_ui_state: Dictionary={}
+var debug_notice: Label
 var font: SystemFont
 var mono: SystemFont
 var overlay: Control
@@ -127,6 +131,16 @@ func _ready() -> void:
 	notice.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	notice.z_index=1000
 	add_child(notice)
+	debug_notice=Label.new()
+	debug_notice.text="DEBUG / NOT SAVED"
+	debug_notice.position=T.DEBUG_BADGE_RECT.position
+	debug_notice.size=T.DEBUG_BADGE_RECT.size
+	debug_notice.add_theme_font_size_override("font_size",T.DEBUG_BADGE_FONT)
+	debug_notice.add_theme_color_override("font_color",CYAN)
+	debug_notice.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	debug_notice.z_index=1001
+	debug_notice.visible=false
+	add_child(debug_notice)
 	panel_probe=preload("res://ui/panel_probe.gd").new()
 	panel_probe.host=self
 	panel_probe.position=BOARD
@@ -140,6 +154,8 @@ func _ready() -> void:
 	_build()
 
 func _process(delta: float) -> void:
+	if debug_session.active() and not debug_session.available():_toggle_debug(false)
+	debug_notice.visible=collection.temporary
 	_cpu_tick(delta)
 	_follow_turn()
 	panel_probe.visible=not build_open
@@ -700,6 +716,8 @@ func _build() -> void:
 	cpu_choice.button_pressed=cpu_enabled
 	panel.add_child(cpu_choice)
 	cpu_choice.toggled.connect(func(value):cpu_enabled=value;_build())
+	if debug_session.available():
+		_button(panel,"EXIT DEBUG" if collection.temporary else "UNLOCK ALL",T.DEBUG_TOGGLE_RECT,func():_toggle_debug(not collection.temporary))
 	_label(panel,"SHARED ARCHIVE   %d ARMS / %d GEAR / %d MUTATIONS     %s" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size(),"PLAYER: HUMAN / ENEMY: CPU" if cpu_enabled else "BOTH SIDES: HUMAN"],Rect2(left,83,1240,26),14,MUTED)
 	var b: Dictionary=collection.builds[edit_unit]
 	_label(panel,"CORE / TOTAL 100",Rect2(left,136,400,28),17,WHITE)
@@ -785,9 +803,41 @@ func _build() -> void:
 		preview.draw_string(mono,Vector2(205,140),"DELAY %.1f" % M.delay(u),HORIZONTAL_ALIGNMENT_LEFT,-1,16,MUTED)
 		preview.draw_string(mono,Vector2(205,173),"INF %.1f%%" % (M.sync(u,1).factor*100),HORIZONTAL_ALIGNMENT_LEFT,-1,16,MUTED))
 	for row in [["SAVE",36,108,_save],["LOAD",158,108,_load],["HELP",280,108,_help],["SETTINGS",402,150,_settings],["QUIT",566,108,_quit]]:
-		_button(panel,row[0],Rect2(row[1],730,row[2],44),row[3])
+		var button=_button(panel,row[0],Rect2(row[1],730,row[2],44),row[3])
+		button.disabled=collection.temporary and row[0] in ["SAVE","LOAD"]
 	_button(panel,"START",Rect2(934,730,342,48),_start_battle)
 	_refresh_build()
+
+func _toggle_debug(enabled: bool) -> bool:
+	if enabled:
+		if not build_open:return false
+		var sandbox=debug_session.begin(collection)
+		if sandbox==null:return false
+		debug_ui_state={"palette":palette_colors.duplicate(),"motion":reduced_motion,"unit":edit_unit,"cpu":cpu_enabled,"fast":cpu_fast,"loot":loot_rng.state,"panels":panel_rng.state,"last_seed":last_panel_seed}
+		collection=sandbox
+		edit_unit=0
+	else:
+		if not debug_session.active():return false
+		collection=debug_session.end()
+		palette_colors=debug_ui_state.palette
+		reduced_motion=debug_ui_state.motion
+		edit_unit=debug_ui_state.unit
+		cpu_enabled=debug_ui_state.cpu
+		cpu_fast=debug_ui_state.fast
+		loot_rng.state=debug_ui_state.loot
+		panel_rng.state=debug_ui_state.panels
+		last_panel_seed=debug_ui_state.last_seed
+		debug_ui_state={}
+		_set_theme()
+	debug_notice.add_theme_color_override("font_color",CYAN)
+	notice.add_theme_color_override("font_color",CYAN)
+	debug_notice.visible=collection.temporary
+	cpu_turn.reset()
+	cpu_memory=[]
+	cpu_paused=false
+	_close_aux()
+	_build()
+	return true
 
 func _core_change(index: int, value: int) -> void:
 	if core_refreshing:
@@ -884,10 +934,10 @@ func _result() -> void:
 	_icon(panel,"check" if battle.result=="VICTORY" else "close",Rect2(40,42,48,48),CYAN if battle.result=="VICTORY" else status_colors[1])
 	_label(panel,battle.result,Rect2(110,35,710,66),48,CYAN if battle.result=="VICTORY" else status_colors[1])
 	_label(panel,"%s / %d TURNS" % [battle.stage.name,battle.turn],Rect2(40,120,780,34),19,MUTED)
-	_label(panel,"ARCHIVE / NEW SIGNALS",Rect2(40,187,780,27),16,MUTED)
+	_label(panel,"DEBUG / NOT SAVED" if collection.temporary else "ARCHIVE / NEW SIGNALS",Rect2(40,187,780,27),16,MUTED)
 	var y=235
 	if drops.is_empty():
-		_label(panel,"0 / NO NEW SIGNALS",Rect2(40,y,780,40),23,WHITE)
+		_label(panel,"NO REWARDS IN DEBUG" if collection.temporary else "0 / NO NEW SIGNALS",Rect2(40,y,780,40),23,WHITE)
 	for drop in drops:
 		if drop.has("skill"):
 			_label(panel,C.SKILLS[drop.skill].label,Rect2(40,y,780,33),22,CYAN)
@@ -1017,7 +1067,7 @@ func _apply_colors() -> void:
 	if not error.is_empty():
 		palette_error.text=error
 		return
-	error=P.save_to(settings_path,colors)
+	error="" if collection.temporary else P.save_to(settings_path,colors)
 	if not error.is_empty():
 		palette_error.text=error
 		return
@@ -1025,6 +1075,7 @@ func _apply_colors() -> void:
 	_set_theme()
 	if is_instance_valid(notice):
 		notice.add_theme_color_override("font_color",CYAN)
+	debug_notice.add_theme_color_override("font_color",CYAN)
 	_close_aux()
 	if build_open:
 		_build()
@@ -1034,7 +1085,7 @@ func _apply_colors() -> void:
 		_result()
 	_hud()
 	_settings()
-	palette_error.text="APPLIED / Saved separately from your build."
+	palette_error.text="APPLIED / DEBUG / NOT SAVED" if collection.temporary else "APPLIED / Saved separately from your build."
 	palette_error.add_theme_color_override("font_color",CYAN)
 	queue_redraw()
 
@@ -1146,6 +1197,7 @@ func _load() -> void:
 	_notify("LOADED / Builds and shared archive restored." if error.is_empty() else error)
 
 func _quit() -> void:
+	if debug_session.active():_toggle_debug(false)
 	get_tree().quit()
 
 func _close_aux() -> void:

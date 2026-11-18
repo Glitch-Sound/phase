@@ -45,7 +45,31 @@ const SKILLS = {
 	FIELD_STOP:{"type":"PASSIVE","effect":"STOP FIELD","area":"SURROUNDING","field":"STOP","label":"STOP FIELD / SURROUNDING","description":"Surrounding others: equipment rotation x0."},
 	FIELD_FAST:{"type":"PASSIVE","effect":"FAST FIELD","area":"SURROUNDING","field":"FAST","label":"FAST FIELD / SURROUNDING","description":"Surrounding others: equipment rotation x1.5."}
 }
-const STARTER_STATS = [[20,20,20,20,20],[20,30,15,20,15],[20,10,30,20,20],[25,15,20,30,10]]
+const STARTER_STATS = [[20,20,20,20,20],[20,30,10,20,20],[20,10,30,20,20],[30,10,20,30,10]]
+
+## 新規装備の全配分を返す。戻り値は各値10以上の10刻みで合計100の126配列。呼び出しごとに独立し、副作用なし。
+static func equipment_catalog() -> Array:
+	var result=[]
+	for vit in range(10,61,10):
+		for inf in range(10,61,10):
+			for res in range(10,61,10):
+				for spd in range(10,61,10):
+					var luk=100-vit-inf-res-spd
+					if luk>=10:result.append([vit,inf,res,spd,luk])
+	return result
+
+## 共有変異の全種類を返す。戻り値はNORMALと通常順以外の119配置の独立した配列。副作用なし。
+static func mutation_catalog() -> Array:
+	var result=["NORMAL"]
+	_mutation_orders("","VIRSL",result)
+	return result
+
+static func _mutation_orders(prefix: String, remaining: String, result: Array) -> void:
+	if remaining.is_empty():
+		if prefix!="VIRSL":result.append(prefix)
+		return
+	for letter in remaining:
+		_mutation_orders(prefix+letter,remaining.replace(letter,""),result)
 
 ## 対象位置を返す。skillはスキルID。戻り値は指定位置の座標差の独立した配列であり、不明または受動なら空。
 static func target_offsets(skill: String) -> Array:

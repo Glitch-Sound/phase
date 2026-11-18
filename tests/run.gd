@@ -246,7 +246,7 @@ func test_loot() -> void:
 		_check(drops.size()<=2,"loot max")
 		for d in drops:
 			if d.has("stats"):
-				_check(M.valid_stats(d.stats),"generated stats")
+				_check(M.valid_stats(d.stats) and d.stats.all(func(value):return value>=10 and int(value)%10==0),"generated stats are multiples of ten with minimum ten")
 				if d.mutation!="NORMAL":
 					mutant_seen=true
 					_check(l.mutations.has(d.mutation),"mutation unlocked")
