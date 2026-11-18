@@ -25,7 +25,7 @@ func _entries() -> void:
 	for row in [[SLOW,345.0,15.0],[STOP,0.0,0.0],[FAST,315.0,45.0]]:
 		var b=_battle()
 		b.units[0].pos=Vector2i(2,4)
-		b.units[2].pos=Vector2i(4,4)
+		b.units[2].pos=Vector2i(4,5)
 		b.units[2].skills=[row[0]]
 		b.units[0].core_angle=90.0
 		b.panels={Vector2i(3,4):"CLOCKWISE"}
@@ -46,10 +46,10 @@ func _boundaries() -> void:
 	_check(f.resolve(u,u.pos,[owner]).factor==0.5,"same-camp neighbor follows the same rule as the enemy")
 	u.skills=[STOP]
 	_check(f.resolve(u,u.pos,[u]).factor==1.0,"field never affects its own source")
-	for row in [[Vector2i(5,5),100.0],[Vector2i(6,4),100.0],[Vector2i(5,4),0.0]]:
+	for row in [[Vector2i(4,4),100.0],[Vector2i(6,4),100.0],[Vector2i(5,4),0.0]]:
 		owner.pos=row[0]
 		owner.hp=row[1]
-		_check(f.resolve(u,u.pos,[owner]).factor==1.0,"diagonal, distance two or defeated source is excluded")
+		_check(f.resolve(u,u.pos,[owner]).factor==1.0,"same cell, distance two or defeated source is excluded")
 	owner.pos=Vector2i(5,4)
 	owner.hp=100
 	var other=b.units[2]
@@ -60,15 +60,15 @@ func _boundaries() -> void:
 		_check(f.resolve(u,u.pos,[owner,other]).factor==row[2] and f.resolve(u,u.pos,[other,owner]).factor==row[2],"same-kind idempotence, cancellation and STOP priority are order-independent")
 	owner.pos=Vector2i.ZERO
 	owner.skills=[SLOW]
-	_check(_sorted(f.coverage([owner]).keys())==_sorted([Vector2i(1,0),Vector2i(0,1)]) and f.resolve(u,Vector2i(-1,0),[owner]).factor==1.0,"corner coverage is exactly the two orthogonal in-board cells")
+	_check(_sorted(f.coverage([owner]).keys())==_sorted([Vector2i(1,0),Vector2i(0,1),Vector2i(1,1)]) and f.resolve(u,Vector2i(-1,0),[owner]).factor==1.0,"corner coverage is exactly three surrounding in-board cells")
 ## REQ-040-S03、REQ-040-S05
 func _path() -> void:
 	var b=_battle()
-	b.units[0].pos=Vector2i(2,3)
+	b.units[0].pos=Vector2i(2,2)
 	b.units[1].pos=Vector2i(4,4)
 	b.units[1].skills=[SLOW]
 	var before=b.units.duplicate(true)
-	for cell in [Vector2i(3,3),Vector2i(3,4),Vector2i(3,5)]: b.path_click(cell)
+	for cell in [Vector2i(3,2),Vector2i(3,3),Vector2i(2,3)]: b.path_click(cell)
 	var u=b.preview()
 	_check([u.gear_angle,u.arms_angle]==[285.0,75.0],"normal, slow, normal applies once per landing without persistence")
 	_check(b.commit_path() and b.units[0].gear_angle==285.0 and b.units[0].arms_angle==75.0 and b.units[1]==before[1],"actual route matches prediction and never rotates the stationary owner")
@@ -106,7 +106,7 @@ func _forced() -> void:
 	b=_battle()
 	b.units[0].pos=Vector2i(4,4)
 	b.units[0].skills=[C.PUSH]
-	b.units[1].pos=Vector2i(6,3)
+	b.units[1].pos=Vector2i(7,3)
 	b.units[1].skills=[FAST]
 	b.units[2].pos=Vector2i(5,4)
 	b.units[2].core_angle=90

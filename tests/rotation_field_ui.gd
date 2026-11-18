@@ -33,8 +33,8 @@ func _run() -> void:
 	_check(game.target_frames.is_empty() and game._turn_focus_cell()==Vector2i(4,4),"GUARD self target has no full rectangle and keeps ordinary corner focus")
 	_check(game.has_method("_field_view"),"UI uses the shared field world")
 	if game.has_method("_field_view"):
-		var expected=[Vector2i(4,3),Vector2i(3,4),Vector2i(5,4),Vector2i(4,5)]
-		_check(_keys(game._field_view().cells.keys())==_keys(expected) and game.field_clouds.size()==4,"exact four-cell coverage is drawn once below units")
+		var expected=[Vector2i(3,3),Vector2i(4,3),Vector2i(5,3),Vector2i(3,4),Vector2i(5,4),Vector2i(3,5),Vector2i(4,5),Vector2i(5,5)]
+		_check(_keys(game._field_view().cells.keys())==_keys(expected) and game.field_clouds.size()==1 and game._field_view().get("emitters",[]).size()==1,"exact eight-cell coverage has one continuous source cloud below units")
 		var hint=game.panel_description(Vector2i(5,4))
 		_check(hint=="EQUIPMENT x0.5 ON ENTRY\nSLOW / 1","hover explains exactly the actual multiplier and source")
 		game.battle.back()
@@ -46,11 +46,13 @@ func _run() -> void:
 		game.battle.path=[]
 		_check(game._field_view().preview.is_empty() and game._field_view().world==before,"route cancellation restores current coverage")
 	var visual=load("res://ui/visuals.gd")
-	_check(visual.new().has_method("cloud_shape"),"cloud geometry is procedural and shared")
-	if visual.new().has_method("cloud_shape"):
-		var rect=Rect2(10,20,100,100)
-		var layers=visual.cloud_shape(rect,false)
-		_check(not layers.is_empty() and layers.all(func(layer):return layer.points.all(func(point):return rect.has_point(point))),"all cloud vertices stay inside their own cell")
+	_check(visual.new().has_method("field_cloud_shape"),"cloud geometry is procedural and shared")
+	if visual.new().has_method("field_cloud_shape"):
+		var rect=Rect2(300,300,300,300)
+		var layers=visual.field_cloud_shape(Vector2(450,450),100.0,0.0,0.0,Rect2(0,0,1000,1000),false)
+		var corner=visual.field_cloud_shape(Vector2(50,50),100.0,0.0,0.0,Rect2(0,0,1000,1000),false)
+		var later=visual.field_cloud_shape(Vector2(450,450),100.0,2.0,0.0,Rect2(0,0,1000,1000),false)
+		_check(not layers.is_empty() and not corner.is_empty() and corner.all(func(layer):return Array(layer.points).all(func(point):return Rect2(-0.001,-0.001,1000.002,1000.002).has_point(point))) and layers!=later and layers.all(func(layer):return Array(layer.points).all(func(point):return rect.grow(0.001).has_point(point))) and layers.any(func(layer):return Array(layer.points).any(func(point):return not Rect2(400,400,100,100).has_point(point))),"cloud drifts continuously around its source inside the actual surrounding cells")
 	game._skill_help()
 	await process_frame
 	var buttons=game.auxiliary.find_children("*","Button",true,false)

@@ -34,13 +34,14 @@ const PANEL_EFFECT_RATE := 0.20
 const CELL_BORDER_INSET := 1.0
 const PANEL_ICON_SIZE := 20.0
 const PANEL_ICON_OFFSET := Vector2(3,3)
-# 雲は判定されたセル内だけの静的な薄い下層。破線は移動後の範囲予測。
+# 雲片が発生源の周囲8マス内をゆっくり巡る。面だけを重ね、破線は移動後の予測。
+const FIELD_CLOUD_WISPS := 6
 const FIELD_CLOUD_LAYERS := 3
-const FIELD_CLOUD_SAMPLES := 40
-const FIELD_CLOUD_RADIUS := Vector2(0.46,0.32)
-const FIELD_CLOUD_OFFSET := Vector2(0,0.08)
-const FIELD_CLOUD_ALPHA := 0.035
-const FIELD_CLOUD_LINE_ALPHA := 0.18
+const FIELD_CLOUD_TEXTURE_SIZE := 64
+const FIELD_CLOUD_ORBIT := 1.02
+const FIELD_CLOUD_SPEED := 0.13
+const FIELD_CLOUD_RADIUS := Vector2(0.48,0.38)
+const FIELD_CLOUD_ALPHA := 0.055
 const FIELD_CLOUD_PREVIEW_ALPHA := 0.34
 const FIELD_CLOUD_PIXEL_MIN := 0.8
 
@@ -62,7 +63,8 @@ const UNIT_GUARD_RADIUS := 0.52
 const UNIT_GUARD_WIDTH := 0.018
 const UNIT_GUARD_PIXEL_MIN := 0.85
 const UNIT_GUARD_FILL_ALPHA := 0.045
-const UNIT_GUARD_LINE_ALPHA := 0.55
+# 設定アクセントの八角形を白いHPから区別し、薄い雲の上でも輪郭を読める濃さ。
+const UNIT_GUARD_LINE_ALPHA := 0.95
 const UNIT_NAME_SIZE := 0.52
 const UNIT_NAME_MIN := 14
 const UNIT_TICK_RADII := Vector2(0.80,0.94)

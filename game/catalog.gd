@@ -18,6 +18,8 @@ const FIELD_SLOW = "PASSIVE_FIELD_SLOW_ADJACENT"
 const FIELD_STOP = "PASSIVE_FIELD_STOP_ADJACENT"
 const FIELD_FAST = "PASSIVE_FIELD_FAST_ADJACENT"
 const FIELD_FACTORS = {"SLOW":0.5,"STOP":0.0,"FAST":1.5}
+# 周囲用だけの8方向。旧保存のADJACENT付きIDは保持し、通常スキルの上下左右とは分ける。
+const FIELD_OFFSETS = [Vector2i(-1,-1),Vector2i(0,-1),Vector2i(1,-1),Vector2i(-1,0),Vector2i(1,0),Vector2i(-1,1),Vector2i(0,1),Vector2i(1,1)]
 const TARGET_PATTERNS = {
 	"SELF":[Vector2i.ZERO],
 	"ADJACENT":[Vector2i(0,-1),Vector2i(1,0),Vector2i(0,1),Vector2i(-1,0)],
@@ -39,9 +41,9 @@ const SKILLS = {
 	PUSH:{"type":"ACTIVE","effect":"PUSH","area":"ADJACENT","label":"PUSH / ADJACENT","description":"Push one enemy 1 cell outward. No damage."},
 	GUARD:{"type":"ACTIVE","effect":"GUARD","area":"SELF","label":"GUARD / SELF","description":"Reduce the next attack once. Cannot stack."},
 	IGNORE_PANEL:{"type":"PASSIVE","effect":"IGNORE PANEL","area":"SELF","label":"PANEL IGNORE / SELF","description":"Ignore special CORE effects. Equipment still turns."},
-	FIELD_SLOW:{"type":"PASSIVE","effect":"SLOW FIELD","area":"ADJACENT","field":"SLOW","label":"SLOW FIELD / ADJACENT","description":"Adjacent others: equipment rotation x0.5."},
-	FIELD_STOP:{"type":"PASSIVE","effect":"STOP FIELD","area":"ADJACENT","field":"STOP","label":"STOP FIELD / ADJACENT","description":"Adjacent others: equipment rotation x0."},
-	FIELD_FAST:{"type":"PASSIVE","effect":"FAST FIELD","area":"ADJACENT","field":"FAST","label":"FAST FIELD / ADJACENT","description":"Adjacent others: equipment rotation x1.5."}
+	FIELD_SLOW:{"type":"PASSIVE","effect":"SLOW FIELD","area":"SURROUNDING","field":"SLOW","label":"SLOW FIELD / SURROUNDING","description":"Surrounding others: equipment rotation x0.5."},
+	FIELD_STOP:{"type":"PASSIVE","effect":"STOP FIELD","area":"SURROUNDING","field":"STOP","label":"STOP FIELD / SURROUNDING","description":"Surrounding others: equipment rotation x0."},
+	FIELD_FAST:{"type":"PASSIVE","effect":"FAST FIELD","area":"SURROUNDING","field":"FAST","label":"FAST FIELD / SURROUNDING","description":"Surrounding others: equipment rotation x1.5."}
 }
 const STARTER_STATS = [[20,20,20,20,20],[20,30,15,20,15],[20,10,30,20,20],[25,15,20,30,10]]
 

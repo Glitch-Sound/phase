@@ -62,7 +62,7 @@ func _test_guard(visual) -> void:
 	var tuning=load("res://game/tuning.gd").get_script_constant_map()
 	_check(normal.guard.is_empty() and not shape.is_empty() and guarded.arcs==normal.arcs and guarded.name==normal.name,"only the guard polygon changes; HP, phase and identity stay identical")
 	if shape.is_empty(): return
-	_check(shape.points.size()==int(tuning.UNIT_GUARD_SIDES) and shape.points.all(func(point):return point.length()>22.0*T.UNIT_HP_RADIUS and point.length()<22.0*T.UNIT_RING_RADII[0]) and shape.fill.a<shape.color.a and shape.color.a<1.0,"translucent polygon remains between HP and CORE")
+	_check(shape.points.size()==int(tuning.UNIT_GUARD_SIDES) and shape.points.all(func(point):return point.length()>22.0*T.UNIT_HP_RADIUS and point.length()<22.0*T.UNIT_RING_RADII[0]) and shape.fill.a<shape.color.a and shape.color.a<1.0 and shape.color==Color(P.PRESETS.DEFAULT[0],T.UNIT_GUARD_LINE_ALPHA),"distinct accent polygon remains between white HP and CORE")
 	u.guard_active=false
 	_check(visual.glyph(22.0,u,false,P.PRESETS.DEFAULT.slice(1),P.PRESETS.DEFAULT[0]).guard.is_empty(),"consumed guard removes only the polygon")
 ## REQ-031-S01

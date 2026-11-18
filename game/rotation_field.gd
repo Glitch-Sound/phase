@@ -14,13 +14,13 @@ static func types(u: Dictionary) -> Array:
 static func has_fields(world: Array) -> bool:
 	return world.any(func(u):return u.hp>0 and not types(u).is_empty())
 
-## 着地の倍率を返す。receiverは受け手、cellは着地、worldは全員の現在位置。戻り値はfactor、kinds、sourcesを持つ辞書。本人、斜めと撃破済みを除外し、原本は変更しない。
+## 着地の倍率を返す。receiverは受け手、cellは着地、worldは全員の現在位置。戻り値はfactor、kinds、sourcesを持つ辞書。周囲8マスから本人と撃破済みを除外し、原本は変更しない。
 static func resolve(receiver: Dictionary, cell: Vector2i, world: Array) -> Dictionary:
 	if not Rect2i(0,0,10,10).has_point(cell):return {"factor":1.0,"kinds":[],"sources":[]}
 	var kinds=[]
 	var sources=[]
 	for source in world:
-		if source.hp<=0 or (source.id==receiver.id and source.camp==receiver.camp) or absi(source.pos.x-cell.x)+absi(source.pos.y-cell.y)!=1:
+		if source.hp<=0 or (source.id==receiver.id and source.camp==receiver.camp) or not C.FIELD_OFFSETS.has(cell-source.pos):
 			continue
 		for kind in types(source):
 			if not kinds.has(kind):kinds.append(kind)
@@ -38,7 +38,7 @@ static func coverage(world: Array) -> Dictionary:
 	var cells={}
 	for source in world:
 		if source.hp<=0 or types(source).is_empty():continue
-		for offset in C.TARGET_PATTERNS.ADJACENT:
+		for offset in C.FIELD_OFFSETS:
 			var cell: Vector2i=source.pos+offset
 			if Rect2i(0,0,10,10).has_point(cell):cells[cell]=true
 	var result={}

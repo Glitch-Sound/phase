@@ -254,7 +254,6 @@ func _draw_board() -> void:
 	for y in range(10):
 		for x in range(10):
 			var cell=Vector2i(x,y)
-			var pos=_board_point(cell)
 			var rect=_cell_rect(cell)
 			var panel=battle.panels.get(cell,"NORMAL")
 			var color=Color("0d1013") if (x+y)%2==0 else Color("090c0f")
@@ -266,8 +265,15 @@ func _draw_board() -> void:
 				color=color.lightened(0.055)
 			draw_rect(rect,color)
 			draw_rect(rect,EDGE,false,1)
-			if fields.cells.has(cell):
-				_field_cloud(rect,fields.preview.has(cell))
+	# セルをまたぐ雲を次の行の背景で隠さず、全リングとパネル記号の下へ置く。
+	for emitter in fields.emitters:
+		_field_cloud(emitter.unit,emitter.preview,emitter.phase)
+	for y in range(10):
+		for x in range(10):
+			var cell=Vector2i(x,y)
+			var pos=_board_point(cell)
+			var rect=_cell_rect(cell)
+			var panel=battle.panels.get(cell,"NORMAL")
 			if panel!="NORMAL":
 				var pc=MAGENTA if panel=="COUNTERCLOCKWISE" else (status_colors[3] if panel=="RESET" else CYAN)
 				_draw_panel_icon(panel,Rect2(pos+T.PANEL_ICON_OFFSET,Vector2.ONE*T.PANEL_ICON_SIZE),pc)
@@ -360,8 +366,8 @@ func _draw_cell_focus(rect: Rect2,color: Color,full_outline: bool=false,line_wid
 func _draw_panel_icon(kind: String, rect: Rect2, color: Color) -> void:
 	draw_texture_rect(ICONS[PANEL_VIEWS[kind].icon],rect,false,color)
 
-func _field_cloud(rect: Rect2, preview: bool) -> void:
-	V.field_cloud(self,rect,preview,CYAN)
+func _field_cloud(source: Dictionary, preview: bool, phase: float) -> void:
+	V.field_cloud(self,_cell_rect(source.pos).get_center(),CELL,clock,phase,Rect2(BOARD,Vector2.ONE*CELL*10),preview,CYAN)
 
 func _field_view() -> Dictionary:
 	var current=F.coverage(battle.units)
@@ -375,7 +381,12 @@ func _field_view() -> Dictionary:
 	var preview={}
 	for cell in cells:
 		if cells[cell]!=current.get(cell,{}):preview[cell]=true
-	return {"world":world,"cells":cells,"preview":preview}
+	var emitters=[]
+	for i in range(world.size()):
+		var u: Dictionary=world[i]
+		if u.hp>0 and not F.types(u).is_empty():
+			emitters.append({"unit":u,"preview":u.pos!=battle.units[i].pos,"phase":i*1.618})
+	return {"world":world,"cells":cells,"preview":preview,"emitters":emitters}
 
 ## セルの説明を返す。cellは盤面座標。戻り値はCOREパネルと現在または移動後の周囲回転の説明、対象がなければ空文字。戦闘を変更しない。
 func panel_description(cell: Vector2i) -> String:
@@ -945,14 +956,14 @@ func _field_help() -> void:
 	_close_aux()
 	var panel=_modal(Rect2(400,160,1120,760),true)
 	_label(panel,"FIELDS",Rect2(36,25,1048,48),32,WHITE)
-	_label(panel,"PASSIVE / ADJACENT",Rect2(36,88,1048,28),16,MUTED)
+	_label(panel,"PASSIVE / SURROUNDING",Rect2(36,88,1048,28),16,MUTED)
 	var names=["SLOW","STOP","FAST"]
 	for i in range(3):
 		_label(panel,"%s x%.1f" % [names[i],C.FIELD_FACTORS[names[i]]],Rect2(36+i*354,153,340,40),24,CYAN)
 		_label(panel,["装備の回転量を半分にする。","装備の回転量を0にする。","装備の回転量を1.5倍にする。"][i],Rect2(36+i*354,204,340,40),18,WHITE)
-	_label(panel,"上下左右1マス。本人を除く、味方と敵の両方。\nGEARとARMSの各SPDによる1歩分の回転だけに作用。\nCOREと能力値、手番の速度は変えない。",Rect2(36,285,1048,88),19,WHITE)
+	_label(panel,"斜めを含む周囲8マス。本人を除く、味方と敵の両方。\nGEARとARMSの各SPDによる1歩分の回転だけに作用。\nCOREと能力値、手番の速度は変えない。",Rect2(36,285,1048,88),19,WHITE)
 	_label(panel,"同種は1回。停止を優先。減速と加速だけなら相殺して通常x1。\n各歩の着地で判定。範囲外へは持続せず、立っているだけでは回転しない。\n交換と押し出しも全到着位置をそろえてから、同じ1歩として判定。",Rect2(36,400,1048,90),19,WHITE)
-	_label(panel,"雲は現在の有効範囲。破線の雲は移動後の予測範囲。\nセルのホバーで倍率と作用元を確認できる。\nPANEL IGNOREはCOREパネルだけを無視し、周囲効果は無視しない。",Rect2(36,515,1048,88),18,MUTED)
+	_label(panel,"雲は発生源の周囲を漂う。薄い破線の雲は移動後の予測。\n作用は周囲8マス。セルのホバーで正確な倍率と作用元を確認。\nPANEL IGNOREはCOREパネルだけを無視し、周囲効果は無視しない。",Rect2(36,515,1048,88),18,MUTED)
 	_button(panel,"BACK",Rect2(36,670,800,44),_skill_help)
 	_button(panel,"CLOSE / ESC",Rect2(856,670,228,44),_close_aux)
 

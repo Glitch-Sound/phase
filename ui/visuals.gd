@@ -28,7 +28,7 @@ static func glyph(radius: float, u: Dictionary, selected: bool, colors: Array, a
 		var points=[]
 		for i in range(T.UNIT_GUARD_SIDES):
 			points.append(Vector2.from_angle(-PI/2-PI/T.UNIT_GUARD_SIDES+TAU*i/T.UNIT_GUARD_SIDES)*radius*T.UNIT_GUARD_RADIUS)
-		guard={"points":points,"fill":Color(TEXT,T.UNIT_GUARD_FILL_ALPHA),"color":Color(TEXT,T.UNIT_GUARD_LINE_ALPHA),"width":radius*T.UNIT_GUARD_WIDTH}
+		guard={"points":points,"fill":Color(TEXT,T.UNIT_GUARD_FILL_ALPHA),"color":Color(accent,T.UNIT_GUARD_LINE_ALPHA),"width":radius*T.UNIT_GUARD_WIDTH}
 	return {"guard":guard,"arcs":arcs,"tick":{"from":Vector2(0,-radius*T.UNIT_TICK_RADII.x),"to":Vector2(0,-radius*T.UNIT_TICK_RADII.y),"color":accent if selected else TEXT,"width":maxf(T.UNIT_MIN_LINE,radius*T.UNIT_TICK_WIDTH)},"name":unit_name(u),"font_size":maxi(T.UNIT_NAME_MIN,roundi(radius*T.UNIT_NAME_SIZE))}
 
 ## 記号を描く。canvasは描画先、centerは中心、radiusは基準半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色、typefaceは名前のフォント。戻り値なし。副作用は描画。
@@ -222,32 +222,57 @@ static func route_segment(from: Vector2, to: Vector2, start_clear: float, end_cl
 	var direction=(to-from)/distance
 	return PackedVector2Array([from+direction*start_clear,to-direction*end_clear])
 
-## 雲の形を返す。rectは1セル、previewは移動後の予測か。戻り値はセル内の各層のpointsとalpha。原本の状態を変更しない。
-static func cloud_shape(rect: Rect2, preview: bool) -> Array:
+static var _cloud_texture: GradientTexture2D
+
+## 漂う雲の形を返す。centerは発生源、cellはセル幅、secondsは表示時間、phaseは発生源の周期差、boardは盤面、previewは予測か。戻り値は盤内と周囲3x3に収まるpoints、rect、uvとalphaの配列。戦闘状態と乱数を変更しない。
+static func field_cloud_shape(center: Vector2, cell: float, seconds: float, phase: float, board: Rect2, preview: bool) -> Array:
 	var layers=[]
-	var center=rect.get_center()+rect.size*T.FIELD_CLOUD_OFFSET
-	for layer in range(T.FIELD_CLOUD_LAYERS):
-		var points=[]
-		var shrink=1.0-layer*0.16
-		for i in range(T.FIELD_CLOUD_SAMPLES):
-			var angle=TAU*i/T.FIELD_CLOUD_SAMPLES
-			var ripple=1.0-0.055*(1+sin(5*angle+layer*0.7))-0.025*(1+cos(3*angle))
-			points.append(center+Vector2(cos(angle),sin(angle))*rect.size*T.FIELD_CLOUD_RADIUS*shrink*ripple)
-		layers.append({"points":points,"alpha":T.FIELD_CLOUD_ALPHA*(0.55 if preview else 1.0)})
+	var bounds=Rect2(center-Vector2.ONE*cell*1.5,Vector2.ONE*cell*3).intersection(board)
+	if not bounds.has_area():return layers
+	for wisp in range(T.FIELD_CLOUD_WISPS):
+		var orbit=phase+TAU*wisp/T.FIELD_CLOUD_WISPS+seconds*(T.FIELD_CLOUD_SPEED+0.009*sin(wisp*2.1))
+		var axis=Vector2(cos(orbit),sin(orbit))
+		# 軸を通るときも急加速しない、滑らかな丸い四角の軌道。
+		var stretch=pow(pow(axis.x,4)+pow(axis.y,4),-0.25)
+		var offset=axis*stretch*cell*T.FIELD_CLOUD_ORBIT
+		var tangent=Vector2(-axis.y,axis.x)
+		var breath=1.0+0.10*sin(seconds*0.7+wisp*0.93+phase)
+		for layer in range(T.FIELD_CLOUD_LAYERS):
+			var drift=tangent*(layer-1)*cell*0.17+axis*cell*0.06*sin(seconds*0.43+wisp+layer)
+			var radius=T.FIELD_CLOUD_RADIUS*cell*breath*(1.0-layer*0.13)
+			var raw=Rect2(center+offset+drift-radius,radius*2)
+			var rect=raw.intersection(bounds)
+			if not rect.has_area():continue
+			var points=PackedVector2Array([rect.position,Vector2(rect.end.x,rect.position.y),rect.end,Vector2(rect.position.x,rect.end.y)])
+			var trail=[]
+			if preview and layer==0:
+				for i in range(12):
+					var point=center+offset+tangent*cell*(float(i)/11-0.5)*0.5+axis*cell*0.04*sin(float(i)/11*PI)
+					if bounds.has_point(point):trail.append(point)
+			layers.append({"points":points,"rect":rect,"uv":Rect2((rect.position-raw.position)/raw.size,rect.size/raw.size),"alpha":T.FIELD_CLOUD_ALPHA*(1.0-layer*0.2)*(0.55 if preview else 1.0),"trail":trail})
 	return layers
 
-## 範囲の雲を描く。canvasは描画先、rectは1セル、previewは予測か、colorは設定色。戻り値なし。副作用はユニットより下の静的な描画だけ。
-static func field_cloud(canvas: CanvasItem, rect: Rect2, preview: bool, color: Color) -> void:
-	var layers=cloud_shape(rect,preview)
-	for layer in layers:
-		canvas.draw_colored_polygon(PackedVector2Array(layer.points),Color(color,layer.alpha))
-	var points=PackedVector2Array(layers[0].points)
-	points.append(points[0])
+static func _field_texture() -> GradientTexture2D:
+	if _cloud_texture==null:
+		var gradient=Gradient.new()
+		gradient.offsets=PackedFloat32Array([0.0,0.3,0.65,1.0])
+		gradient.colors=PackedColorArray([Color(1,1,1,1),Color(1,1,1,0.8),Color(1,1,1,0.25),Color(1,1,1,0)])
+		_cloud_texture=GradientTexture2D.new()
+		_cloud_texture.gradient=gradient
+		_cloud_texture.width=T.FIELD_CLOUD_TEXTURE_SIZE
+		_cloud_texture.height=T.FIELD_CLOUD_TEXTURE_SIZE
+		_cloud_texture.fill=GradientTexture2D.FILL_RADIAL
+		_cloud_texture.fill_from=Vector2(0.5,0.5)
+		_cloud_texture.fill_to=Vector2(0.5,0.0)
+	return _cloud_texture
+
+## 発生源の雲を描く。canvasは描画先、centerは中心、cellはセル幅、secondsは表示時間、phaseは周期差、boardは盤面、previewは予測か、colorは設定色。戻り値なし。副作用はユニットより下の描画だけ。
+static func field_cloud(canvas: CanvasItem, center: Vector2, cell: float, seconds: float, phase: float, board: Rect2, preview: bool, color: Color) -> void:
+	var layers=field_cloud_shape(center,cell,seconds,phase,board,preview)
+	var texture=_field_texture()
 	var scale_px=maxf(0.001,(canvas.get_viewport_transform()*canvas.get_global_transform()).get_scale().x)
 	var width=T.FIELD_CLOUD_PIXEL_MIN/scale_px
-	var ink=Color(color,T.FIELD_CLOUD_PREVIEW_ALPHA if preview else T.FIELD_CLOUD_LINE_ALPHA)
-	if preview:
-		for i in range(points.size()-1):
-			if i%6<3:canvas.draw_line(points[i],points[i+1],ink,width,true)
-	else:
-		canvas.draw_polyline(points,ink,width,true)
+	for layer in layers:
+		canvas.draw_texture_rect_region(texture,layer.rect,Rect2(layer.uv.position*texture.get_size(),layer.uv.size*texture.get_size()),Color(color,layer.alpha))
+		for i in range(layer.trail.size()-1):
+			if i%4<2:canvas.draw_line(layer.trail[i],layer.trail[i+1],Color(color,T.FIELD_CLOUD_PREVIEW_ALPHA),width,true)
