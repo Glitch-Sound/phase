@@ -15,7 +15,6 @@ const P = preload("res://ui/palette.gd")
 const CPU = preload("res://game/cpu_policy.gd")
 const CPU_TURN = preload("res://ui/cpu_turn.gd")
 const MOVEMENT = preload("res://ui/movement.gd")
-const ACTION_EFFECT = preload("res://ui/action_effect.gd")
 const TURN_PLAN = preload("res://ui/turn_plan.gd")
 const WHITE = P.TEXT
 const MUTED = P.MUTED
@@ -77,7 +76,6 @@ var auxiliary: Control
 var hud: Control
 var selected := -1
 var movement=MOVEMENT.new()
-var action_effect=ACTION_EFFECT.new()
 var planning=TURN_PLAN.new()
 var playback_command: Dictionary={}
 var timeline_hover := -1
@@ -181,7 +179,6 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if debug_session.active() and not debug_session.available():_toggle_debug(false)
 	debug_notice.visible=collection.temporary
-	_action_tick(delta)
 	_movement_tick(delta)
 	_cpu_tick(delta)
 	_follow_turn()
@@ -302,7 +299,7 @@ func _draw_board() -> void:
 	var effect_chips=[]
 	var target_cells=[]
 	var effect=C.SKILLS.get(decision.selected_skill,{}).get("effect","")
-	if decision.mode=="TARGET" and not _presentation_locked():
+	if decision.mode=="TARGET" and not movement.active:
 		for offset in C.target_offsets(decision.selected_skill):
 			target_cells.append(decision.units[decision.actor].pos+offset)
 	for y in range(10):
@@ -322,7 +319,6 @@ func _draw_board() -> void:
 	# セルをまたぐ雲を次の行の背景で隠さず、全リングとパネル記号の下へ置く。
 	for emitter in fields.emitters:
 		_field_cloud(emitter.unit,emitter.preview,emitter.phase)
-	_draw_action_signal()
 	for y in range(10):
 		for x in range(10):
 			var cell=Vector2i(x,y)
@@ -352,7 +348,7 @@ func _draw_board() -> void:
 				_ring(self,center,T.UNIT_BOARD_RADIUS*BOARD_SCALE,u,i==battle.actor)
 				if i==selected or i==timeline_hover:
 					_draw_cell_focus(rect,MAGENTA)
-				if decision.mode=="TARGET" and not _presentation_locked() and decision.valid_target(decision.actor,i,decision.selected_skill):
+				if decision.mode=="TARGET" and not movement.active and decision.valid_target(decision.actor,i,decision.selected_skill):
 					var tc=_action_color(effect)
 					_draw_cell_focus(rect,tc,effect!="GUARD")
 					var text=effect
@@ -363,11 +359,11 @@ func _draw_board() -> void:
 						text=("-" if effect=="DAMAGE" else "+")+str(amount)
 					if effect!="GUARD":
 						effect_chips.append({"cell":cell,"text":text,"color":tc,"font_size":16 if effect in ["DAMAGE","HEAL"] else 14})
-				if not action_effect.active and cpu_turn.active and (cpu_turn.phase=="TARGET" or movement.active) and cpu_turn.command.target==i:
+				if cpu_turn.active and (cpu_turn.phase=="TARGET" or movement.active) and cpu_turn.command.target==i:
 					_draw_cell_focus(rect,WHITE)
 	if movement.active:
 		_ring(self,BOARD+(movement.position()+Vector2.ONE*0.5)*CELL,T.UNIT_BOARD_RADIUS*BOARD_SCALE,movement.unit(),true)
-	elif battle.mode=="MOVE" and not action_effect.active:
+	elif battle.mode=="MOVE":
 		for segment in _route_segments():
 			draw_line(segment[0],segment[1],CYAN,T.ROUTE_LINE_WIDTH*BOARD_SCALE,true)
 		for i in range(battle.path.size()):
@@ -391,7 +387,7 @@ func _draw_board() -> void:
 		_center(chip.text,rect.position+Vector2(rect.size.x/2,16*BOARD_SCALE),roundi(chip.font_size*BOARD_SCALE),chip.color,mono)
 
 func _turn_focus_cell() -> Vector2i:
-	if _presentation_locked() or build_open or not battle.result.is_empty() or battle.actor<0 or battle.units[battle.actor].hp<=0 or selected>=0 or (battle.mode=="MOVE" and not battle.path.is_empty()):
+	if movement.active or build_open or not battle.result.is_empty() or battle.actor<0 or battle.units[battle.actor].hp<=0 or selected>=0 or (battle.mode=="MOVE" and not battle.path.is_empty()):
 		return Vector2i(-1,-1)
 	return battle.units[battle.actor].pos
 
@@ -468,7 +464,7 @@ func panel_description(cell: Vector2i) -> String:
 
 func _update_panel_hint() -> void:
 	if not is_instance_valid(panel_hint):return
-	var hint=panel_description(hover_cell) if not _presentation_locked() and not build_open and window_focused and not is_instance_valid(overlay) and not is_instance_valid(auxiliary) else ""
+	var hint=panel_description(hover_cell) if not movement.active and not build_open and window_focused and not is_instance_valid(overlay) and not is_instance_valid(auxiliary) else ""
 	panel_hint.visible=not hint.is_empty()
 	if hint.is_empty():return
 	var lines=hint.split("\n",false)
@@ -509,7 +505,7 @@ func _action_color(kind: String) -> Color:
 
 func _utility_preview() -> Dictionary:
 	var decision=_decision_battle()
-	if _presentation_locked() or build_open or decision.mode!="TARGET" or not decision.result.is_empty():
+	if movement.active or build_open or decision.mode!="TARGET" or not decision.result.is_empty():
 		return {}
 	var target=planning.target if planning.active() and planning.phase=="READY" else decision.at(hover_cell)
 	if cpu_turn.active and cpu_turn.phase=="TARGET":
@@ -545,7 +541,7 @@ func _draw_info() -> void:
 		_text(C.SKILLS[id].description,position_px+T.BATTLE_INFO_DESCRIPTION_OFFSET,T.BATTLE_INFO_DESCRIPTION_FONT,MUTED)
 		position_px.y+=T.BATTLE_SKILL_STEP
 	if cpu_enabled and battle.result.is_empty():
-		var phase=("IMPACT" if action_effect.hit else "CASTING") if action_effect.active and action_effect.cpu else ("AIMING" if movement.landed else "MOVING") if movement.active and movement.cpu else (cpu_turn.phase if cpu_turn.active else "READY")
+		var phase=("AIMING" if movement.landed else "MOVING") if movement.active and movement.cpu else (cpu_turn.phase if cpu_turn.active else "READY")
 		var name=V.unit_name(battle.units[cpu_turn.actor]) if cpu_turn.active else ""
 		var stopped=cpu_paused or not window_focused or is_instance_valid(auxiliary)
 		_text("CPU %s / %s" % [name,"PAUSED" if stopped else phase],T.CPU_CONTROL_ORIGIN+Vector2(0,14),14,MUTED,mono)
@@ -574,7 +570,7 @@ func _draw_preview() -> void:
 func _input(event: InputEvent) -> void:
 	_follow_turn()
 	if event is InputEventMouseMotion:
-		if _presentation_locked() or build_open or not window_focused or is_instance_valid(auxiliary) or is_instance_valid(overlay):
+		if movement.active or build_open or not window_focused or is_instance_valid(auxiliary) or is_instance_valid(overlay):
 			_timeline_mouse_exited()
 		else:
 			timeline_hover_event=TL.hit(_timeline_view(),event.position)
@@ -599,7 +595,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode==KEY_ESCAPE:
 			if is_instance_valid(auxiliary):
 				_close_aux()
-			elif _presentation_locked() or _cpu_locked():
+			elif movement.active or _cpu_locked():
 				return
 			elif planning.active():
 				_plan_back()
@@ -611,7 +607,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif battle.mode=="MOVE" and not build_open:
 				battle.path=[]
 		return
-	if _presentation_locked() or build_open or is_instance_valid(auxiliary) or is_instance_valid(overlay):
+	if movement.active or build_open or is_instance_valid(auxiliary) or is_instance_valid(overlay):
 		timeline_hover=-1
 		timeline_hover_event={}
 		return
@@ -646,7 +642,7 @@ func _window_focus_entered() -> void:
 
 func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 	_follow_turn()
-	if _presentation_locked():return
+	if movement.active:return
 	if _cpu_locked():
 		var occupant=battle.at(cell)
 		if occupant>=0:
@@ -663,8 +659,9 @@ func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 		queue_redraw()
 		return
 	if battle.mode=="TARGET":
-		if index>=0 and battle.valid_target(battle.actor,index,battle.selected_skill):
-			_begin_action({"actor":battle.actor,"skill":battle.selected_skill,"target":index},false)
+		if index>=0 and battle.act(index):
+			_feedback()
+			_after_action()
 		else:
 			_notify("Choose a highlighted target. BACK keeps your movement.")
 	elif battle.mode=="MOVE":
@@ -717,67 +714,23 @@ func _movement_arrived(via_cpu: bool) -> void:
 		cpu_turn.reset()
 		_result()
 		_hud()
-	elif not command.is_empty():_begin_action(command,via_cpu)
+	elif not command.is_empty():
+		var ok=battle.wait_turn() if command.skill.is_empty() else (battle.choose_skill(command.skill) and battle.act(command.target))
+		if via_cpu:
+			cpu_turn.phase="RESULT";cpu_turn.elapsed=0
+			cpu_memory.append({"actor":command.actor,"pos":battle.units[command.actor].pos,"skill":command.skill,"target":command.target})
+			cpu_memory=cpu_memory.slice(-T.CPU_MEMORY_LIMIT)
+		if ok:
+			if not command.skill.is_empty():_feedback()
+			_after_action()
+		else:
+			cpu_paused=via_cpu
+			_notify("Action stopped / State changed. RESTART returns to BUILD.")
+			_hud()
 	else:_hud()
 
-func _presentation_locked() -> bool:
-	return movement.active or action_effect.active
-
-func _begin_action(command: Dictionary,via_cpu: bool) -> void:
-	if action_effect.active:return
-	var skill=command.get("skill","")
-	if not skill.is_empty() and battle.mode!="TARGET" and not battle.choose_skill(skill):
-		_action_failed(via_cpu);return
-	if C.SKILLS.get(skill,{}).get("effect","") in ["DAMAGE","HEAL"]:
-		if not action_effect.begin(battle,command,via_cpu,reduced_motion):
-			_action_failed(via_cpu);return
-		_clear_overlay();_hud();_action_tick(0)
-	else:
-		var ok=battle.wait_turn() if skill.is_empty() else battle.act(command.target)
-		if ok:_action_applied(command,via_cpu)
-		else:_action_failed(via_cpu)
-
-func _action_tick(delta: float) -> void:
-	if not action_effect.active:return
-	var via_cpu=action_effect.cpu
-	var blocked=not window_focused or is_instance_valid(auxiliary) or (via_cpu and cpu_paused)
-	var event=action_effect.advance(battle,delta,blocked,T.CPU_FAST_SPEED if via_cpu and cpu_fast else 1.0)
-	if event=="hit":
-		var command=action_effect.command.duplicate(true)
-		if not battle.act(command.target):
-			action_effect.reset();_action_failed(via_cpu);return
-		action_effect.confirm_result(battle)
-		_action_applied(command,via_cpu)
-		if reduced_motion:_action_tick(0)
-	elif event=="done":_after_action()
-	elif event=="cancel":
-		if via_cpu:cpu_turn.reset()
-		_hud()
-	queue_redraw()
-
-func _action_applied(command: Dictionary,via_cpu: bool) -> void:
-	if via_cpu:
-		cpu_turn.phase="RESULT";cpu_turn.elapsed=0
-		cpu_memory.append({"actor":command.actor,"pos":battle.units[command.actor].pos,"skill":command.skill,"target":command.target})
-		cpu_memory=cpu_memory.slice(-T.CPU_MEMORY_LIMIT)
-	if not command.skill.is_empty():_feedback()
-	_after_action()
-
-func _action_failed(via_cpu: bool) -> void:
-	cpu_paused=via_cpu
-	_notify("Action stopped / State changed. RESTART returns to BUILD.")
-	_hud()
-
-func _draw_action_signal() -> void:
-	if not action_effect.active:return
-	var pixel_scale=maxf(0.001,get_viewport_transform().get_scale().x*get_global_transform().get_scale().x)
-	var halo=maxf(T.ACTION_HALO_WIDTH,T.ACTION_MIN_PIXEL_WIDTH/pixel_scale)
-	var clearance=V.route_unit_clearance(T.UNIT_BOARD_RADIUS*BOARD_SCALE,halo,pixel_scale)
-	var view=action_effect.geometry(Rect2(BOARD,Vector2.ONE*CELL*10),CELL,clearance)
-	V.action_signal(self,view,_action_color(action_effect.kind),pixel_scale)
-
 func _confirm_plan() -> void:
-	if _presentation_locked() or _cpu_locked() or not planning.active():return
+	if movement.active or _cpu_locked() or not planning.active():return
 	var before=battle.units[battle.actor].duplicate(true)
 	var actor=battle.actor
 	var command=planning.commit(battle)
@@ -798,7 +751,7 @@ func _confirm_dialog() -> void:
 	_button(panel,"BACK",Rect2(25,158,370,42),_plan_back)
 
 func _plan_back() -> void:
-	if _presentation_locked() or _cpu_locked() or not planning.active():return
+	if movement.active or _cpu_locked() or not planning.active():return
 	planning.back()
 	_clear_overlay()
 	if planning.active() and planning.phase=="CHOICE":_action_dialog()
@@ -855,7 +808,7 @@ func _hud() -> void:
 	if cpu_enabled and not build_open and battle.result.is_empty():
 		_button(hud,"SPEED 4x" if cpu_fast else "SPEED 1x",Rect2(T.CPU_CONTROL_ORIGIN+Vector2(0,38),Vector2(190,40)),func():cpu_fast=not cpu_fast;_hud(),"fast_forward")
 		_button(hud,"RESUME" if cpu_paused else "PAUSE",Rect2(T.CPU_CONTROL_ORIGIN+Vector2(210,38),Vector2(190,40)),func():cpu_paused=not cpu_paused;_hud(),"play" if cpu_paused else "wait")
-	if _presentation_locked() or _cpu_locked():
+	if movement.active or _cpu_locked():
 		return
 	if planning.active():
 		if planning.phase=="TARGET":_button(hud,"BACK",T.BATTLE_CONTEXT_BUTTON,_plan_back)
@@ -866,7 +819,7 @@ func _hud() -> void:
 		_button(hud,"WAIT",T.BATTLE_CONTEXT_BUTTON,_wait_action)
 
 func _action_dialog() -> void:
-	if _presentation_locked():return
+	if movement.active:return
 	_clear_overlay()
 	_hud()
 	var active=[]
@@ -890,7 +843,7 @@ func _action_dialog() -> void:
 	_button(panel,"BACK",Rect2(25,126+active.size()*63,370,48),_reselect_path)
 
 func _choose_battle_skill(skill: String) -> void:
-	if _presentation_locked() or _cpu_locked():return
+	if movement.active or _cpu_locked():return
 	if planning.active():
 		if not planning.choose(skill):return
 		_clear_overlay()
@@ -903,7 +856,7 @@ func _choose_battle_skill(skill: String) -> void:
 		_hud()
 
 func _wait_action() -> void:
-	if _presentation_locked() or _cpu_locked():return
+	if movement.active or _cpu_locked():return
 	if planning.active():
 		if planning.wait():_confirm_dialog()
 		return
@@ -913,7 +866,7 @@ func _wait_action() -> void:
 	if battle.wait_turn():_after_action()
 
 func _reselect_path() -> void:
-	if _presentation_locked() or _cpu_locked():return
+	if movement.active or _cpu_locked():return
 	if planning.active():planning.reset()
 	elif not battle.reselect_path():
 		return
@@ -926,10 +879,8 @@ func _reselect_path() -> void:
 	queue_redraw()
 
 func _build() -> void:
-	toasts=[]
 	planning.reset();playback_command={}
 	movement.reset()
-	action_effect.reset()
 	build_open=true
 	followed_turn=[]
 	if is_instance_valid(hud):
@@ -1193,10 +1144,8 @@ func _focus_build_choice(kind: String,slot: int) -> void:
 			return
 
 func _start_battle() -> void:
-	toasts=[]
 	planning.reset();playback_command={}
 	movement.reset()
-	action_effect.reset()
 	for b in collection.builds:
 		if not collection.valid_build(b):
 			_notify("Invalid build. Check unlocked elements and the CORE total.")
@@ -1221,10 +1170,8 @@ func _start_battle() -> void:
 	_notify("UNIT %s / %s — Click adjacent empty cells, then double-click the endpoint." % [V.unit_name(battle.units[battle.actor]),battle.units[battle.actor].camp])
 
 func _result() -> void:
-	if action_effect.active:return
 	planning.reset();playback_command={}
 	movement.reset()
-	action_effect.reset()
 	if battle.mode!="RESULT" or battle.result.is_empty():
 		return
 	_clear_overlay()
@@ -1453,7 +1400,7 @@ func _cpu_locked() -> bool:
 
 func _cpu_tick(delta: float) -> void:
 	_follow_turn()
-	if _presentation_locked() or not cpu_enabled or build_open or is_instance_valid(auxiliary) or not window_focused or cpu_paused:
+	if movement.active or not cpu_enabled or build_open or is_instance_valid(auxiliary) or not window_focused or cpu_paused:
 		return
 	if not battle.result.is_empty():
 		cpu_turn.reset()
@@ -1506,7 +1453,6 @@ func _load() -> void:
 func _quit() -> void:
 	planning.reset();playback_command={}
 	movement.reset()
-	action_effect.reset()
 	if debug_session.active():_toggle_debug(false)
 	get_tree().quit()
 

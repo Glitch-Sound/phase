@@ -280,13 +280,3 @@ static func field_cloud(canvas: CanvasItem, center: Vector2, cell: float, second
 		canvas.draw_texture_rect_region(texture,layer.rect,Rect2(layer.uv.position*texture.get_size(),layer.uv.size*texture.get_size()),Color(color,layer.alpha*opacity))
 		for i in range(layer.trail.size()-1):
 			if i%4<2:canvas.draw_line(layer.trail[i],layer.trail[i+1],Color(color,T.FIELD_CLOUD_PREVIEW_ALPHA*opacity),width,true)
-
-## 行動の光を描く。canvasは描画先、viewは切り取り済みの線分、colorは効果色、pixel_scaleは物理倍率。戻り値なし。モデルと保存は変更しない。
-static func action_signal(canvas: CanvasItem,view: Dictionary,color: Color,pixel_scale: float) -> void:
-	var alpha=view.alpha
-	var width=maxf(T.ACTION_LINE_WIDTH*(1+view.strength),T.ACTION_MIN_PIXEL_WIDTH/pixel_scale)
-	for line in view.lines:
-		canvas.draw_line(line[0],line[1],Color(color,T.ACTION_HALO_ALPHA*alpha),maxf(T.ACTION_HALO_WIDTH,width*2),true)
-		canvas.draw_line(line[0],line[1],Color(color,0.95*alpha),width,true)
-	for line in view.tip:
-		canvas.draw_line(line[0],line[1],Color(color.lerp(Color.WHITE,0.5),alpha),width,true)

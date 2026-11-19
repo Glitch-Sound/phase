@@ -66,8 +66,6 @@ func _manual() -> void:
 	game._close_aux();game._movement_tick(game.movement.duration-game.movement.elapsed);await _draw_frame()
 	_check(game.movement.active and game.movement.get("landed")==true and game.battle.units[3].hp==hp and game.battle.history.size()==1 and not is_instance_valid(game.overlay),"landing shows a short automatic beat before damage without another menu")
 	game._movement_tick(game.T.get_script_constant_map().get("MOVEMENT_ATTACK_BEAT_SECONDS",0))
-	_check(game.action_effect.active and game.battle.units[3].hp==hp and game.battle.history.size()==1,"landing beat starts light before applying damage")
-	game._action_tick(game.action_effect.duration);game._action_tick(game.action_effect.impact_duration)
 	_check(not game.movement.active and not is_instance_valid(game.overlay) and game.battle.history.size()==2 and game.battle.turn==2 and game.battle.last_effect.target==3,"the automatic beat executes the selected attack without another menu")
 	game._movement_tick(100);game._confirm_plan()
 	_check(game.battle.history.size()==2,"no queued final confirmation can replay the action")
@@ -105,7 +103,6 @@ func _cpu() -> void:
 	_check(game.battle.units[0].hp==hp and game.movement.active,"CPU pause also freezes the attack beat")
 	game.cpu_paused=false;game.cpu_fast=true
 	game._movement_tick(game.T.get_script_constant_map().get("MOVEMENT_ATTACK_BEAT_SECONDS",0)/game.T.CPU_FAST_SPEED+0.000001)
-	game._action_tick(game.action_effect.duration/game.T.CPU_FAST_SPEED+0.000001);game._action_tick(game.action_effect.impact_duration/game.T.CPU_FAST_SPEED+0.000001)
 	game.cpu_fast=false
 	_check(game.battle.turn==2 and game.battle.history.size()==2 and game.cpu_turn.phase=="RESULT" and game.battle.last_effect.kind=="DAMAGE","CPU executes after the automatic beat without ACTION or TARGET waits")
 	game._start_battle();game.battle.actor=3

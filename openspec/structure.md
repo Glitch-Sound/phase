@@ -21,8 +21,6 @@
 ビルドと収集の保存をgame/collection.gdに集約する。\
 構成候補と可否、原本から独立したプレビューはgame/build_choices.gd、共通の選択画面はui/build_dialog.gdへ置く。
 リングと波形はui/visuals.gdで手続き的に描く。
-攻撃と回復の飛行と局所反応はui/action_effect.gdが所有し、到達時だけ既存の戦闘処理を呼ぶ。\
-表示時間と曲線の切り取りはモデルと保存へ入れず、所有戦闘の変更と退出で破棄する。
 配色と判読性はui/palette.gd、操作アイコンと権利表示はassets/lucide/に集約する。
 CPUの判断はgame/cpu_policy.gd、段階と表示時間はui/cpu_turn.gdへ分離し、どちらも既存のbattleを操作する。
 経路と行動の予定はui/turn_plan.gd、各歩の描画補間はui/movement.gdへ分離する。\
