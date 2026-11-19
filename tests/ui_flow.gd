@@ -20,7 +20,7 @@ func _run() -> void:
 	game._choose_battle_skill(C.DAMAGE)
 	game._clear_overlay()
 	game._cell_input(Vector2i(6,4))
-	game._confirm_plan();game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
+	game._confirm_plan();game._movement_tick(game.T.MOVEMENT_MAX_SECONDS);game._action_tick(game.T.ACTION_FLIGHT_MAX_SECONDS);game._action_tick(game.T.ACTION_HEAL_REACTION_SECONDS)
 	_check(game.battle.units[2].hp<100 and game.battle.actor==1,"UI target connects to battle and ends turn")
 	_check(game.toasts.back().text=="-"+str(game.battle.last_effect.amount),"damage toast connects to computed effect")
 	game._cell_input(Vector2i(6,4))
@@ -33,14 +33,14 @@ func _run() -> void:
 	game.battle.units[1].hp=95.0
 	game.battle.mode="CHOICE"
 	game.battle.choose_skill(C.HEAL)
-	game._cell_input(Vector2i(6,5))
+	game._cell_input(Vector2i(6,5));game._action_tick(game.T.ACTION_FLIGHT_MAX_SECONDS);game._action_tick(game.T.ACTION_HEAL_REACTION_SECONDS)
 	_check(game.toasts.back().text=="+5","heal toast reports actual capped recovery")
 	game.battle.start(0,game.collection.builds)
 	game.battle.units[0].pos=Vector2i(5,4)
 	game.battle.units[2].hp=1.0
 	game.battle.mode="CHOICE"
 	game.battle.choose_skill(C.DAMAGE)
-	game._cell_input(Vector2i(6,4))
+	game._cell_input(Vector2i(6,4));game._action_tick(game.T.ACTION_FLIGHT_MAX_SECONDS);game._action_tick(game.T.ACTION_HEAL_REACTION_SECONDS)
 	_check(game.toasts.any(func(t):return t.text=="DEFEATED"),"defeat toast connected")
 	await process_frame
 	game.collection.stage_index=2
@@ -51,7 +51,7 @@ func _run() -> void:
 	game._cell_input(Vector2i(4,4))
 	game._cell_input(Vector2i(5,4))
 	game._cell_input(Vector2i(5,4),true)
-	game._confirm_plan();game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
+	game._confirm_plan();game._movement_tick(game.T.MOVEMENT_MAX_SECONDS);game._action_tick(game.T.ACTION_FLIGHT_MAX_SECONDS);game._action_tick(game.T.ACTION_HEAL_REACTION_SECONDS)
 	_check(game.battle.result=="VICTORY" and is_instance_valid(game.overlay),"REACH connects to RESULT")
 	_check(game.drops.size()<=2,"RESULT loot connection")
 	game._build()

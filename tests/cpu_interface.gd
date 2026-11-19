@@ -104,6 +104,7 @@ func _controls() -> void:
 	for tick in range(200):
 		var turn=game.battle.turn
 		var actor=game.battle.actor
+		game._action_tick(0.2)
 		game._movement_tick(0.2)
 		game._cpu_tick(0.2)
 		if game.battle.turn!=turn:
