@@ -76,6 +76,7 @@ var auxiliary: Control
 var hud: Control
 var selected := -1
 var movement=MOVEMENT.new()
+var convergences: Array=[]
 var planning=TURN_PLAN.new()
 var playback_command: Dictionary={}
 var timeline_hover := -1
@@ -179,6 +180,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if debug_session.active() and not debug_session.available():_toggle_debug(false)
 	debug_notice.visible=collection.temporary
+	_advance_convergence(delta)
 	_movement_tick(delta)
 	_cpu_tick(delta)
 	_follow_turn()
@@ -319,6 +321,7 @@ func _draw_board() -> void:
 	# セルをまたぐ雲を次の行の背景で隠さず、全リングとパネル記号の下へ置く。
 	for emitter in fields.emitters:
 		_field_cloud(emitter.unit,emitter.preview,emitter.phase)
+	_draw_convergence()
 	for y in range(10):
 		for x in range(10):
 			var cell=Vector2i(x,y)
@@ -777,10 +780,36 @@ func _feedback() -> void:
 	if e.kind in ["SWAP","PUSH"]:
 		toasts.append({"cell":u.pos,"text":e.kind,"color":CYAN,"age":0.0})
 		return
+	if e.kind in ["DAMAGE","HEAL"] and not reduced_motion:
+		convergences.append({"cell":u.pos,"age":0.0,"owner":battle})
 	var shown=str(e.amount) if e.kind=="DAMAGE" else _hp(e.actual)
 	toasts.append({"cell":u.pos,"text":("-" if e.kind=="DAMAGE" else "+")+shown,"color":status_colors[1] if e.kind=="DAMAGE" else status_colors[2],"age":0.0})
 	if e.dead:
 		toasts.append({"cell":u.pos,"text":"DEFEATED","color":status_colors[1],"age":-0.65})
+
+func _advance_convergence(delta: float) -> void:
+	if build_open or reduced_motion or not window_focused or is_instance_valid(auxiliary):
+		convergences=[];return
+	if not is_finite(delta) or delta<0:return
+	for pulse in convergences:pulse.age+=delta
+	convergences=convergences.filter(func(p):return p.owner==battle and p.age<T.CONVERGENCE_SECONDS)
+
+func _draw_convergence() -> void:
+	if convergences.is_empty():return
+	var scale_px=maxf(0.001,get_viewport_transform().get_scale().x*get_global_transform().get_scale().x)
+	var width=maxf(T.CONVERGENCE_LINE_WIDTH,T.CONVERGENCE_MIN_PIXEL_WIDTH/scale_px)
+	var radius=V.route_unit_clearance(T.UNIT_BOARD_RADIUS*BOARD_SCALE,width,scale_px)
+	var bounds=Rect2(BOARD,Vector2.ONE*CELL*10).grow(-width/2-1/scale_px)
+	var masks=[]
+	for i in range(battle.units.size()):
+		if battle.units[i].hp<=0:continue
+		var point=BOARD+(movement.position()+Vector2.ONE*0.5)*CELL if movement.active and movement.actor==i else _cell_rect(battle.units[i].pos).get_center()
+		masks.append({"center":point,"radius":radius})
+	for pulse in convergences:
+		var center=_cell_rect(pulse.cell).get_center()
+		for ring in V.convergence_rings(pulse.age,radius):
+			for line in V.convergence_segments(center,ring.radius,bounds,masks):
+				draw_polyline(line,Color(T.CONVERGENCE_GRAY,T.CONVERGENCE_GRAY,T.CONVERGENCE_GRAY,ring.alpha),width,true)
 
 func _hud() -> void:
 	if is_instance_valid(hud):
@@ -879,6 +908,7 @@ func _reselect_path() -> void:
 	queue_redraw()
 
 func _build() -> void:
+	convergences=[]
 	planning.reset();playback_command={}
 	movement.reset()
 	build_open=true
@@ -1144,6 +1174,7 @@ func _focus_build_choice(kind: String,slot: int) -> void:
 			return
 
 func _start_battle() -> void:
+	convergences=[]
 	planning.reset();playback_command={}
 	movement.reset()
 	for b in collection.builds:
@@ -1451,6 +1482,7 @@ func _load() -> void:
 	_notify("LOADED / Builds and shared archive restored." if error.is_empty() else error)
 
 func _quit() -> void:
+	convergences=[]
 	planning.reset();playback_command={}
 	movement.reset()
 	if debug_session.active():_toggle_debug(false)
