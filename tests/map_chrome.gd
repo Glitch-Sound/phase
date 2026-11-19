@@ -44,7 +44,7 @@ func _run() -> void:
 			game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 			if state=="DAMAGE":
 				await process_frame
-				game.battle.choose_skill(game.C.DAMAGE)
+				game._choose_battle_skill(game.C.DAMAGE)
 				game._clear_overlay()
 				game._hud()
 		await _test_case(game,state,"TARGET" if state in ["DAMAGE","HEAL"] else ("MOVE" if state=="TRAPPED" else state))
@@ -60,13 +60,14 @@ func _run() -> void:
 			var actor=game.battle.actor
 			if is_instance_valid(action_button):
 				action_button.pressed.emit()
+				if state=="TRAPPED":game._confirm_plan()
 			await process_frame
-			_check(game.battle.actor!=actor if state=="TRAPPED" else game.battle.mode=="CHOICE" and game.battle.units==units,"required action remains functional: "+state)
+			_check(game.battle.actor!=actor if state=="TRAPPED" else game._decision_battle().mode=="CHOICE" and game.battle.units==units,"required action remains functional: "+state)
 	await _test_help_and_build(game)
 	print("MAP CHROME: %d checks / %d failures" % [checks,failures])
 	quit(0 if failures==0 else 1)
 func _test_case(game,title: String,expected_mode: String="MOVE") -> void:
-	_check(game.battle.mode==expected_mode,"fixture reaches requested state: "+title)
+	_check(game._decision_battle().mode==expected_mode,"fixture reaches requested state: "+title)
 	game.message_time=0
 	var before=game.battle.units.duplicate(true)
 	await create_timer(0.07).timeout
@@ -91,7 +92,7 @@ func _test_help_and_build(game) -> void:
 	var content=[]
 	for label in game.auxiliary.find_children("*","Label",true,false):
 		content.append(label.text)
-	_check(content.any(func(s):return s.contains("Double-click the endpoint to move.")),"HELP retains endpoint operation")
+	_check(content.any(func(s):return s.contains("Double-click to plan an action.")),"HELP retains endpoint operation")
 	game._close_aux()
 	_check(game.battle.path==[Vector2i(4,4)],"HELP keeps pending route")
 	for stage in range(4):

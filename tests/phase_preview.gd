@@ -12,6 +12,7 @@ func _run() -> void:
 	if visual.has_method("phase_field") and visual.has_method("phase_contours"):
 		_test_fields(visual)
 		_test_contours(visual)
+		_test_fractional_boundary(visual)
 		_test_gradient(visual)
 		_test_strength(visual)
 		_test_smooth_strength(visual)
@@ -82,6 +83,13 @@ func _test_contours(visual) -> void:
 	_check(visual.phase_contours(u,custom)!=curves and u==before,"new custom color updates output without mutation")
 	u.gear_angle=80.0
 	_check(visual.phase_contours(u,colors)!=curves,"rotation updates the contour")
+## REQ-033-S02
+func _test_fractional_boundary(visual) -> void:
+	var build={"class_name":"SLVIR","core":[30,10,10,35,15],"gear":[30,10,10,40,10],"arms":[30,10,20,10,30],"gear_mutation":"RVLSI","arms_mutation":"ISLVR","skills":[C.DAMAGE]}
+	var u=C.unit("C","ENEMY",Vector2i.ZERO,build)
+	u.gear_angle=2.8421709430404e-14;u.arms_angle=90.0
+	var curves=visual.phase_contours(u,P.PRESETS.DEFAULT.slice(1))
+	_check(curves.size()==4 and curves.all(func(curve):return curve.points.size()==T.PREVIEW_SAMPLES+1 and Array(curve.points).all(func(point):return is_finite(point.x) and is_finite(point.y))),"fractional angle near zero has four complete finite contours without sector gaps")
 ## REQ-033-S02、REQ-019-S01
 func _test_ui() -> void:
 	var game=load("res://tests/phase_preview_audit.gd").new()
@@ -126,7 +134,7 @@ func _test_ui() -> void:
 	_check(guide.size()==1,"HELP explains overlapping roles and interpolation without an inner-to-outer order")
 	if guide.size()==1:
 		var label=guide[0]
-		var next=game.auxiliary.find_children("*","Label",true,false).filter(func(item):return item.text.begins_with("Double-click the endpoint"))[0]
+		var next=game.auxiliary.find_children("*","Label",true,false).filter(func(item):return item.text.begins_with("Double-click to plan"))[0]
 		_check(Array(label.text.split("\n")).all(func(line):return label.position.x+game.font.get_string_size(line,HORIZONTAL_ALIGNMENT_LEFT,-1,18).x<next.position.x),"orbit guide does not cross into next HELP column")
 	game.queue_free()
 	await process_frame
@@ -180,11 +188,11 @@ func _test_notifications() -> void:
 			game._cell_input(Vector2i(5,4),true)
 			game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 			await process_frame
-			game.battle.choose_skill(game.C.DAMAGE)
+			game._choose_battle_skill(game.C.DAMAGE)
 			game._clear_overlay()
 			game._hud()
 			game._cell_input(Vector2i(0,0))
-			expected="Choose a highlighted target. BACK keeps your movement."
+			expected="Choose a highlighted target. BACK keeps your planned route."
 		await create_timer(0.08).timeout
 		var messages=game.drawn_text.filter(func(item):return item.text==expected)
 		_check(game.message==expected and game.message_time>0 and messages.size()==1,"real notification is visible: "+state)
@@ -409,7 +417,7 @@ func _test_compact_layout() -> void:
 	game._cell_input(Vector2i(5,4),true)
 	game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 	await process_frame
-	game.battle.choose_skill(game.C.DAMAGE)
+	game._choose_battle_skill(game.C.DAMAGE)
 	game._clear_overlay()
 	game._hud()
 	await process_frame

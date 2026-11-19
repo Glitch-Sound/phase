@@ -1,10 +1,13 @@
 extends "res://ui/main.gd"
+var draw_times=[]
 var displayed_rings=[]
 var displayed_text=[]
 func _draw() -> void:
+	var begin=Time.get_ticks_usec()
 	displayed_rings=[]
 	displayed_text=[]
 	super._draw()
+	draw_times.append((Time.get_ticks_usec()-begin)/1000.0)
 func _ring(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,active: bool=false) -> void:
 	displayed_rings.append({"center":center,"unit":u.duplicate(true)})
 	super._ring(canvas,center,radius,u,active)

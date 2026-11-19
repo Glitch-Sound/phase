@@ -15,6 +15,7 @@ const P = preload("res://ui/palette.gd")
 const CPU = preload("res://game/cpu_policy.gd")
 const CPU_TURN = preload("res://ui/cpu_turn.gd")
 const MOVEMENT = preload("res://ui/movement.gd")
+const TURN_PLAN = preload("res://ui/turn_plan.gd")
 const WHITE = P.TEXT
 const MUTED = P.MUTED
 const BG = P.BG
@@ -75,6 +76,8 @@ var auxiliary: Control
 var hud: Control
 var selected := -1
 var movement=MOVEMENT.new()
+var planning=TURN_PLAN.new()
+var playback_command: Dictionary={}
 var timeline_hover := -1
 var timeline_hover_event: Dictionary={}
 var timeline_selected_event: Dictionary={}
@@ -236,8 +239,11 @@ func _timeline_view() -> Dictionary:
 func _display_units() -> Array:
 	if not movement.active:return battle.units
 	var units=battle.units.duplicate(true)
-	units[movement.actor]=movement.source
+	units[movement.actor]=movement.unit()
 	return units
+
+func _decision_battle():
+	return planning.projected if planning.active() else battle
 
 func _draw_timeline() -> void:
 	var view=_timeline_view()
@@ -288,13 +294,14 @@ func _timeline_matches(event: Dictionary, inspected: Dictionary) -> bool:
 
 
 func _draw_board() -> void:
+	var decision=_decision_battle()
 	var fields=_field_view()
 	var effect_chips=[]
 	var target_cells=[]
-	var effect=C.SKILLS.get(battle.selected_skill,{}).get("effect","")
-	if battle.mode=="TARGET":
-		for offset in C.target_offsets(battle.selected_skill):
-			target_cells.append(battle.units[battle.actor].pos+offset)
+	var effect=C.SKILLS.get(decision.selected_skill,{}).get("effect","")
+	if decision.mode=="TARGET" and not movement.active:
+		for offset in C.target_offsets(decision.selected_skill):
+			target_cells.append(decision.units[decision.actor].pos+offset)
 	for y in range(10):
 		for x in range(10):
 			var cell=Vector2i(x,y)
@@ -334,30 +341,30 @@ func _draw_board() -> void:
 			var i=battle.at(cell)
 			if i>=0 and not (movement.active and i==movement.actor):
 				var u: Dictionary=battle.units[i]
-				if effect=="GUARD" and battle.mode=="TARGET" and battle.valid_target(battle.actor,i,battle.selected_skill):
+				if effect=="GUARD" and decision.mode=="TARGET" and decision.valid_target(decision.actor,i,decision.selected_skill):
 					u=u.duplicate(true)
 					u.guard_active=true
 				var center=pos+T.UNIT_BOARD_CENTER*BOARD_SCALE
 				_ring(self,center,T.UNIT_BOARD_RADIUS*BOARD_SCALE,u,i==battle.actor)
 				if i==selected or i==timeline_hover:
 					_draw_cell_focus(rect,MAGENTA)
-				if battle.mode=="TARGET" and battle.valid_target(battle.actor,i,battle.selected_skill):
+				if decision.mode=="TARGET" and not movement.active and decision.valid_target(decision.actor,i,decision.selected_skill):
 					var tc=_action_color(effect)
 					_draw_cell_focus(rect,tc,effect!="GUARD")
 					var text=effect
 					if effect in ["DAMAGE","HEAL"]:
-						var amount=M.effect(battle.units[battle.actor],u,effect)
+						var amount=M.effect(decision.units[decision.actor],u,effect)
 						if effect=="HEAL":
 							amount=mini(amount,ceili(u.max_hp-u.hp))
 						text=("-" if effect=="DAMAGE" else "+")+str(amount)
 					if effect!="GUARD":
 						effect_chips.append({"cell":cell,"text":text,"color":tc,"font_size":16 if effect in ["DAMAGE","HEAL"] else 14})
-				if cpu_turn.active and cpu_turn.phase=="TARGET" and cpu_turn.command.target==i:
+				if cpu_turn.active and (cpu_turn.phase=="TARGET" or movement.active) and cpu_turn.command.target==i:
 					_draw_cell_focus(rect,WHITE)
 	if movement.active:
 		for segment in _route_segments():
 			draw_line(segment[0],segment[1],WHITE,T.ROUTE_LINE_WIDTH*BOARD_SCALE,true)
-		_ring(self,BOARD+(movement.position()+Vector2.ONE*0.5)*CELL,T.UNIT_BOARD_RADIUS*BOARD_SCALE,movement.source,true)
+		_ring(self,BOARD+(movement.position()+Vector2.ONE*0.5)*CELL,T.UNIT_BOARD_RADIUS*BOARD_SCALE,movement.unit(),true)
 	elif battle.mode=="MOVE":
 		for segment in _route_segments():
 			draw_line(segment[0],segment[1],CYAN,T.ROUTE_LINE_WIDTH*BOARD_SCALE,true)
@@ -420,10 +427,10 @@ func _field_cloud(source: Dictionary, preview: bool, phase: float) -> void:
 
 func _field_view() -> Dictionary:
 	var current=F.coverage(_display_units())
-	var world=_display_units()
+	var world=planning.projected.units if planning.active() else _display_units()
 	var forecast=_utility_preview()
 	if not forecast.is_empty():world=forecast.units
-	elif battle.mode=="MOVE" and not battle.path.is_empty():
+	elif not planning.active() and battle.mode=="MOVE" and not battle.path.is_empty():
 		world=battle.units.duplicate(true)
 		world[battle.actor]=battle.preview()
 	var cells=F.coverage(world)
@@ -498,12 +505,13 @@ func _action_color(kind: String) -> Color:
 	return status_colors[1] if kind=="DAMAGE" else (status_colors[2] if kind=="HEAL" else CYAN)
 
 func _utility_preview() -> Dictionary:
-	if movement.active or build_open or battle.mode!="TARGET" or not battle.result.is_empty():
+	var decision=_decision_battle()
+	if movement.active or build_open or decision.mode!="TARGET" or not decision.result.is_empty():
 		return {}
-	var target=battle.at(hover_cell)
+	var target=planning.target if planning.active() and planning.phase=="READY" else decision.at(hover_cell)
 	if cpu_turn.active and cpu_turn.phase=="TARGET":
 		target=cpu_turn.command.target
-	return battle.action_preview(target) if target>=0 else {}
+	return decision.action_preview(target) if target>=0 else {}
 
 func _draw_info() -> void:
 	var index=selected if selected>=0 else battle.actor
@@ -511,7 +519,7 @@ func _draw_info() -> void:
 	if not forecast.is_empty():
 		index=forecast.target
 		_text("%sPREVIEW / UNIT %s" % ["" if forecast.kind=="GUARD" else forecast.kind+" ",V.unit_name(forecast.units[index])],T.BATTLE_INFO_CLASS-Vector2(0,24),13,MUTED,mono)
-	var u: Dictionary=forecast.units[index] if not forecast.is_empty() else _display_units()[index]
+	var u: Dictionary=forecast.units[index] if not forecast.is_empty() else (planning.projected.units[index] if planning.active() and selected<0 else _display_units()[index])
 	var camp_color=CYAN if u.camp=="PLAYER" else status_colors[1]
 	var core_code=M.layout_code(u.class_name)
 	var class_text="CLASS: "+core_code
@@ -538,7 +546,7 @@ func _draw_info() -> void:
 		var name=V.unit_name(battle.units[cpu_turn.actor]) if cpu_turn.active else ""
 		var stopped=cpu_paused or not window_focused or is_instance_valid(auxiliary)
 		_text("CPU %s / %s" % [name,"PAUSED" if stopped else phase],T.CPU_CONTROL_ORIGIN+Vector2(0,14),14,MUTED,mono)
-		if not movement.active and cpu_turn.active and cpu_turn.phase in ["ACTION","TARGET"]:
+		if cpu_turn.active and cpu_turn.phase in ["ACTION","TARGET"]:
 			var action="WAIT" if cpu_turn.command.skill.is_empty() else C.SKILLS[cpu_turn.command.skill].label+" → "+V.unit_name(battle.units[cpu_turn.command.target])
 			_text(action,T.CPU_CONTROL_ORIGIN+Vector2(0,-12),13,WHITE,mono)
 
@@ -548,7 +556,7 @@ func _equipment_icon(key: String, rect: Rect2, tint: Color) -> void:
 func _draw_preview() -> void:
 	_text("PREVIEW",T.PREVIEW_HEADING_CENTER-Vector2(mono.get_string_size("PREVIEW",HORIZONTAL_ALIGNMENT_LEFT,-1,T.TIMELINE_TURN_FONT).x/2,0),T.TIMELINE_TURN_FONT,MUTED,mono)
 	var forecast=_utility_preview()
-	var u=movement.source if movement.active else (battle.preview() if forecast.is_empty() else forecast.units[battle.actor])
+	var u=movement.unit() if movement.active else (_decision_battle().preview() if forecast.is_empty() else forecast.units[battle.actor])
 	var signature=[u.core,u.gear,u.arms,u.class_name,u.gear_mutation,u.arms_mutation,u.get("core_angle",0.0),u.gear_angle,u.arms_angle,status_colors]
 	if signature!=preview_signature:
 		preview_signature=signature.duplicate(true)
@@ -590,6 +598,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_close_aux()
 			elif movement.active or _cpu_locked():
 				return
+			elif planning.active():
+				_plan_back()
 			elif battle.mode=="CHOICE" and not build_open:
 				_reselect_path()
 			elif battle.mode=="TARGET":
@@ -644,6 +654,11 @@ func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 	timeline_hover=-1
 	timeline_hover_event={}
 	var index=battle.at(cell)
+	if planning.active():
+		if planning.phase=="TARGET" and planning.select(index):_confirm_dialog()
+		elif planning.phase=="TARGET":_notify("Choose a highlighted target. BACK keeps your planned route.")
+		queue_redraw()
+		return
 	if battle.mode=="TARGET":
 		if index>=0 and battle.act(index):
 			_feedback()
@@ -654,9 +669,10 @@ func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 		if index>=0 and cell!=battle.units[battle.actor].pos:
 			selected=index
 		elif double_click and not battle.path.is_empty() and cell==battle.path.back():
-			var before=battle.units[battle.actor].duplicate(true)
-			var route=battle.path.duplicate()
-			if battle.commit_path():_begin_movement(before,route,false)
+			if planning.begin(battle):
+				selected=-1
+				if planning.phase=="READY":_confirm_dialog()
+				else:_action_dialog()
 		elif battle.path_click(cell):
 			selected=-1
 		else:
@@ -683,18 +699,62 @@ func _movement_tick(delta: float) -> void:
 	var blocked=not window_focused or is_instance_valid(auxiliary) or (via_cpu and cpu_paused)
 	var event=movement.advance(battle,delta,blocked,T.CPU_FAST_SPEED if via_cpu and cpu_fast else 1.0)
 	if event=="arrived":_movement_arrived(via_cpu)
-	elif event=="cancel":_hud()
+	elif event=="cancel":
+		playback_command={}
+		if via_cpu:cpu_turn.reset()
+		_hud()
 	queue_redraw()
 
 func _movement_arrived(via_cpu: bool) -> void:
+	var command=playback_command
+	playback_command={}
 	if not battle.result.is_empty():
 		cpu_turn.reset()
 		_result()
 		_hud()
-	elif via_cpu:
-		_hud()
-	else:
-		_action_dialog()
+	elif not command.is_empty():
+		var ok=battle.wait_turn() if command.skill.is_empty() else (battle.choose_skill(command.skill) and battle.act(command.target))
+		if via_cpu:
+			cpu_turn.phase="RESULT";cpu_turn.elapsed=0
+			cpu_memory.append({"actor":command.actor,"pos":battle.units[command.actor].pos,"skill":command.skill,"target":command.target})
+			cpu_memory=cpu_memory.slice(-T.CPU_MEMORY_LIMIT)
+		if ok:
+			if not command.skill.is_empty():_feedback()
+			_after_action()
+		else:
+			cpu_paused=via_cpu
+			_notify("Action stopped / State changed. RESTART returns to BUILD.")
+			_hud()
+	else:_hud()
+
+func _confirm_plan() -> void:
+	if movement.active or _cpu_locked() or not planning.active():return
+	var before=battle.units[battle.actor].duplicate(true)
+	var actor=battle.actor
+	var command=planning.commit(battle)
+	if command.is_empty():return
+	command.actor=actor
+	playback_command=command
+	_begin_movement(before,command.path,false)
+
+func _confirm_dialog() -> void:
+	_clear_overlay();_hud()
+	var panel=_modal(Rect2(700,380,420,220),false,true)
+	_label(panel,"UNIT "+V.unit_name(battle.units[battle.actor])+" / READY",Rect2(25,16,370,32),18,WHITE)
+	var decision=planning.projected
+	var text="MOVE / FINISH" if not decision.result.is_empty() else ("WAIT" if decision.selected_skill.is_empty() else C.SKILLS[decision.selected_skill].label)
+	if planning.target>=0 and planning.target!=battle.actor:text+=" → "+V.unit_name(battle.units[planning.target])
+	_label(panel,text,Rect2(25,60,370,32),16,MUTED)
+	_button(panel,"CONFIRM",Rect2(25,105,370,42),_confirm_plan)
+	_button(panel,"BACK",Rect2(25,158,370,42),_plan_back)
+
+func _plan_back() -> void:
+	if movement.active or _cpu_locked() or not planning.active():return
+	planning.back()
+	_clear_overlay()
+	if planning.active() and planning.phase=="CHOICE":_action_dialog()
+	else:_hud()
+	queue_redraw()
 
 func _after_action() -> void:
 	_follow_turn()
@@ -748,17 +808,21 @@ func _hud() -> void:
 		_button(hud,"RESUME" if cpu_paused else "PAUSE",Rect2(T.CPU_CONTROL_ORIGIN+Vector2(210,38),Vector2(190,40)),func():cpu_paused=not cpu_paused;_hud(),"play" if cpu_paused else "wait")
 	if movement.active or _cpu_locked():
 		return
+	if planning.active():
+		if planning.phase=="TARGET":_button(hud,"BACK",T.BATTLE_CONTEXT_BUTTON,_plan_back)
+		return
 	if battle.mode=="TARGET":
 		_button(hud,"BACK",T.BATTLE_CONTEXT_BUTTON,func():battle.back();_action_dialog())
 	elif battle.mode=="MOVE" and battle.trapped():
-		_button(hud,"WAIT",T.BATTLE_CONTEXT_BUTTON,func():battle.wait_turn();_after_action())
+		_button(hud,"WAIT",T.BATTLE_CONTEXT_BUTTON,_wait_action)
 
 func _action_dialog() -> void:
 	if movement.active:return
 	_clear_overlay()
 	_hud()
 	var active=[]
-	for skill in battle.units[battle.actor].skills:
+	var decision=_decision_battle()
+	for skill in decision.units[decision.actor].skills:
 		if C.SKILLS[skill].type=="ACTIVE":
 			active.append(skill)
 	var height=185+active.size()*63
@@ -769,8 +833,8 @@ func _action_dialog() -> void:
 		var skill: String=active[i]
 		var button=_button(panel,C.SKILLS[skill].label,Rect2(25,126+i*63,370,48),func():_choose_battle_skill(skill))
 		var available=false
-		for target in range(battle.units.size()):
-			if battle.valid_target(battle.actor,target,skill):
+		for target in range(decision.units.size()):
+			if decision.valid_target(decision.actor,target,skill):
 				available=true
 		button.disabled=not available
 		button.tooltip_text="No valid target in this pattern." if not available else C.SKILLS[skill].description
@@ -778,16 +842,31 @@ func _action_dialog() -> void:
 
 func _choose_battle_skill(skill: String) -> void:
 	if movement.active or _cpu_locked():return
+	if planning.active():
+		if not planning.choose(skill):return
+		_clear_overlay()
+		if planning.phase=="READY":_confirm_dialog()
+		else:_hud()
+		queue_redraw()
+		return
 	if battle.choose_skill(skill):
 		_clear_overlay()
 		_hud()
 
 func _wait_action() -> void:
 	if movement.active or _cpu_locked():return
+	if planning.active():
+		if planning.wait():_confirm_dialog()
+		return
+	if battle.mode=="MOVE" and battle.trapped():
+		if planning.begin(battle) and planning.wait():_confirm_dialog()
+		return
 	if battle.wait_turn():_after_action()
 
 func _reselect_path() -> void:
-	if movement.active or _cpu_locked() or not battle.reselect_path():
+	if movement.active or _cpu_locked():return
+	if planning.active():planning.reset()
+	elif not battle.reselect_path():
 		return
 	selected=-1
 	timeline_hover=-1
@@ -798,6 +877,7 @@ func _reselect_path() -> void:
 	queue_redraw()
 
 func _build() -> void:
+	planning.reset();playback_command={}
 	movement.reset()
 	build_open=true
 	followed_turn=[]
@@ -1062,6 +1142,7 @@ func _focus_build_choice(kind: String,slot: int) -> void:
 			return
 
 func _start_battle() -> void:
+	planning.reset();playback_command={}
 	movement.reset()
 	for b in collection.builds:
 		if not collection.valid_build(b):
@@ -1087,6 +1168,7 @@ func _start_battle() -> void:
 	_notify("UNIT %s / %s — Click adjacent empty cells, then double-click the endpoint." % [V.unit_name(battle.units[battle.actor]),battle.units[battle.actor].camp])
 
 func _result() -> void:
+	planning.reset();playback_command={}
 	movement.reset()
 	if battle.mode!="RESULT" or battle.result.is_empty():
 		return
@@ -1124,7 +1206,7 @@ func _help() -> void:
 	var steps=[
 		["move","01 / ROUTE","Focus follows the acting unit.\nClick route cells to undo later steps.\nScroll over a panel for long details."],
 		["target","02 / ALIGN","3 contours move at different rates.\nTheir colors follow the actual phase.\nAnimation does not change combat."],
-		["check","03 / ACT","Double-click the endpoint to move.\nChoose WAIT or a skill, then a target.\nORTHO = cardinal; DIAGONAL = diagonal.\n1 / 2 = exact cell distance."]
+		["check","03 / ACT","Double-click to plan an action.\nPick skill and target, then CONFIRM.\nORTHO = cardinal; DIAGONAL = diagonal.\n1 / 2 = exact cell distance."]
 	]
 	for i in range(3):
 		var x=36+i*354
@@ -1342,6 +1424,8 @@ func _cpu_tick(delta: float) -> void:
 		cpu_memory.append({"actor":actor,"pos":battle.units[actor].pos,"skill":command.skill,"target":command.target})
 		cpu_memory=cpu_memory.slice(-T.CPU_MEMORY_LIMIT)
 	if event=="commit":
+		command.actor=actor
+		playback_command=command
 		_begin_movement(before,command.path,true)
 		return
 	if not battle.result.is_empty():
@@ -1365,6 +1449,7 @@ func _load() -> void:
 	_notify("LOADED / Builds and shared archive restored." if error.is_empty() else error)
 
 func _quit() -> void:
+	planning.reset();playback_command={}
 	movement.reset()
 	if debug_session.active():_toggle_debug(false)
 	get_tree().quit()

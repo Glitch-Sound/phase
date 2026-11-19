@@ -75,13 +75,16 @@ static func _phase_field(sectors: Array, angle: float, colors: Array) -> Diction
 	var roles=[]
 	var profiles=[]
 	for r in range(3):
+		var nearest=INF
+		var role=0
 		for status in range(5):
 			var sector: Vector2=sectors[r][status]
 			var local=fposmod(angle-sector.x,360.0)
-			if local<sector.y:
-				roles.append(status)
-				profiles.append(pow(sin(PI*local/sector.y),2))
-				break
+			# 開始境界の循環順で所属を決め、Vector2の丸めで隣接領域に微小な隙間を作らない。
+			if local<nearest:
+				nearest=local;role=status
+		roles.append(role)
+		profiles.append(pow(sin(PI*clampf(nearest/sectors[r][role].y,0,1)),2))
 	var clarity=0.0
 	var height=0.0
 	var mixed=Color(0,0,0,0)

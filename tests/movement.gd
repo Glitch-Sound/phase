@@ -11,6 +11,7 @@ func _initialize() -> void:
 		factory=load("res://ui/movement.gd")
 		_sequence()
 		_boundaries()
+		_angles()
 	print("MOVEMENT: %d checks / %d failures" % [checks,failures])
 	quit(0 if failures==0 else 1)
 func _battle():
@@ -56,6 +57,29 @@ func _boundaries() -> void:
 	_check(p.duration<=tuning.MOVEMENT_MAX_SECONDS,"long path never exceeds the configured cap")
 	p.reset()
 	_check(not p.active and p.advance(b,100,false)=="","explicit exit invalidates all callbacks")
+## REQ-046-S01
+func _angles() -> void:
+	var b=_battle();var source=b.units[0].duplicate(true)
+	source.core=[20,20,20,20,20]
+	source.core_angle=60;source.initial_core_angle=10;source.gear_angle=350;source.arms_angle=10
+	b.units[0]=source.duplicate(true)
+	b.panels={Vector2i(4,4):"CLOCKWISE",Vector2i(4,5):"RESET"}
+	b.path=[Vector2i(4,4),Vector2i(4,5)];b.commit_path()
+	var p=factory.new();p.begin(b,source,[Vector2i(4,4),Vector2i(4,5)])
+	_check(p.has_method("unit"),"movement exposes changing per-step rings")
+	if not p.has_method("unit"):return
+	var before=b.units.duplicate(true)
+	p.advance(b,p.duration/4,false)
+	var u=p.unit()
+	_check(is_equal_approx(u.core_angle,75) and is_equal_approx(u.gear_angle,335) and is_equal_approx(u.arms_angle,25),"first half step follows actual rotation directions")
+	p.advance(b,p.duration/2,false);u=p.unit()
+	_check(is_equal_approx(u.core_angle,50) and is_equal_approx(u.gear_angle,305) and is_equal_approx(u.arms_angle,55),"RESET interpolates from the first landing rather than skipping it")
+	p.advance(b,p.duration/4,false)
+	_check(p.unit()==b.units[0] and b.units==before,"arrival state matches actual calculation without extra panel application")
+	b.units[0]=source.duplicate(true);b.units[3].pos=Vector2i(5,4);b.units[3].skills=[C.FIELD_STOP]
+	b.panels[Vector2i(4,4)]="COUNTERCLOCKWISE"
+	p.begin(b,source,[Vector2i(4,4)]);p.advance(b,p.duration/2,false);u=p.unit()
+	_check(is_equal_approx(u.core_angle,45) and is_equal_approx(u.gear_angle,350) and is_equal_approx(u.arms_angle,10),"STOP freezes only equipment while counterclockwise CORE still changes during travel")
 func _check(ok: bool,note: String) -> void:
 	checks+=1
 	if not ok:failures+=1;printerr("FAIL: ",note)

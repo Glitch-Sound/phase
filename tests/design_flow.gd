@@ -82,31 +82,31 @@ func _test_apply(game,palette) -> void:
 	_check(not game.palette_error.text.is_empty(),"invalid apply explains reason")
 	game._close_aux()
 	await process_frame
-	game._cell_input(Vector2i(4,4),true)
-	game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
+	game._cell_input(Vector2i(5,4))
+	game._cell_input(Vector2i(5,4),true)
 	await process_frame
-	_check(game.battle.mode=="CHOICE","action overlay after palette apply")
+	_check(game._decision_battle().mode=="CHOICE","action overlay after palette apply")
 	game._settings()
 	await process_frame
 	for i in range(6):
 		game.palette_pickers[i].color=palette.PRESETS.DEFAULT[i]
 	game._apply_colors()
 	await process_frame
-	_check(game.battle.mode=="CHOICE" and is_instance_valid(game.overlay),"apply keeps action selection")
+	_check(game._decision_battle().mode=="CHOICE" and is_instance_valid(game.overlay),"apply keeps action selection")
 	game._close_aux()
-	game.battle.choose_skill(game.C.DAMAGE)
+	game._choose_battle_skill(game.C.DAMAGE)
 	game._clear_overlay()
 	game._settings()
 	await process_frame
 	game._close_aux()
-	_check(game.battle.mode=="TARGET" and game.battle.selected_skill==game.C.DAMAGE,"cancel preserves target mode")
+	_check(game._decision_battle().mode=="TARGET" and game._decision_battle().selected_skill==game.C.DAMAGE,"cancel preserves target mode")
 	game._settings()
 	await process_frame
 	for i in range(6):
 		game.palette_pickers[i].color=palette.PRESETS.ICE[i]
 	game._apply_colors()
 	await process_frame
-	_check(game.battle.mode=="TARGET" and game.battle.selected_skill==game.C.DAMAGE,"apply preserves target mode")
+	_check(game._decision_battle().mode=="TARGET" and game._decision_battle().selected_skill==game.C.DAMAGE,"apply preserves target mode")
 	game._close_aux()
 	game.battle.mode="RESULT"
 	game.battle.result="VICTORY"

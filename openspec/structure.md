@@ -23,7 +23,8 @@
 リングと波形はui/visuals.gdで手続き的に描く。
 配色と判読性はui/palette.gd、操作アイコンと権利表示はassets/lucide/に集約する。
 CPUの判断はgame/cpu_policy.gd、段階と表示時間はui/cpu_turn.gdへ分離し、どちらも既存のbattleを操作する。
-確定経路の描画補間はui/movement.gdに分離し、モデルを書き換えずに画面とCPUの進行を同期する。
+経路と行動の予定はui/turn_plan.gd、各歩の描画補間はui/movement.gdへ分離する。\
+予定は原本を変更せず、描画はモデルへ書き戻さずに画面とCPUの連続実行を同期する。
 
 ## 命名規則
 

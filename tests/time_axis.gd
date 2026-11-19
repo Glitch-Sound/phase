@@ -272,12 +272,12 @@ func _test_input() -> void:
 	game._cell_input(Vector2i(5,4),true)
 	game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 	await process_frame
-	game.battle.choose_skill(game.C.DAMAGE)
+	game._choose_battle_skill(game.C.DAMAGE)
 	game._clear_overlay()
 	game._hud()
 	before=game.battle.units.duplicate(true)
 	game._unhandled_input(click)
-	_check(game.selected==2 and game.battle.mode=="TARGET" and game.battle.units==before,"timeline inspection never fires selected skill")
+	_check(game.selected==2 and game._decision_battle().mode=="TARGET" and game.battle.units==before,"timeline inspection never fires selected skill")
 	game.queue_free()
 	await process_frame
 	root.size=Vector2i(1920,1080)

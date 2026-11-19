@@ -17,12 +17,12 @@ func _click(point: Vector2,double: bool=false) -> void:
 func _cell(cell: Vector2i,double: bool=false) -> void:
 	_click(game._cell_rect(cell).get_center(),double)
 func _shot(name: String) -> void:
-	root.get_texture().get_image().save_png("res://artifacts/runtime/movement-"+name+".png")
+	root.get_texture().get_image().save_png("res://artifacts/runtime/planned-movement-"+name+".png")
 ## REQ-046-S04
 func _run() -> void:
 	game=load("res://tests/movement_audit.gd").new()
-	game.save_path="res://artifacts/runtime/movement-gpu-no-save.json"
-	game.settings_path="res://artifacts/runtime/movement-gpu-no-settings.json"
+	game.save_path="res://artifacts/runtime/planned-movement-gpu-no-save.json"
+	game.settings_path="res://artifacts/runtime/planned-movement-gpu-no-settings.json"
 	root.add_child(game);await _settle()
 	var normal=game.collection.snapshot()
 	_check(game._toggle_debug(true),"isolated actual debug entry")
@@ -38,30 +38,36 @@ func _run() -> void:
 		var source=game.battle.units[0].duplicate(true)
 		for cell in [Vector2i(4,4),Vector2i(4,5)]:_cell(cell)
 		var predicted=game.battle.preview()
-		_cell(Vector2i(4,5),true)
-		_check(game.movement.active and not is_instance_valid(game.overlay),"scaled confirmation begins travel "+str(dimensions))
+		_cell(Vector2i(4,5),true);await _settle()
+		_check(game.planning.active() and game.battle.units[0]==source and not game.movement.active,"scaled planning keeps the original unit "+str(dimensions))
+		var back=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="BACK")[0]
+		_click(back.get_global_rect().get_center());await _settle()
+		_check(not game.planning.active() and game.battle.units[0]==source and game.battle.path==[Vector2i(4,4),Vector2i(4,5)] and game.battle.history.is_empty(),"scaled BACK changes only the plan")
+		_cell(Vector2i(4,5),true);await _settle()
+		var wait=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="WAIT")[0]
+		_click(wait.get_global_rect().get_center());await _settle()
+		_check(game.planning.phase=="READY" and game.battle.units[0]==source and game.battle.history.is_empty(),"WAIT selection still does not commit")
+		var confirm=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="CONFIRM")[0]
+		_click(confirm.get_global_rect().get_center())
+		_check(game.movement.active and not is_instance_valid(game.overlay),"scaled CONFIRM begins travel "+str(dimensions))
 		var history=game.battle.history.duplicate()
 		_cell(game.battle.units[3].pos)
 		var key=InputEventKey.new();key.keycode=KEY_ESCAPE;key.pressed=true;root.push_input(key,false)
 		_check(game.selected==-1 and game.battle.history==history,"GPU inspection and Esc cannot interrupt committed travel")
 		await _observe("manual-"+str(dimensions.x))
-		_check(is_instance_valid(game.overlay) and game.battle.mode=="CHOICE","arrival directly exposes ACTION")
-		for center in [game.T.PREVIEW_CENTER,game.T.BATTLE_INFO_RING]:
-			var rings=game.displayed_rings.filter(func(r):return r.center==center)
-			_check(rings.size()==1 and _same_landing(rings[0].unit,predicted),"both actual drawn rings use predicted landing state")
+		_check(not is_instance_valid(game.overlay) and game.battle.turn==2 and game.battle.history.size()==2,"arrival directly executes chosen WAIT")
+		_check(_same_landing(game.battle.units[0],predicted),"real landing equals planned panels and aura")
 		_shot("landing-"+str(dimensions.x))
-		var back=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="BACK")[0]
-		_click(back.get_global_rect().get_center());await _settle()
-		_check(game.battle.units[0]==source and game.battle.path==[Vector2i(4,4),Vector2i(4,5)] and game.battle.history.is_empty(),"scaled BACK restores the exact original unit and editable route")
-		_cell(Vector2i(4,5),true);game._restart();await _settle(15)
-		_check(game.build_open and not game.movement.active,"restart during travel discards old arrival")
+		game._start_battle();_cell(Vector2i(4,4));_cell(Vector2i(4,4),true);game._wait_action();game._confirm_plan()
+		game._restart();await _settle(15)
+		_check(game.build_open and not game.movement.active and game.playback_command.is_empty(),"restart during travel discards old arrival and action")
 	root.size=Vector2i(1920,1080);await _settle()
 	await _cpu()
 	await _terminal()
 	game._restart();_check(game._toggle_debug(false) and game.collection.snapshot()==normal,"normal BUILD and exact original collection restored")
 	await _settle()
-	var f=FileAccess.open("res://artifacts/runtime/movement-gpu.json",FileAccess.WRITE);f.store_string(JSON.stringify({"checks":checks,"failures":failures,"observations":observations},"\t"));f.close()
-	print("MOVEMENT GPU: %d checks / %d failures / normal BUILD restored" % [checks,failures])
+	var f=FileAccess.open("res://artifacts/runtime/planned-movement-gpu.json",FileAccess.WRITE);f.store_string(JSON.stringify({"checks":checks,"failures":failures,"observations":observations,"draw_ms":game.draw_times},"\t"));f.close()
+	print("PLANNED MOVEMENT GPU: %d checks / %d failures / normal BUILD restored" % [checks,failures])
 	quit(0 if failures==0 else 1)
 func _same_landing(actual: Dictionary,predicted: Dictionary) -> bool:
 	for key in ["pos","core_angle","gear_angle","arms_angle","class_name","gear_mutation","arms_mutation"]:
@@ -83,8 +89,8 @@ func _observe(tag: String) -> void:
 			_check(Geometry2D.get_closest_point_to_segment(expected,segment[0],segment[1]).distance_to(expected)>=clearance-0.001,"white route stays outside moving ring "+tag)
 		for center in [game.T.PREVIEW_CENTER,game.T.BATTLE_INFO_RING]:
 			var side=game.displayed_rings.filter(func(r):return r.center==center)
-			_check(side.size()==1 and side[0].unit==game.movement.source,"actual side glyph remains the same moving source "+tag)
-		frames.append({"elapsed":game.movement.elapsed,"position":str(cell),"center":str(expected)})
+			_check(side.size()==1 and side[0].unit==game.movement.unit(),"actual side glyph remains the same changing moving rings "+tag)
+		frames.append({"elapsed":game.movement.elapsed,"position":str(cell),"center":str(expected),"angles":[game.movement.unit().core_angle,game.movement.unit().gear_angle,game.movement.unit().arms_angle]})
 		if not snapped:
 			_shot("mid-"+tag);snapped=true
 	_check(not game.movement.active and frames.size()>0,"travel visibly completes without a stuck frame "+tag)
@@ -112,7 +118,7 @@ func _terminal() -> void:
 	game.collection.stage_index=2;game._start_battle();await _settle()
 	# 移動で終局する境界だけの明示fixture。製品の通常配置と動画には使わない。
 	game.battle.actor=0;game.battle.units[0].pos=Vector2i(8,0);game.battle.units[3].pos=Vector2i.ZERO;game._follow_turn()
-	_cell(Vector2i(9,0));_cell(Vector2i(9,0),true)
+	_cell(Vector2i(9,0));_cell(Vector2i(9,0),true);await _settle();game._confirm_plan()
 	_check(game.movement.active and game.battle.result=="VICTORY" and not is_instance_valid(game.overlay),"movement terminal waits for landing display")
 	await _observe("terminal-1920")
 	_check(is_instance_valid(game.overlay) and game.result_awarded and game.battle.history.size()==1 and game.battle.turn==1,"landing opens only one terminal result without extra action")
