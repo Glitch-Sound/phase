@@ -782,7 +782,7 @@ func _build() -> void:
 	for r in range(2):
 		var key="arms" if r==0 else "gear"
 		var y=T.BUILD_EQUIPMENT_ROWS[r]
-		_icon(panel,key,Rect2(middle,y+3,20,20),MUTED)
+		_icon(panel,key,Rect2(Vector2(middle,y)+T.BUILD_EQUIPMENT_ICON.position,T.BUILD_EQUIPMENT_ICON.size),MUTED)
 		_label(panel,key.to_upper(),Rect2(middle+32,y,T.BUILD_EQUIPMENT_WIDTH-32,28),17,WHITE)
 		var view=Control.new()
 		view.position=Vector2(middle,y+99)

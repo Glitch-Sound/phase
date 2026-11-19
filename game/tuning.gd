@@ -144,6 +144,8 @@ const BUILD_EQUIPMENT_STAT_STEP := 80.0
 const BUILD_EQUIPMENT_LABEL_FONT := 14
 const BUILD_EQUIPMENT_VALUE_FONT := 15
 const BUILD_EQUIPMENT_ROWS := [136.0,410.0]
+# 剣と盾の可視中心を見出し文字へ揃え、図柄と大きさは保つ。
+const BUILD_EQUIPMENT_ICON := Rect2(0,-1,20,20)
 const UI_FIELD_LINE := 1
 const UI_FOCUS_LINE := 2
 # 右情報を盤面から56px離し、識別と行動判断に必要な内容へ絞る。
