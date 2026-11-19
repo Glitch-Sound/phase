@@ -178,6 +178,7 @@ func _test_notifications() -> void:
 			game._cell_input(Vector2i(4,4))
 			game._cell_input(Vector2i(5,4))
 			game._cell_input(Vector2i(5,4),true)
+			game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 			await process_frame
 			game.battle.choose_skill(game.C.DAMAGE)
 			game._clear_overlay()
@@ -406,6 +407,7 @@ func _test_compact_layout() -> void:
 	game._cell_input(Vector2i(4,4))
 	game._cell_input(Vector2i(5,4))
 	game._cell_input(Vector2i(5,4),true)
+	game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 	await process_frame
 	game.battle.choose_skill(game.C.DAMAGE)
 	game._clear_overlay()

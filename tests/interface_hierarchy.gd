@@ -133,6 +133,7 @@ func _surfaces() -> void:
 	game._start_battle()
 	game._cell_input(Vector2i(4,4))
 	game._cell_input(Vector2i(4,4),true)
+	game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 	await process_frame
 	_check_surface(game.overlay,"ACTION")
 	var active=game.overlay.find_children("*","Button",true,false).filter(func(b):return not b.disabled)

@@ -103,6 +103,7 @@ func _test_screens() -> void:
 	game._cell_input(Vector2i(4,4))
 	game._cell_input(Vector2i(5,4))
 	game._cell_input(Vector2i(5,4),true)
+	game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 	await process_frame
 	texts=game.overlay.find_children("*","Label",true,false).map(func(l):return l.text)
 	_check(texts.has("UNIT 1 / ACTION") and not texts.has("UNIT 01 / ACTION"),"ACTION uses presentation name")

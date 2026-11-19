@@ -26,6 +26,7 @@ func _run() -> void:
 	game._cell_input(Vector2i(4,4))
 	game._cell_input(Vector2i(5,4))
 	game._cell_input(Vector2i(5,4),true)
+	game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 	await process_frame
 	_check(game.overlay.get_child(1).position==Vector2(700,330),"restore centered ACTION")
 	_check(game.overlay.get_child(1).size.x==420,"restore original ACTION width")

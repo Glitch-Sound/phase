@@ -26,6 +26,7 @@ func _entry_points() -> void:
 		var source=game.battle.units[0].pos
 		game._cell_input(Vector2i(4,4))
 		game._cell_input(Vector2i(4,4),true)
+		game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 		await process_frame
 		var panel=game.overlay.get_child(1)
 		var buttons=panel.find_children("*","Button",true,false)

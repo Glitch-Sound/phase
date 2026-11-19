@@ -45,6 +45,7 @@ func _test_gui_mouse(game: Control, factor: float, offset: Vector2) -> void:
 	await process_frame
 	_check(game.battle.path==[Vector2i(4,4)],"scaled click selects visible board cell")
 	_push_click(offset+_point(Vector2i(4,4))*factor,true)
+	game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 	await process_frame
 	_check(game.battle.mode=="CHOICE" and is_instance_valid(game.overlay),"scaled double click opens action overlay")
 	game._start_battle()
@@ -69,6 +70,7 @@ func _test_resize_route(game: Control) -> void:
 	await process_frame
 	_check(game.battle.path==[Vector2i(4,4),Vector2i(5,4)],"resize return preserves the route")
 	_push_click(root.get_final_transform()*_point(Vector2i(5,4)),true)
+	game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 	await process_frame
 	_check(game.battle.mode=="CHOICE" and game.battle.units[0].pos==Vector2i(5,4),"route can commit after resize return")
 

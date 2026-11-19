@@ -83,6 +83,7 @@ func _test_apply(game,palette) -> void:
 	game._close_aux()
 	await process_frame
 	game._cell_input(Vector2i(4,4),true)
+	game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 	await process_frame
 	_check(game.battle.mode=="CHOICE","action overlay after palette apply")
 	game._settings()
@@ -169,6 +170,7 @@ func _test_action_context(game,palette) -> void:
 	game._start_battle()
 	game._cell_input(Vector2i(4,4))
 	game._cell_input(Vector2i(4,4),true)
+	game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 	await process_frame
 	var dim: Color=game.overlay.get_child(0).color
 	var colors=palette.PRESETS.DEFAULT.duplicate()
@@ -228,6 +230,7 @@ func _test_focus_scope(game) -> void:
 	game._start_battle()
 	game._cell_input(Vector2i(4,4))
 	game._cell_input(Vector2i(4,4),true)
+	game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 	await process_frame
 	await _tab_cycle(game,game.overlay,"ACTION")
 	game.battle.mode="RESULT"
