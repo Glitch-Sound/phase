@@ -4,6 +4,7 @@ var failures=0
 var game
 func _initialize() -> void:_run.call_deferred()
 func _run() -> void:
+	root.size=Vector2i(1920,1080)
 	game=load("res://tests/movement_audit.gd").new()
 	game.settings_path="res://artifacts/runtime/movement-no-settings.json"
 	game.save_path="res://artifacts/runtime/movement-no-save.json"
@@ -27,12 +28,14 @@ func _manual() -> void:
 	game.battle.units[3].pos=Vector2i(5,4)
 	var before=game.battle.units.duplicate(true)
 	_commit();await _draw_frame()
-	_check(not game.movement.active and is_instance_valid(game.overlay) and game.planning.phase=="CHOICE" and game.battle.units==before and game.battle.history.is_empty(),"endpoint opens planning without moving or committing")
+	_check(not game.movement.active and is_instance_valid(game.overlay) and game.planning.phase=="CHOICE" and game.battle.units==before and game.battle.history.is_empty() and not game.drawn_route_segments.is_empty(),"endpoint opens planning with the existing route, without moving or committing")
 	var expected=game.planning.projected.units[0].duplicate(true)
 	game._choose_battle_skill(game.C.DAMAGE)
-	_check(game.planning.phase=="TARGET" and game.battle.units==before,"choose action from landing while real units stay put")
+	await _draw_frame()
+	_check(game.planning.phase=="TARGET" and game.battle.units==before and not game.drawn_route_segments.is_empty(),"target planning retains the route while real units stay put")
 	game._cell_input(game.battle.units[3].pos)
-	_check(game.planning.phase=="READY" and not game.movement.active and game.battle.history.is_empty(),"target selection still requires explicit CONFIRM")
+	await _draw_frame()
+	_check(game.planning.phase=="READY" and not game.movement.active and game.battle.history.is_empty() and not game.drawn_route_segments.is_empty(),"final confirmation retains the planned route without committing")
 	game._plan_back();game._plan_back();game._reselect_path()
 	_check(not game.planning.active() and game.battle.units==before and game.battle.path==[Vector2i(4,4)] and game.battle.history.is_empty(),"BACK discards only plans and retains editable route")
 	game._cell_input(Vector2i(4,4),true);game._choose_battle_skill(game.C.DAMAGE);game._cell_input(game.battle.units[3].pos)
@@ -43,6 +46,7 @@ func _manual() -> void:
 	var key=InputEventKey.new();key.keycode=KEY_ESCAPE;key.pressed=true;root.push_input(key,false)
 	_check(game.selected==-1 and game.battle.history.size()==1,"repeated input and Esc cannot alter playback")
 	game._movement_tick(game.movement.duration/2);await _draw_frame()
+	_check(game.drawn_route_segments.is_empty(),"manual execution draws no route line")
 	var display=game.movement.unit()
 	for center in [game.T.PREVIEW_CENTER,game.T.BATTLE_INFO_RING]:
 		var ring=game.displayed_rings.filter(func(r):return r.center==center)
@@ -71,12 +75,14 @@ func _cpu() -> void:
 	game.cpu_enabled=true;game._start_battle();await process_frame
 	game.battle.actor=3;game._follow_turn()
 	game.cpu_turn.begin(game.battle,{"path":[Vector2i(5,4),Vector2i(4,4)],"skill":game.C.DAMAGE,"target":0})
+	game._cpu_tick(1);await _draw_frame()
+	_check(not game.movement.active and not game.drawn_route_segments.is_empty(),"CPU route announcement retains the existing route line")
 	for i in range(20):
 		game._cpu_tick(1)
 		if game.movement.active:break
 	_check(game.movement.active,"CPU commit enters the same movement phase")
 	await _draw_frame()
-	_check(game.displayed_text.has("CPU A / MOVING") and game.displayed_text.has("DAMAGE / ADJACENT → 1"),"CPU shows its already chosen action and target during travel")
+	_check(game.displayed_text.has("CPU A / MOVING") and game.displayed_text.has("DAMAGE / ADJACENT → 1") and game.drawn_route_segments.is_empty(),"CPU shows its chosen action and target during travel without a route line")
 	var hp=game.battle.units[0].hp
 	game._cpu_tick(100)
 	_check(game.battle.units[0].hp==hp,"CPU cannot attack during travel")

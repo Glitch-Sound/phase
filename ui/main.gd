@@ -362,8 +362,6 @@ func _draw_board() -> void:
 				if cpu_turn.active and (cpu_turn.phase=="TARGET" or movement.active) and cpu_turn.command.target==i:
 					_draw_cell_focus(rect,WHITE)
 	if movement.active:
-		for segment in _route_segments():
-			draw_line(segment[0],segment[1],WHITE,T.ROUTE_LINE_WIDTH*BOARD_SCALE,true)
 		_ring(self,BOARD+(movement.position()+Vector2.ONE*0.5)*CELL,T.UNIT_BOARD_RADIUS*BOARD_SCALE,movement.unit(),true)
 	elif battle.mode=="MOVE":
 		for segment in _route_segments():

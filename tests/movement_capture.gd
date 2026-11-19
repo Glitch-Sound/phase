@@ -17,12 +17,12 @@ func _click(point: Vector2,double: bool=false) -> void:
 func _cell(cell: Vector2i,double: bool=false) -> void:
 	_click(game._cell_rect(cell).get_center(),double)
 func _shot(name: String) -> void:
-	root.get_texture().get_image().save_png("res://artifacts/runtime/planned-movement-"+name+".png")
+	root.get_texture().get_image().save_png("res://artifacts/runtime/hide-route-"+name+".png")
 ## REQ-046-S04
 func _run() -> void:
 	game=load("res://tests/movement_audit.gd").new()
-	game.save_path="res://artifacts/runtime/planned-movement-gpu-no-save.json"
-	game.settings_path="res://artifacts/runtime/planned-movement-gpu-no-settings.json"
+	game.save_path="res://artifacts/runtime/hide-route-gpu-no-save.json"
+	game.settings_path="res://artifacts/runtime/hide-route-gpu-no-settings.json"
 	root.add_child(game);await _settle()
 	var normal=game.collection.snapshot()
 	_check(game._toggle_debug(true),"isolated actual debug entry")
@@ -35,18 +35,25 @@ func _run() -> void:
 			root.grab_focus();await _settle()
 		_check(root.has_focus() and game.window_focused,"actual GPU focus "+str(dimensions))
 		game._start_battle();await _settle()
+		root.grab_focus();await _settle(3)
+		_check(root.has_focus() and game.window_focused,"battle input focus "+str(dimensions))
 		var source=game.battle.units[0].duplicate(true)
 		for cell in [Vector2i(4,4),Vector2i(4,5)]:_cell(cell)
 		var predicted=game.battle.preview()
+		await _settle()
+		_check(not game.drawn_route_segments.is_empty(),"route planning visibly retains the line")
+		_shot("planning-"+str(dimensions.x))
 		_cell(Vector2i(4,5),true);await _settle()
-		_check(game.planning.active() and game.battle.units[0]==source and not game.movement.active,"scaled planning keeps the original unit "+str(dimensions))
+		_check(game.planning.active() and game.battle.units[0]==source and not game.movement.active and not game.drawn_route_segments.is_empty(),"scaled planning keeps the original unit "+str(dimensions))
+		if not game.planning.active():
+			game._restart();game._toggle_debug(false);quit(1);return
 		var back=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="BACK")[0]
 		_click(back.get_global_rect().get_center());await _settle()
 		_check(not game.planning.active() and game.battle.units[0]==source and game.battle.path==[Vector2i(4,4),Vector2i(4,5)] and game.battle.history.is_empty(),"scaled BACK changes only the plan")
 		_cell(Vector2i(4,5),true);await _settle()
 		var wait=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="WAIT")[0]
 		_click(wait.get_global_rect().get_center());await _settle()
-		_check(game.planning.phase=="READY" and game.battle.units[0]==source and game.battle.history.is_empty(),"WAIT selection still does not commit")
+		_check(game.planning.phase=="READY" and game.battle.units[0]==source and game.battle.history.is_empty() and not game.drawn_route_segments.is_empty(),"WAIT selection still does not commit")
 		var confirm=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="CONFIRM")[0]
 		_click(confirm.get_global_rect().get_center())
 		_check(game.movement.active and not is_instance_valid(game.overlay),"scaled CONFIRM begins travel "+str(dimensions))
@@ -66,8 +73,8 @@ func _run() -> void:
 	await _terminal()
 	game._restart();_check(game._toggle_debug(false) and game.collection.snapshot()==normal,"normal BUILD and exact original collection restored")
 	await _settle()
-	var f=FileAccess.open("res://artifacts/runtime/planned-movement-gpu.json",FileAccess.WRITE);f.store_string(JSON.stringify({"checks":checks,"failures":failures,"observations":observations,"draw_ms":game.draw_times},"\t"));f.close()
-	print("PLANNED MOVEMENT GPU: %d checks / %d failures / normal BUILD restored" % [checks,failures])
+	var f=FileAccess.open("res://artifacts/runtime/hide-route-gpu.json",FileAccess.WRITE);f.store_string(JSON.stringify({"checks":checks,"failures":failures,"observations":observations,"draw_ms":game.draw_times},"\t"));f.close()
+	print("HIDDEN ROUTE GPU: %d checks / %d failures / normal BUILD restored" % [checks,failures])
 	quit(0 if failures==0 else 1)
 func _same_landing(actual: Dictionary,predicted: Dictionary) -> bool:
 	for key in ["pos","core_angle","gear_angle","arms_angle","class_name","gear_mutation","arms_mutation"]:
@@ -83,14 +90,11 @@ func _observe(tag: String) -> void:
 		var expected=game.BOARD+(cell+Vector2.ONE*0.5)*game.CELL
 		var rings=game.displayed_rings.filter(func(r):return r.unit.id==game.movement.source.id and Rect2(game.BOARD,Vector2.ONE*game.CELL*10).has_point(r.center))
 		_check(rings.size()==1 and rings[0].center.distance_to(expected)<0.001,"single actual moving glyph at continuous route position "+tag)
-		var scale=root.get_final_transform().get_scale().x
-		var clearance=game.V.route_unit_clearance(game.T.UNIT_BOARD_RADIUS*game.BOARD_SCALE,game.T.ROUTE_LINE_WIDTH*game.BOARD_SCALE,scale)
-		for segment in game._route_segments():
-			_check(Geometry2D.get_closest_point_to_segment(expected,segment[0],segment[1]).distance_to(expected)>=clearance-0.001,"white route stays outside moving ring "+tag)
+		_check(game.drawn_route_segments.is_empty(),"no route line is drawn during actual movement "+tag)
 		for center in [game.T.PREVIEW_CENTER,game.T.BATTLE_INFO_RING]:
 			var side=game.displayed_rings.filter(func(r):return r.center==center)
 			_check(side.size()==1 and side[0].unit==game.movement.unit(),"actual side glyph remains the same changing moving rings "+tag)
-		frames.append({"elapsed":game.movement.elapsed,"position":str(cell),"center":str(expected),"angles":[game.movement.unit().core_angle,game.movement.unit().gear_angle,game.movement.unit().arms_angle]})
+		frames.append({"elapsed":game.movement.elapsed,"position":str(cell),"center":str(expected),"angles":[game.movement.unit().core_angle,game.movement.unit().gear_angle,game.movement.unit().arms_angle],"drawn_route_segments":game.drawn_route_segments.size()})
 		if not snapped:
 			_shot("mid-"+tag);snapped=true
 	_check(not game.movement.active and frames.size()>0,"travel visibly completes without a stuck frame "+tag)
@@ -100,10 +104,12 @@ func _cpu() -> void:
 	game.cpu_paused=true;game.battle.actor=3;game._follow_turn()
 	game.cpu_turn.begin(game.battle,{"path":[Vector2i(5,4),Vector2i(4,4)],"skill":game.C.DAMAGE,"target":0})
 	game.cpu_paused=false
+	var saw_route=false
 	for i in range(60):
 		await _settle(1)
+		if not game.movement.active and not game.drawn_route_segments.is_empty():saw_route=true
 		if game.movement.active:break
-	_check(game.movement.active,"CPU uses common committed travel")
+	_check(game.movement.active and saw_route,"CPU announces the route before actual travel")
 	var elapsed=game.movement.elapsed;var hp=game.battle.units[0].hp
 	game._help();await _settle(12)
 	_check(game.movement.elapsed==elapsed and game.battle.units[0].hp==hp,"GPU HELP freezes CPU travel and action")
