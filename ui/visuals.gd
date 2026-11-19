@@ -76,7 +76,7 @@ static func glyph(radius: float, u: Dictionary, selected: bool, colors: Array, a
 			arcs.append({"role":["CORE","GEAR","ARMS"][r],"radius":rad,"start":start+gap/2,"end":end-gap/2,"color":colors[status],"width":maxf(T.UNIT_MIN_LINE,radius*T.UNIT_RING_WIDTH)})
 	var health=clampf(u.hp/maxf(1.0,u.max_hp),0.0,1.0)
 	if health>0:
-		arcs.append({"role":"HP","radius":radius*T.UNIT_HP_RADIUS,"start":-PI/2,"end":-PI/2+TAU*health,"color":A.health(assembly),"width":maxf(T.UNIT_HP_MIN_LINE,radius*T.UNIT_HP_WIDTH)})
+		arcs.append({"role":"HP","radius":radius*T.UNIT_HP_RADIUS,"start":-PI/2,"end":-PI/2+TAU*health,"color":A.color(assembly),"width":maxf(T.UNIT_HP_MIN_LINE,radius*T.UNIT_HP_WIDTH)})
 	var guard={}
 	if u.get("guard_active",false) and u.hp>0:
 		var points=[]

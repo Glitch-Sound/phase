@@ -23,7 +23,7 @@
 ビルドと収集の保存をgame/collection.gdに集約する。\
 構成候補と可否、原本から独立したプレビューはgame/build_choices.gd、共通の選択画面はui/build_dialog.gdへ置く。
 game/unit_identity.gdが表示名の規約と固定の幾何を生成し、戦闘の不変IDと構成には名前を混ぜない。\
-game/assembly_identity.gdが独立した所属紋章と安定色キー、明るいHPと視点の所有規則を持ち、ui/assembly_dialog.gdが候補だけを編集する。\
+game/assembly_identity.gdが独立した所属紋章と安定色キーと共通RGB、視点の所有規則を持ち、ui/assembly_dialog.gdが候補だけを編集する。\
 リングと波形、両方の紋章はui/visuals.gdで手続き的に描く。\
 目標文の固定参照はui/unit_reference_text.gdで紋章へ置換し、名前を非表示のアクセシビリティ用名称に保持する。
 配色と判読性はui/palette.gd、操作アイコンと権利表示はassets/lucide/に集約する。

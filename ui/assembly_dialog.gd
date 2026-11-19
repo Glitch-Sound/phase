@@ -35,8 +35,8 @@ func configure(owner_ui: Control,data: RefCounted) -> void:
 	preview=Control.new();preview.position=Vector2(552,132);preview.size=Vector2(220,230);preview.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(preview)
 	preview.draw.connect(func():
 		host._assembly_emblem(preview,Vector2(110,76),62,candidate,"PLAYER")
-		preview.draw_string(host.font,Vector2(30,180),"CREST / BRIGHT HP",HORIZONTAL_ALIGNMENT_LEFT,-1,13,host.MUTED)
-		preview.draw_rect(Rect2(30,200,160,5),A.health(candidate)))
+		preview.draw_string(host.font,Vector2(30,180),"ASSEMBLY COLOR",HORIZONTAL_ALIGNMENT_LEFT,-1,13,host.MUTED)
+		preview.draw_rect(Rect2(30,200,160,5),A.color(candidate)))
 	host._label(self,"Names may repeat. Your ownership mark stays separate.",Rect2(36,host.T.ASSEMBLY_COLOR_NOTE_Y,748,28),14,host.MUTED)
 	host._button(self,"APPLY",Rect2(36,host.T.ASSEMBLY_ACTION_Y,360,44),confirm)
 	host._button(self,"CANCEL",Rect2(424,host.T.ASSEMBLY_ACTION_Y,360,44),func():cancelled.emit())

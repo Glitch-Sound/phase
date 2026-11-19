@@ -32,7 +32,8 @@ func _test_glyph(visual) -> void:
 			_check(arc.role==["CORE","GEAR","ARMS"][r] and arc.color==P.PRESETS.DEFAULT[s+1],"layer and palette mapping %d/%d" % [r,s])
 			_check(arc.start>deg_to_rad(s*72.0-90) and arc.end<deg_to_rad((s+1)*72.0-90),"each sector has a real boundary gap %d/%d" % [r,s])
 			_check(is_equal_approx(arc.radius,24.0*T.new().get("UNIT_RING_RADII")[r]) and is_equal_approx(arc.width,maxf(T.new().get("UNIT_MIN_LINE"),24.0*T.new().get("UNIT_RING_WIDTH"))),"single-source thin geometry %d/%d" % [r,s])
-	_check(glyph.arcs[15].role=="HP" and glyph.arcs[15].color==A.health(A.default_profile("PLAYER")),"HP uses the independent bright assembly color")
+	var red=visual.glyph(24.0,u,false,P.PRESETS.DEFAULT.slice(1),P.PRESETS.DEFAULT[0],{"color":"RED"})
+	_check(glyph.arcs[15].role=="HP" and glyph.arcs[15].color==Color("c9d2dc") and red.arcs[15].color==Color("ed8b8b") and glyph.arcs.slice(0,15)==red.arcs.slice(0,15),"HP uses the exact opaque assembly RGB without changing phase colors")
 	_check(glyph.arcs[15].radius+glyph.arcs[15].width/2<glyph.arcs[0].radius-glyph.arcs[0].width/2,"HP is entirely inside CORE")
 	_check(u==before,"render description does not mutate the model")
 	for hp in [0,50,89,100]:

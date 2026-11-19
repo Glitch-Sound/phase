@@ -233,17 +233,18 @@ func _assembly_rows() -> Array:
 		for u in battle.units:
 			if u.camp==camp:hp+=u.hp;maximum+=u.max_hp
 		var text="%s / %s" % [_hp(hp),_hp(maximum)]
-		width=maxf(width,mono.get_string_size(text,HORIZONTAL_ALIGNMENT_LEFT,-1,T.BATTLE_HP_FONT_SIZE).x)
-		rows.append({"camp":camp,"hp":hp,"maximum":maximum,"text":text})
-	var value_x=minf(T.BATTLE_HP_VALUE_X,T.BATTLE_HP_RIGHT-width)
+		var text_width=mono.get_string_size(text,HORIZONTAL_ALIGNMENT_LEFT,-1,T.BATTLE_HP_FONT_SIZE).x
+		width=maxf(width,text_width)
+		rows.append({"camp":camp,"hp":hp,"maximum":maximum,"text":text,"text_width":text_width})
+	var bar_end=T.BATTLE_HP_RIGHT-width-T.BATTLE_HP_GAP
 	var baseline_offset=(mono.get_ascent(T.BATTLE_HP_FONT_SIZE)-mono.get_descent(T.BATTLE_HP_FONT_SIZE))/2
 	for i in range(rows.size()):
 		var row=rows[i];var center_y=T.BATTLE_HP_BASELINE+i*T.BATTLE_HP_STEP-baseline_offset
 		row.center_y=center_y
-		row.bar=Rect2(T.BATTLE_HP_BAR.position.x,center_y-T.BATTLE_HP_BAR.size.y/2,value_x-T.BATTLE_HP_GAP-T.BATTLE_HP_BAR.position.x,T.BATTLE_HP_BAR.size.y)
+		row.bar=Rect2(T.BATTLE_HP_BAR.position.x,center_y-T.BATTLE_HP_BAR.size.y/2,bar_end-T.BATTLE_HP_BAR.position.x,T.BATTLE_HP_BAR.size.y)
 		row.emblem=Rect2(row.bar.position.x-T.ASSEMBLY_HP_GAP-T.ASSEMBLY_EMBLEM_RADIUS*2,center_y-T.ASSEMBLY_EMBLEM_RADIUS,T.ASSEMBLY_EMBLEM_RADIUS*2,T.ASSEMBLY_EMBLEM_RADIUS*2)
-		row.text_origin=Vector2(value_x,center_y+baseline_offset)
-		row.text_rect=Rect2(value_x,center_y-mono.get_height(T.BATTLE_HP_FONT_SIZE)/2,width,mono.get_height(T.BATTLE_HP_FONT_SIZE))
+		row.text_origin=Vector2(T.BATTLE_HP_RIGHT-row.text_width,center_y+baseline_offset)
+		row.text_rect=Rect2(row.text_origin.x,center_y-mono.get_height(T.BATTLE_HP_FONT_SIZE)/2,row.text_width,mono.get_height(T.BATTLE_HP_FONT_SIZE))
 	return rows
 
 func _draw_left() -> void:
@@ -251,7 +252,7 @@ func _draw_left() -> void:
 	for row in _assembly_rows():
 		var profile=_assembly_profile(row.camp)
 		_assembly_emblem(self,row.emblem.get_center(),T.ASSEMBLY_EMBLEM_RADIUS,profile,row.camp)
-		_bar(row.bar,row.hp/maxf(1,row.maximum),A.health(profile))
+		_bar(row.bar,row.hp/maxf(1,row.maximum),A.color(profile))
 		_text(row.text,row.text_origin,T.BATTLE_HP_FONT_SIZE,WHITE,mono)
 	_draw_timeline()
 
@@ -1375,7 +1376,7 @@ func _help() -> void:
 	_label(panel,"Name 3 PLAYER slots. Max 3 skills; NONE allowed.\nCLASS: CORE order; MUTATION: one equipment ring.\nVIRSL = STANDARD; VLSRI is free. Others: MUTATION unlocks.\nUNLOCK ALL: temporary, debug only, never saved.",Rect2(36,631,500,98),16,WHITE)
 	_label(panel,"READING THE SIGNAL",Rect2(580,589,500,28),16,CYAN)
 	_label(panel,"Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage.\nSAVE / LOAD are explicit. Old saves are backed up.",Rect2(580,631,510,66),18,WHITE)
-	_label(panel,"Crests identify units and assemblies. A small dot marks your units.",Rect2(580,706,510,22),13,MUTED)
+	_label(panel,"Crests identify units and assemblies. A small assembly crest marks your units.",Rect2(580,706,510,22),13,MUTED)
 	_button(panel,"CLOSE / ESC",Rect2(36,736,800,44),_close_aux)
 	_button(panel,"SKILLS",Rect2(856,736,228,44),_skill_help)
 
@@ -1553,14 +1554,7 @@ func _objective_label(parent: Control,text: String,rect: Rect2,font_px: int,colo
 
 func _ownership_marker(center: Vector2,u: Dictionary) -> void:
 	if not A.owns(u,view_camp):return
-	var point=center+T.OWNER_MARK_OFFSET
-	var scale_px=maxf(0.001,(get_viewport_transform()*get_global_transform()).get_scale().x)
-	var ink=_ownership_color(u)
-	draw_arc(point,T.OWNER_MARK_RADIUS,0,TAU,32,ink,T.OWNER_MARK_PIXEL_MIN/scale_px,true)
-	draw_circle(point,T.OWNER_MARK_INNER,ink,true,-1,true)
-
-func _ownership_color(u: Dictionary) -> Color:
-	return Color(A.color(_assembly_profile(u.camp)),T.OWNER_MARK_ALPHA)
+	_assembly_emblem(self,center+T.OWNER_MARK_OFFSET,T.OWNER_MARK_RADIUS,_assembly_profile(u.camp),u.camp)
 
 func _ring(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,active: bool=false) -> void:
 	V.ring(canvas,center,radius,u,active,ring_colors,CYAN,mono,_assembly_profile(u.camp))

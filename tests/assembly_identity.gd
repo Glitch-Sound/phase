@@ -31,11 +31,6 @@ func _geometry() -> void:
 func _colors() -> void:
 	var palette={"PEARL":"c9d2dc","JADE":"a1d9c3","ICE":"9ec8ed","AMBER":"e5c38c","LILAC":"c7b1e6","ROSE":"e3adbd","RED":"ed8b8b"}
 	_check(A.PALETTE.keys()==palette.keys() and palette.keys().all(func(k):return A.color({"color":k})==Color(palette[k])),"all stable palette keys have fixed colors")
-	var T=load("res://game/tuning.gd")
-	var bg=_luminance(Color("13181d"))
-	_check(palette.keys().all(func(k):
-		var color=A.color({"color":k});var hp=A.health({"color":k});var light=_luminance(hp)
-		return is_equal_approx(color.h,hp.h) and hp.a==1 and light>=T.ASSEMBLY_HP_LUMINANCE_MIN and (light+0.05)/(bg+0.05)>=T.ASSEMBLY_HP_CONTRAST_MIN),"every HP color preserves hue with high luminance and contrast")
 ## REQ-052-S01
 func _ownership() -> void:
 	var units=[{"id":"01","camp":"PLAYER","display_name":"Same"},{"id":"A","camp":"ENEMY","display_name":"Same"},{"id":"A","camp":"PLAYER","display_name":"Same"}]
@@ -50,10 +45,6 @@ func _storage() -> void:
 	_check(not b.load_from(path+".invalid").is_empty() and b.snapshot()==saved,"bad assembly load preserves the complete current data")
 	var normal=a.snapshot();var session=load("res://game/debug_session.gd").new();var temp=session.begin(a);temp.assembly.name="Temporary"
 	_check(temp.save_to(path+".temporary")!="" and not FileAccess.file_exists(path+".temporary") and session.end().snapshot()==normal,"temporary assembly does not pollute normal data or save")
-func _luminance(color: Color) -> float:
-	var rgb=[]
-	for v in [color.r,color.g,color.b]:rgb.append(v/12.92 if v<=0.04045 else pow((v+0.055)/1.055,2.4))
-	return rgb[0]*0.2126+rgb[1]*0.7152+rgb[2]*0.0722
 func _check(ok: bool,note: String) -> void:
 	checks+=1
 	if not ok:failures+=1;printerr("FAIL: ",note)
