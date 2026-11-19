@@ -20,7 +20,7 @@ func _run() -> void:
 		game.battle.units[1].pos=Vector2i(5,5)
 		game.battle.units[1].skills=[C.FIELD_FAST,C.GUARD]
 		game.battle.units[2].pos=Vector2i(6,4)
-		game.battle.units[2].skills=[C.DAMAGE,C.FIELD_STOP]
+		game.battle.units[2].skills=[C.DAMAGE,C.FIELD_SLOW]
 		game.battle.units[3].pos=Vector2i(9,9)
 		game.battle.units[3].skills=[C.FIELD_SLOW]
 		await _focus_input()
@@ -84,7 +84,7 @@ func _battle_observation() -> void:
 	game.cpu_enabled=true
 	game.cpu_fast=false
 	game._start_battle()
-	game.battle.units[2].skills=[C.DAMAGE,C.HEAL,C.FIELD_STOP]
+	game.battle.units[2].skills=[C.DAMAGE,C.HEAL,C.FIELD_SLOW]
 	game.battle.units[3].skills=[C.DAMAGE,C.HEAL,C.FIELD_SLOW]
 	await create_timer(0.2).timeout
 	var policy=POLICY.new()
@@ -145,7 +145,7 @@ func _motion_observation() -> void:
 	await _utility_fixture(C.GUARD)
 	game.battle.units[0].skills=[C.GUARD,C.FIELD_SLOW]
 	game.battle.units[1].skills=[C.FIELD_FAST]
-	game.battle.units[2].skills=[C.FIELD_STOP]
+	game.battle.units[2].skills=[C.FIELD_SLOW]
 	game.battle.units[3].skills=[C.FIELD_SLOW]
 	game.cpu_paused=true
 	game.field_draw_times=[]

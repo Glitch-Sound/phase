@@ -60,8 +60,9 @@ func _run() -> void:
 	if game.has_method("_field_help"):
 		game._field_help()
 		await process_frame
-		var text="\n".join(game.auxiliary.find_children("*","Label",true,false).map(func(label):return label.text))
-		_check(text.contains("STOP") and text.contains("SLOW") and text.contains("FAST") and text.contains("STOP wins") and text.contains("SLOW + FAST cancel"),"HELP explains every field and the full overlap rule")
+		var labels=game.auxiliary.find_children("*","Label",true,false).map(func(label):return label.text)
+		var titles=labels.filter(func(text):return text.contains(" FIELD "))
+		_check(titles==["SLOW FIELD x0.5","FAST FIELD x1.5"] and labels.all(func(text):return not text.contains("STOP")) and labels.has("Same type applies once. SLOW + FAST cancel to normal x1.\nChecked on each landing; no lingering effect outside the field. Standing still does not rotate rings.\nSWAP and PUSH use the same entry rule after all landing positions are set."),"HELP has exactly two correctly named fields and the full overlap rule")
 	game._close_aux()
 	game._restart()
 	_check(game.build_open,"field UI returns BUILD without saving")

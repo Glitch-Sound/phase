@@ -51,7 +51,7 @@ func _panel_hint() -> void:
 		_check(not game.panel_hint.get_global_rect().intersects(game._cell_rect(Vector2i(4,4))),"hint never covers hovered panel icon or focus")
 		for i in range(game.battle.units.size()):
 			game.battle.units[i].pos=Vector2i(3+i%3,3+i/3)
-			game.battle.units[i].skills=[game.C.FIELD_STOP,game.C.FIELD_SLOW,game.C.FIELD_FAST]
+			game.battle.units[i].skills=[game.C.FIELD_SLOW,game.C.FIELD_FAST]
 		game.hover_cell=Vector2i(4,4)
 		game._update_panel_hint()
 		await process_frame

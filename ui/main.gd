@@ -453,13 +453,12 @@ func panel_description(cell: Vector2i) -> String:
 	if view.cells.has(cell):
 		var field: Dictionary=view.cells[cell]
 		var lines=[("AFTER MOVE / " if view.preview.has(cell) else "")+"EQUIPMENT x%.1f ON ENTRY" % field.factor]
-		for name in ["STOP","SLOW","FAST"]:
+		for name in ["SLOW","FAST"]:
 			var ids=[]
 			for source in field.sources:
 				if source.kind==name:ids.append(V.unit_name(source))
 			if not ids.is_empty():lines.append(name+" / "+", ".join(ids))
-		if field.kinds.has("STOP"):lines.append("STOP takes priority.")
-		elif field.kinds.has("SLOW") and field.kinds.has("FAST"):lines.append("SLOW + FAST cancel.")
+		if field.kinds.has("SLOW") and field.kinds.has("FAST"):lines.append("SLOW + FAST cancel.")
 		text+=("\n" if not text.is_empty() else "")+"\n".join(lines)
 	return text
 
@@ -1256,12 +1255,12 @@ func _field_help() -> void:
 	var panel=_modal(Rect2(400,160,1120,760),true)
 	_label(panel,"FIELDS",Rect2(36,25,1048,48),32,WHITE)
 	_label(panel,"PASSIVE / SURROUNDING",Rect2(36,88,1048,28),16,MUTED)
-	var names=["SLOW","STOP","FAST"]
-	for i in range(3):
-		_label(panel,"%s x%.1f" % [names[i],C.FIELD_FACTORS[names[i]]],Rect2(36+i*354,153,340,40),24,CYAN)
-		_label(panel,["Half equipment rotation.","Stop equipment rotation.","Speed up equipment rotation."][i],Rect2(36+i*354,204,340,40),18,WHITE)
+	var names=["SLOW","FAST"]
+	for i in range(names.size()):
+		_label(panel,"%s FIELD x%.1f" % [names[i],C.FIELD_FACTORS[names[i]]],Rect2(36+i*524,153,510,40),24,CYAN)
+		_label(panel,["Half equipment rotation.","Speed up equipment rotation."][i],Rect2(36+i*524,204,510,40),18,WHITE)
 	_label(panel,"Affects the 8 surrounding cells, including diagonals. Both camps, excluding the source.\nChanges only the GEAR and ARMS rotation for each step.\nCORE, stat values and turn speed stay unchanged.",Rect2(36,285,1048,88),19,WHITE)
-	_label(panel,"Same type applies once. STOP wins; SLOW + FAST cancel to normal x1.\nChecked on each landing; no lingering effect outside the field. Standing still does not rotate rings.\nSWAP and PUSH use the same entry rule after all landing positions are set.",Rect2(36,400,1048,90),19,WHITE)
+	_label(panel,"Same type applies once. SLOW + FAST cancel to normal x1.\nChecked on each landing; no lingering effect outside the field. Standing still does not rotate rings.\nSWAP and PUSH use the same entry rule after all landing positions are set.",Rect2(36,400,1048,90),19,WHITE)
 	_label(panel,"Clouds drift around the source. Faint broken clouds preview a moved source.\nHover cells to inspect the exact multiplier and source units.\nPANEL IGNORE skips CORE panels, not fields.",Rect2(36,515,1048,88),18,MUTED)
 	_button(panel,"BACK",Rect2(36,670,800,44),_skill_help)
 	_button(panel,"CLOSE / ESC",Rect2(856,670,228,44),_close_aux)

@@ -15,9 +15,8 @@ const PUSH = "ACTIVE_PUSH_ADJACENT"
 const GUARD = "ACTIVE_GUARD_SELF"
 const IGNORE_PANEL = "PASSIVE_IGNORE_PANEL_SELF"
 const FIELD_SLOW = "PASSIVE_FIELD_SLOW_ADJACENT"
-const FIELD_STOP = "PASSIVE_FIELD_STOP_ADJACENT"
 const FIELD_FAST = "PASSIVE_FIELD_FAST_ADJACENT"
-const FIELD_FACTORS = {"SLOW":0.5,"STOP":0.0,"FAST":1.5}
+const FIELD_FACTORS = {"SLOW":0.5,"FAST":1.5}
 # 周囲用だけの8方向。旧保存のADJACENT付きIDは保持し、通常スキルの上下左右とは分ける。
 const FIELD_OFFSETS = [Vector2i(-1,-1),Vector2i(0,-1),Vector2i(1,-1),Vector2i(-1,0),Vector2i(1,0),Vector2i(-1,1),Vector2i(0,1),Vector2i(1,1)]
 const TARGET_PATTERNS = {
@@ -42,7 +41,6 @@ const SKILLS = {
 	GUARD:{"type":"ACTIVE","effect":"GUARD","area":"SELF","label":"GUARD / SELF","description":"Reduce the next attack once. Cannot stack."},
 	IGNORE_PANEL:{"type":"PASSIVE","effect":"IGNORE PANEL","area":"SELF","label":"PANEL IGNORE / SELF","description":"Ignore special CORE effects. Equipment still turns."},
 	FIELD_SLOW:{"type":"PASSIVE","effect":"SLOW FIELD","area":"SURROUNDING","field":"SLOW","label":"SLOW FIELD / SURROUNDING","description":"Surrounding others: equipment rotation x0.5."},
-	FIELD_STOP:{"type":"PASSIVE","effect":"STOP FIELD","area":"SURROUNDING","field":"STOP","label":"STOP FIELD / SURROUNDING","description":"Surrounding others: equipment rotation x0."},
 	FIELD_FAST:{"type":"PASSIVE","effect":"FAST FIELD","area":"SURROUNDING","field":"FAST","label":"FAST FIELD / SURROUNDING","description":"Surrounding others: equipment rotation x1.5."}
 }
 const SQUAD_SIZE = 3

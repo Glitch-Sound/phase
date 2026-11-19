@@ -43,7 +43,7 @@ func _session() -> void:
 	_check(sandbox.items.ARMS.size()==126 and sandbox.items.GEAR.size()==126 and sandbox.builds.all(func(build):return sandbox.valid_build(build)),"all equipment is usable with new-game builds")
 	var labels=sandbox.skills.duplicate();labels.sort()
 	var all_skills=C.SKILLS.keys();all_skills.sort()
-	_check(labels==all_skills and labels.size()==16,"all sixteen skills are unlocked exactly once")
+	_check(labels==all_skills and labels.size()==15,"all fifteen skills are unlocked exactly once")
 	var mutations=sandbox.mutations
 	var unique={}
 	for mutation in mutations:unique[mutation]=true
@@ -55,7 +55,7 @@ func _session() -> void:
 	var rng=RandomNumberGenerator.new();rng.seed=417
 	var rng_state=rng.state
 	_check(sandbox.roll_loot(rng)==[] and rng.state==rng_state and sandbox.snapshot()==state,"debug result has no loot or random-state changes")
-	sandbox.builds[0].skills=[C.GUARD,C.FIELD_STOP,C.SWAP]
+	sandbox.builds[0].skills=[C.GUARD,C.FIELD_SLOW,C.SWAP]
 	sandbox.stage_index=3
 	_check(normal.snapshot()==original,"debug edits never mutate normal state")
 	_check(session.end()==normal and not session.active() and normal.snapshot()==original,"exit returns the exact untouched normal object")

@@ -221,7 +221,7 @@ func _draw_preview() -> void:
 
 func _draw_skill_area() -> void:
 	if not C.SKILLS.has(selected_id):return
-	var offsets=C.FIELD_OFFSETS if selected_id in [C.FIELD_SLOW,C.FIELD_STOP,C.FIELD_FAST] else C.target_offsets(selected_id)
+	var offsets=C.FIELD_OFFSETS if selected_id in [C.FIELD_SLOW,C.FIELD_FAST] else C.target_offsets(selected_id)
 	var origin=Vector2(226,420);var cell=24.0
 	for y in range(-2,3):
 		for x in range(-2,3):

@@ -27,8 +27,7 @@ static func resolve(receiver: Dictionary, cell: Vector2i, world: Array) -> Dicti
 			sources.append({"id":source.id,"camp":source.camp,"kind":kind})
 	kinds.sort()
 	var factor=1.0
-	if kinds.has("STOP"):factor=C.FIELD_FACTORS.STOP
-	elif kinds.has("SLOW") and kinds.has("FAST"):factor=1.0
+	if kinds.has("SLOW") and kinds.has("FAST"):factor=1.0
 	elif kinds.has("SLOW"):factor=C.FIELD_FACTORS.SLOW
 	elif kinds.has("FAST"):factor=C.FIELD_FACTORS.FAST
 	return {"factor":factor,"kinds":kinds,"sources":sources}

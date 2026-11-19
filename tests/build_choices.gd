@@ -30,7 +30,7 @@ func _catalog(model) -> void:
 	var mutations=model.candidates(collection,0,"gear_mutation")
 	_check(mutations.size()==120 and mutations.filter(func(r):return r.selectable).map(func(r):return r.id)==["NORMAL"],"mutations are a separate shared catalogue with inactive locks")
 	var skills=model.candidates(collection,0,"skill",2)
-	_check(skills.size()==17 and not skills.filter(func(r):return r.id==C.DAMAGE)[0].selectable and not skills.filter(func(r):return r.id==C.MOVE)[0].selectable,"NONE plus all skills distinguish equipped and locked entries")
+	_check(skills.size()==16 and not skills.filter(func(r):return r.id==C.DAMAGE)[0].selectable and not skills.filter(func(r):return r.id==C.MOVE)[0].selectable,"NONE plus all current skills distinguish equipped and locked entries")
 	_check(skills.filter(func(r):return r.id=="NONE")[0].selectable,"empty slot remains available")
 ## REQ-042-S01、REQ-024-S01
 func _preview_and_commit(model) -> void:

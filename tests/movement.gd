@@ -78,10 +78,10 @@ func _angles() -> void:
 	_check(is_equal_approx(u.core_angle,50) and is_equal_approx(u.gear_angle,305) and is_equal_approx(u.arms_angle,55),"RESET interpolates from the first landing rather than skipping it")
 	p.advance(b,p.duration/4,false)
 	_check(p.unit()==b.units[0] and b.units==before,"arrival state matches actual calculation without extra panel application")
-	b.units[0]=source.duplicate(true);b.units[3].pos=Vector2i(5,4);b.units[3].skills=[C.FIELD_STOP]
+	b.units[0]=source.duplicate(true);b.units[3].pos=Vector2i(5,4);b.units[3].skills=[C.FIELD_SLOW]
 	b.panels[Vector2i(4,4)]="COUNTERCLOCKWISE"
 	p.begin(b,source,[Vector2i(4,4)]);p.advance(b,p.duration/2,false);u=p.unit()
-	_check(is_equal_approx(u.core_angle,45) and is_equal_approx(u.gear_angle,350) and is_equal_approx(u.arms_angle,10),"STOP freezes only equipment while counterclockwise CORE still changes during travel")
+	_check(is_equal_approx(u.core_angle,45) and is_equal_approx(u.gear_angle,342.5) and is_equal_approx(u.arms_angle,17.5),"SLOW halves equipment rotation while counterclockwise CORE still changes during travel")
 ## REQ-046-S01、REQ-046-S02、REQ-046-S03
 func _attack_beat() -> void:
 	var b=_battle();var before=b.units[0].duplicate(true);var route=[Vector2i(4,4)]
@@ -108,7 +108,7 @@ func _attack_beat() -> void:
 	_check(not p.begin(b,before,[],false,false,true),"zero-step movement adds no preparation hold")
 ## REQ-018-S08、REQ-046-S01、REQ-046-S02、REQ-046-S03
 func _cloud_fade() -> void:
-	var b=_battle();var source=b.units[0].duplicate(true);source.skills=[C.FIELD_STOP]
+	var b=_battle();var source=b.units[0].duplicate(true);source.skills=[C.FIELD_SLOW]
 	var p=factory.new()
 	_check(p.has_method("cloud_alpha"),"movement exposes only its own cloud visibility")
 	if not p.has_method("cloud_alpha"):return

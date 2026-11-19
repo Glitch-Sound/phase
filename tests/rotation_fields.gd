@@ -8,11 +8,15 @@ const STOP="PASSIVE_FIELD_STOP_ADJACENT"
 const FAST="PASSIVE_FIELD_FAST_ADJACENT"
 var checks=0
 var failures=0
+## REQ-026-S05
 func _initialize() -> void:
-	for skill in [SLOW,STOP,FAST]:
+	for skill in [SLOW,FAST]:
 		_check(C.SKILLS.has(skill) and C.SKILLS.get(skill,{}).get("type","")=="PASSIVE","new passive "+skill)
+	_check(C.SKILLS.keys().filter(func(id):return C.SKILLS[id].has("field"))==[SLOW,FAST] and C.FIELD_FACTORS=={"SLOW":0.5,"FAST":1.5},"only the two surviving fields remain in the live catalog and multipliers")
+	_check(C.SKILLS[FAST].label=="FAST FIELD / SURROUNDING" and C.SKILLS[SLOW].label=="SLOW FIELD / SURROUNDING","field display names preserve the old fast ID")
 	_entries()
 	_inventory()
+	_retired_save()
 	_check(ResourceLoader.exists("res://game/rotation_field.gd"),"shared field resolver exists")
 	if ResourceLoader.exists("res://game/rotation_field.gd"):
 		_boundaries()
@@ -22,7 +26,7 @@ func _initialize() -> void:
 	quit(0 if failures==0 else 1)
 ## REQ-040-S01
 func _entries() -> void:
-	for row in [[SLOW,345.0,15.0],[STOP,0.0,0.0],[FAST,315.0,45.0]]:
+	for row in [[SLOW,345.0,15.0],[FAST,315.0,45.0]]:
 		var b=_battle()
 		b.units[0].pos=Vector2i(2,4)
 		b.units[2].pos=Vector2i(4,5)
@@ -44,7 +48,7 @@ func _boundaries() -> void:
 	owner.pos=Vector2i(5,4)
 	owner.skills=[SLOW]
 	_check(f.resolve(u,u.pos,[owner]).factor==0.5,"same-camp neighbor follows the same rule as the enemy")
-	u.skills=[STOP]
+	u.skills=[FAST]
 	_check(f.resolve(u,u.pos,[u]).factor==1.0,"field never affects its own source")
 	for row in [[Vector2i(4,4),100.0],[Vector2i(6,4),100.0],[Vector2i(5,4),0.0]]:
 		owner.pos=row[0]
@@ -54,10 +58,10 @@ func _boundaries() -> void:
 	owner.hp=100
 	var other=b.units[2]
 	other.pos=Vector2i(4,5)
-	for row in [[[SLOW],[SLOW],0.5],[[FAST],[FAST],1.5],[[SLOW],[FAST],1.0],[[STOP,SLOW],[FAST],0.0]]:
+	for row in [[[SLOW],[SLOW],0.5],[[FAST],[FAST],1.5],[[SLOW],[FAST],1.0]]:
 		owner.skills=row[0]
 		other.skills=row[1]
-		_check(f.resolve(u,u.pos,[owner,other]).factor==row[2] and f.resolve(u,u.pos,[other,owner]).factor==row[2],"same-kind idempotence, cancellation and STOP priority are order-independent")
+		_check(f.resolve(u,u.pos,[owner,other]).factor==row[2] and f.resolve(u,u.pos,[other,owner]).factor==row[2],"same-kind idempotence, and cancellation are order-independent")
 	owner.pos=Vector2i.ZERO
 	owner.skills=[SLOW]
 	_check(_sorted(f.coverage([owner]).keys())==_sorted([Vector2i(1,0),Vector2i(0,1),Vector2i(1,1)]) and f.resolve(u,Vector2i(-1,0),[owner]).factor==1.0,"corner coverage is exactly three surrounding in-board cells")
@@ -124,10 +128,11 @@ func _inventory() -> void:
 	var l=L.new()
 	_check(l.skills==[C.DAMAGE,C.HEAL],"new fields remain locked initially")
 	var accepted=true
-	for skill in [SLOW,STOP,FAST]: accepted=l.accept_drop({"skill":skill}) and accepted
-	_check(accepted,"all three fields use the existing loot acceptance path")
+	for skill in [SLOW,FAST]: accepted=l.accept_drop({"skill":skill}) and accepted
+	_check(accepted,"both fields use the existing loot acceptance path")
 	if not accepted:return
-	l.builds[0].skills=[SLOW,STOP,FAST]
+	_check(not l.accept_drop({"skill":STOP}),"retired STOP cannot be collected")
+	l.builds[0].skills=[SLOW,FAST]
 	l.builds[1].skills=[FAST,SLOW,C.DAMAGE]
 	var copy=L.new()
 	var file="res://artifacts/runtime/rotation-field-save-%d.json" % Time.get_ticks_usec()
@@ -135,6 +140,40 @@ func _inventory() -> void:
 	l.skills=[C.DAMAGE,C.HEAL,C.MOVE,C.DAMAGE_DIAGONAL,C.HEAL_DIAGONAL,C.DAMAGE_ORTHOGONAL_TWO,C.HEAL_ORTHOGONAL_TWO,C.DAMAGE_DIAGONAL_TWO,C.HEAL_DIAGONAL_TWO,C.SWAP,C.PUSH,C.GUARD,C.IGNORE_PANEL]
 	l.builds=C.player_builds()
 	_check(l.save_to(file)=="" and copy.load_from(file)=="" and _json(copy.snapshot())==_json(l.snapshot()),"old thirteen-skill v1 preserves inventory and never auto-unlocks fields")
+## REQ-016-S03
+func _retired_save() -> void:
+	var original=L.new().snapshot()
+	original.skills=[C.DAMAGE,C.HEAL,FAST,STOP,SLOW]
+	original.mutations=["NORMAL","VLSRI"]
+	original.stage_index=2
+	original.builds[0].skills=[FAST,STOP,C.DAMAGE]
+	original.builds[1].skills=[STOP]
+	original.builds[2].skills=[C.HEAL,SLOW]
+	_check(not L.new().valid_build(original.builds[0],original),"retired ID is accepted only by legacy loading, never normal build validation")
+	var expected=original.duplicate(true)
+	expected.skills=[C.DAMAGE,C.HEAL,FAST,SLOW]
+	expected.builds[0].skills=[FAST,C.DAMAGE]
+	expected.builds[1].skills=[]
+	var path="res://artifacts/runtime/remove-stop/legacy-%d.json" % Time.get_ticks_usec()
+	var bytes=JSON.stringify(original,"\t")
+	var file=FileAccess.open(path,FileAccess.WRITE);file.store_string(bytes);file.close()
+	var loaded=L.new()
+	_check(loaded.load_from(path)=="" and _json(loaded.snapshot())==_json(expected),"valid old STOP inventory and slots remove only STOP, preserving order and all other data")
+	_check(FileAccess.get_file_as_string(path)==bytes,"legacy load never rewrites the source")
+	var roundtrip=path+".current.json"
+	var copy=L.new()
+	_check(loaded.save_to(roundtrip)=="" and copy.load_from(roundtrip)=="" and _json(copy.snapshot())==_json(expected),"cleaned state can explicitly save and reload without STOP")
+	for kind in ["unknown","duplicate","locked"]:
+		var bad=original.duplicate(true)
+		if kind=="unknown":bad.skills.append("UNKNOWN")
+		elif kind=="duplicate":bad.skills.append(STOP)
+		else:bad.skills.erase(STOP)
+		file=FileAccess.open(path+kind,FileAccess.WRITE);file.store_string(JSON.stringify(bad));file.close()
+		var before=loaded.snapshot()
+		_check(not loaded.load_from(path+kind).is_empty() and loaded.snapshot()==before,"legacy cleanup cannot hide an invalid original "+kind)
+	original.builds=original.builds.slice(0,2)
+	file=FileAccess.open(path+".two",FileAccess.WRITE);file.store_string(JSON.stringify(original));file.close()
+	_check(loaded.load_from(path+".two")=="" and _json(loaded.builds.slice(0,2))==_json(expected.builds.slice(0,2)) and loaded.builds.size()==3 and loaded.builds.all(func(b):return loaded.valid_build(b)),"old two-build save also removes only STOP before the existing third-build supplement")
 func _battle():
 	var b=B.new()
 	b.start(0,[C.default_build(),C.default_build()],1)

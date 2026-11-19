@@ -3,6 +3,8 @@ extends RefCounted
 const C = preload("res://game/catalog.gd")
 const M = preload("res://game/phase_math.gd")
 const T = preload("res://game/tuning.gd")
+# 読込専用の廃止ID。元の保存を検証してからメモリ上だけで除去する。
+const RETIRED_FIELD_STOP = "PASSIVE_FIELD_STOP_ADJACENT"
 var items: Dictionary={"ARMS":{},"GEAR":{}}
 var mutations: Array=["NORMAL"]
 var skills: Array=[C.DAMAGE,C.HEAL]
@@ -19,6 +21,9 @@ func _init() -> void:
 
 ## ビルドを検証する。buildは候補、inventoryは検証用開放状態で空なら現状態。戻り値は適否。
 func valid_build(build: Variant, inventory: Dictionary={}) -> bool:
+	return _valid_build(build,inventory,false)
+
+func _valid_build(build: Variant, inventory: Dictionary, allow_retired: bool) -> bool:
 	if not build is Dictionary:
 		return false
 	var inv=snapshot() if inventory.is_empty() else inventory
@@ -42,7 +47,7 @@ func valid_build(build: Variant, inventory: Dictionary={}) -> bool:
 		return false
 	var seen=[]
 	for skill in build.skills:
-		if not skill in inv.skills or seen.has(skill):
+		if not (C.SKILLS.has(skill) or (allow_retired and skill==RETIRED_FIELD_STOP)) or not skill in inv.skills or seen.has(skill):
 			return false
 		seen.append(skill)
 	return true
@@ -150,10 +155,13 @@ func load_from(path: String) -> String:
 	f.close()
 	if status!=OK:
 		return "Invalid JSON. Current build is preserved."
-	var error=_validate_snapshot(parser.data,true)
+	var error=_validate_snapshot(parser.data,true,true)
 	if not error.is_empty():
 		return error
-	var data: Dictionary=parser.data
+	var data: Dictionary=parser.data.duplicate(true)
+	data.skills=data.skills.filter(func(skill):return skill!=RETIRED_FIELD_STOP)
+	for build in data.builds:
+		build.skills=build.skills.filter(func(skill):return skill!=RETIRED_FIELD_STOP)
 	if data.builds.size()==2:
 		# 読込元は書き換えず、所持品だけで有効な3体目をメモリへ補う。
 		var third=C.player_builds()[2]
@@ -170,7 +178,7 @@ func load_from(path: String) -> String:
 	stage_index=int(data.stage_index)
 	return ""
 
-func _validate_snapshot(data: Variant,allow_two: bool=false) -> String:
+func _validate_snapshot(data: Variant,allow_two: bool=false,allow_retired: bool=false) -> String:
 	if not data is Dictionary or data.get("version",-1)!=T.SAVE_VERSION:
 		return "Unsupported save version."
 	for key in ["items","mutations","skills","builds","stage_index"]:
@@ -196,13 +204,13 @@ func _validate_snapshot(data: Variant,allow_two: bool=false) -> String:
 		seen.append(mutation)
 	seen=[]
 	for skill in data.skills:
-		if not C.SKILLS.has(skill) or seen.has(skill):
+		if not (C.SKILLS.has(skill) or (allow_retired and skill==RETIRED_FIELD_STOP)) or seen.has(skill):
 			return "Unknown or duplicate skill."
 		seen.append(skill)
 	if data.builds.size()!=C.SQUAD_SIZE and not (allow_two and data.builds.size()==2):
 		return "Expected three PLAYER builds."
 	for build in data.builds:
-		if not valid_build(build,data):
+		if not _valid_build(build,data,allow_retired):
 			return "Invalid or locked build element."
 	return ""
 
