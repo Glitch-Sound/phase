@@ -99,23 +99,29 @@ func cloud_alpha(u: Dictionary) -> float:
 func position() -> Vector2:
 	if source.is_empty():return Vector2.ZERO
 	if route.is_empty():return Vector2(source.pos)
-	var progress=1.0 if duration==0 else clampf(elapsed/duration,0,1)
-	if progress>=1:return Vector2(route.back())
-	var leg=progress*route.size();var index=floori(leg)
+	var leg=_leg_progress()
+	if leg>=route.size():return Vector2(route.back())
+	var index=floori(leg)
 	var start=Vector2(source.pos if index==0 else route[index-1])
 	return start.lerp(Vector2(route[index]),leg-index)
 
 ## 各歩の表示ユニットを返す。戻り値は補間した独立辞書。実計算と保存は変更しない。
 func unit() -> Dictionary:
 	if samples.is_empty():return source.duplicate(true)
-	var progress=1.0 if duration==0 else clampf(elapsed/duration,0,1)
-	if progress>=1:return samples.back().duplicate(true)
-	var leg=progress*route.size();var index=floori(leg)
+	var leg=_leg_progress()
+	if leg>=route.size():return samples.back().duplicate(true)
+	var index=floori(leg)
 	var u: Dictionary=samples[index].duplicate(true)
 	for ring in range(3):
 		var key=["core_angle","gear_angle","arms_angle"][ring]
 		u[key]=fposmod(u.get(key,0.0)+deltas[index][ring]*(leg-index),360)
 	return u
+
+# 歩内の速度は1-a*cos(2πt)で常に正。各整数時刻と全体の尺は元の時計のままにする。
+func _leg_progress() -> float:
+	var leg=(1.0 if duration==0 else clampf(elapsed/duration,0,1))*route.size()
+	var whole=floorf(leg);var local=leg-whole
+	return whole+local-T.MOVEMENT_CELL_PULSE*sin(TAU*local)/TAU
 
 ## 白線の部分を返す。clearanceはセル単位のリング外形と余白。戻り値は移動中の円を除いた線分。モデルは変更しない。
 func segments(clearance: float) -> Array:

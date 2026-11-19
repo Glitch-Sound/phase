@@ -10,6 +10,7 @@ func _initialize() -> void:
 	if failures==0:
 		factory=load("res://ui/movement.gd")
 		_sequence()
+		_cell_rhythm()
 		_boundaries()
 		_angles()
 		_attack_beat()
@@ -38,6 +39,28 @@ func _sequence() -> void:
 	_check(p.position().is_equal_approx(Vector2(4,4.5)),"turn follows the actual corner")
 	_check(p.advance(b,duration/4+0.000001,false)=="arrived" and not p.active and p.position()==Vector2(4,5),"arrival occurs once at exact destination")
 	_check(p.advance(b,100,false)=="" and final==[b.units,b.history,b.turn,b.mode],"presentation never reapplies panels, changes battle time or repeats completion")
+## REQ-046-S01
+func _cell_rhythm() -> void:
+	var b=_battle();b.panels={}
+	var source=b.units[0].duplicate(true);var route=[Vector2i(4,4),Vector2i(4,5)]
+	b.path=route.duplicate();b.commit_path()
+	var final=[b.units.duplicate(true),b.history.duplicate(),b.turn]
+	var p=factory.new();p.begin(b,source,route)
+	var distances=[];var speeds=[];var on_path=true;var rings_match=true
+	for i in range(65):
+		p.elapsed=p.duration*i/64.0
+		var point=p.position();var distance=point.x-source.pos.x if i<=32 else 1+point.y-4
+		on_path=on_path and (is_equal_approx(point.y,4) if i<=32 else is_equal_approx(point.x,4))
+		distances.append(distance)
+		if i>0:speeds.append(distance-distances[i-1])
+		# 位相の期待値は描画関数を使わず、経路上の実変位と通常1歩の規則から求める。
+		var u=p.unit()
+		rings_match=rings_match and is_equal_approx(u.gear_angle,fposmod(source.gear_angle-source.gear[3]*1.5*distance,360)) and is_equal_approx(u.arms_angle,fposmod(source.arms_angle+source.arms[3]*1.5*distance,360))
+	var near=[speeds[0],speeds[31],speeds[32],speeds[63]];var middle=[speeds[15],speeds[16],speeds[47],speeds[48]]
+	var pulse=tuning.get_script_constant_map().get("MOVEMENT_CELL_PULSE",0.0)
+	_check(pulse>0 and pulse<1 and speeds.min()>0 and near.max()+0.000001<middle.min(),"cell centers slow down without any stop or reversal; between centers accelerates")
+	_check(on_path and is_equal_approx(distances[32],1) and is_equal_approx(distances.back(),2),"same clock crosses each exact cell center and corner without a shortcut")
+	_check(rings_match and final==[b.units,b.history,b.turn],"per-step ring progress follows spatial progress without changing the model")
 ## REQ-046-S02、REQ-046-S03
 func _boundaries() -> void:
 	var b=_battle();var source=b.units[0].duplicate(true);var p=factory.new()

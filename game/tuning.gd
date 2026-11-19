@@ -29,6 +29,8 @@ const CPU_FAST_SPEED := 4.0
 # 各歩の変化を読み、長経路も抑えた時間で着地へ進める。
 const MOVEMENT_CELL_SECONDS := 0.28
 const MOVEMENT_MAX_SECONDS := 0.90
+# 0より大きく1未満にし、各中心でも平均速度の1-aを残して位置とリングを同じ拍へそろえる。
+const MOVEMENT_CELL_PULSE := 0.60
 # 移動を伴う攻撃だけ、着地の状態を短く見せてから実行する。
 const MOVEMENT_ATTACK_BEAT_SECONDS := 0.22
 # 発生源だけを出発前に消し、着地の再表示は攻撃前の一拍へ重ねる。
