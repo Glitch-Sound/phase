@@ -37,7 +37,7 @@ func _run() -> void:
 		var expected=[Vector2i(3,3),Vector2i(4,3),Vector2i(5,3),Vector2i(3,4),Vector2i(5,4),Vector2i(3,5),Vector2i(4,5),Vector2i(5,5)]
 		_check(_keys(game._field_view().cells.keys())==_keys(expected) and game.field_clouds.size()==1 and game._field_view().get("emitters",[]).size()==1,"exact eight-cell coverage has one continuous source cloud below units")
 		var hint=game.panel_description(Vector2i(5,4))
-		_check(hint=="EQUIPMENT x0.5 ON ENTRY\nSLOW / P1 / Aster","hover explains exactly the actual multiplier and source")
+		_check(hint=="EQUIPMENT x0.5 ON ENTRY\nSLOW FIELD","hover explains exactly the actual multiplier and source")
 		game.battle.back()
 		game.battle.mode="MOVE"
 		game.battle.path_click(Vector2i(5,4))

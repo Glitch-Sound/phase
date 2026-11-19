@@ -61,14 +61,14 @@ func _check_scene(game, title: String) -> void:
 		_check(hits.is_empty(),"only requested labels absent: "+title+" / "+label+" / "+str(hits))
 	var displayed=game.battle.units[game.selected if game.selected>=0 else game.battle.actor]
 	var code={"STANDARD":"VIRSL","REVERSE":"VLSRI"}.get(displayed.class_name,displayed.class_name)
-	var expected_count=25+2*displayed.skills.size()+int(game.M.singularity(game.battle.preview()))
+	var expected_count=18+2*displayed.skills.size()+int(game.M.singularity(game.battle.preview()))
 	expected_count+=int(code=="VIRSL")
 	for goal in [game.battle.stage.goal,game.battle.stage.enemy_goal]:
 		if Rect2i(0,0,10,10).has_point(goal):
 			expected_count+=1
 	expected_count+=1 if game.message_time>0 else 0
 	_check(game.drawn_text.size()==expected_count,"complete text set excludes any extra caption fragment: "+title+" / "+str(game.drawn_text.size())+" / "+str(expected_count))
-	var required=["TURN 01","PREVIEW","PHASE","PLAYER","ENEMY","CLASS: "+code,"MOVE %d" % game.battle.movement(displayed),"DAMAGE / ADJACENT","HEAL / ADJACENT"]
+	var required=["TURN 01","PREVIEW","PHASE","CLASS: "+code,"MOVE %d" % game.battle.movement(displayed),"DAMAGE / ADJACENT","HEAL / ADJACENT"]
 	if code=="VIRSL":required.append("STANDARD")
 	_check(required.all(func(text):return texts.has(text)),"keep headers and complete details: "+title)
 	_check(texts.filter(func(text):return text.begins_with("I:")).size()==4 and texts.filter(func(text):return text.begins_with("R:")).size()==4,"keep four current states and their factors: "+title)

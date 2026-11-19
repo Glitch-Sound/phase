@@ -178,7 +178,7 @@ func _test_notifications() -> void:
 	for state in ["start","invalid-move","invalid-target"]:
 		game._start_battle()
 		await process_frame
-		var expected="UNIT P1 / Kestrel / PLAYER — Click adjacent empty cells, then double-click the endpoint."
+		var expected="Click adjacent empty cells, then double-click the endpoint."
 		if state=="invalid-move":
 			game._cell_input(Vector2i(0,9))
 			expected="Add an empty adjacent cell. No revisits. Maximum %d steps." % T.BASE_MOVE
@@ -377,11 +377,11 @@ func _test_compact_layout() -> void:
 	_check(game.drawn_text.filter(func(t):return not t.in_board).all(func(t):return not _text_bounds(t).intersects(board)),"all peripheral text stays outside the expanded map")
 	_check(not game.T.PREVIEW_PANEL.intersects(board) and buttons.all(func(b):return not b.get_global_rect().intersects(board)),"preview and system buttons stay outside map")
 	for i in range(2):
-		var label=game.drawn_text.filter(func(t):return t.text==["PLAYER","ENEMY"][i])[0]
+		var emblem=game._assembly_rows()[i].emblem
 		var value=game.drawn_text.filter(func(t):return t.text=="200 / 200")[i]
 		var bar=game.drawn_bars[i].rect
-		_check(label.position.y==value.position.y and _text_bounds(value).position.y<=bar.get_center().y and bar.get_center().y<=_text_bounds(value).end.y,"camp, HP value and bar share one row: "+str(i))
-		_check(_text_bounds(label).end.x<bar.position.x and bar.end.x<_text_bounds(value).position.x and _text_bounds(value).end.x<board.position.x,"one-row HP fields do not overlap: "+str(i))
+		_check(is_equal_approx(emblem.get_center().y,bar.get_center().y) and is_equal_approx(_text_bounds(value).get_center().y,bar.get_center().y),"camp, HP value and bar share one row: "+str(i))
+		_check(emblem.end.x<bar.position.x and bar.end.x<_text_bounds(value).position.x and _text_bounds(value).end.x<board.position.x,"one-row HP fields do not overlap: "+str(i))
 	var original=game.battle.units.duplicate(true)
 	# VIT96の3係数から各11059.2、陣営合計22118.4となる表示境界を確認する。
 	for i in range(2):

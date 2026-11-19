@@ -23,7 +23,7 @@ func _run() -> void:
 		Input.parse_input_event(hover)
 		await process_frame
 		await _shot("preview-"+str(dimensions.x)+"x"+str(dimensions.y))
-		_check(not game.drawn_text.any(func(record):return record.text=="GUARD") and game.info_text.has("PREVIEW / UNIT P1") and not game.battle.units[0].guard_active,"preview is graphic-only and distinct from real defense "+str(dimensions))
+		_check(not game.drawn_text.any(func(record):return record.text=="GUARD") and game.info_text.has("PREVIEW") and not game.battle.units[0].guard_active,"preview is graphic-only and distinct from real defense "+str(dimensions))
 		await _focus_input()
 		_click(game._cell_rect(game.battle.units[0].pos).get_center())
 		await create_timer(0.05).timeout

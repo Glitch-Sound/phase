@@ -7,7 +7,7 @@ func _initialize() -> void:_run.call_deferred()
 func _run() -> void:
 	game=load("res://tests/movement_audit.gd").new();game.save_path="res://artifacts/runtime/unit-identity/ui-save.json";game.settings_path="res://artifacts/runtime/unit-identity/no-settings.json"
 	root.add_child(game);await process_frame;game.set_process(false)
-	_check(game.get("name_edit") is LineEdit,"BUILD has a compact name editor")
+	_check(game.get("name_edit") is LineEdit and game.name_hint.text=="32 characters / blank uses a default","BUILD keeps names in the compact input without a duplicate default name")
 	if game.get("name_edit") is LineEdit:
 		var field=game.name_edit
 		field.focus_entered.emit();field.text="星屑";field.text_changed.emit(field.text)
@@ -29,8 +29,8 @@ func _run() -> void:
 		for name in ["界".repeat(32),"﷽".repeat(32)]:
 			game.battle.units[2].display_name=name;await _draw()
 			var lines=game.text_records.filter(func(r):return r.position.x==game.T.BATTLE_NAME_ORIGIN.x and r.position.y<game.T.BATTLE_INFO_CLASS.y)
-			layouts.append(lines.size()<=2 and "".join(lines.map(func(r):return r.text))=="P3 / "+name)
-		_check(layouts.all(func(ok):return ok),"ordinary and wide Unicode names stay complete within the name region")
+			layouts.append(lines.is_empty() and game.accessibility_description=="Inspected unit: "+name)
+		_check(layouts.all(func(ok):return ok),"ordinary and wide Unicode names stay nonvisual while retaining accessible metadata")
 		game._help();await process_frame
 		var guide=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text.begins_with("Name 3 PLAYER slots."))[0]
 		var seed=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text.contains(" / SEED "))[0]

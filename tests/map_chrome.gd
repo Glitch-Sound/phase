@@ -102,9 +102,10 @@ func _test_help_and_build(game) -> void:
 		var texts=[]
 		for label in game.overlay.find_children("*","Label",true,false):
 			texts.append(label.text)
-		# 目標の対象は表示名と独立した陣営と枠の参照で示す。
-		var expected=["ELIMINATE ALL ENEMY UNITS","DEFEAT E1 / KEEP P1 ALIVE","P1 REACH (9,0) / KEEP P1 ALIVE / STOP E2 (0,9)","PLAYER HOLD (8,0) / DENY ENEMY (0,9)"]
-		_check(texts.has(expected[stage]),"BUILD retains stage objective: "+str(stage))
+		var views=game.overlay.find_children("*","Control",true,false).filter(func(node):return node.get_script()!=null and node.get_script().resource_path=="res://ui/unit_reference_text.gd")
+		var expected=[["ELIMINATE ALL ENEMY UNITS",[]],["DEFEAT  / KEEP  ALIVE",["A","01"]],[" REACH (9,0) / KEEP  ALIVE / STOP  (0,9)",["01","01","B"]],["PLAYER HOLD (8,0) / DENY ENEMY (0,9)",[]]]
+		var view=views[0]
+		_check("".join(view.parts.filter(func(part):return part.has("text")).map(func(part):return part.text))==expected[stage][0] and view.parts.filter(func(part):return part.has("unit")).map(func(part):return part.unit.id)==expected[stage][1],"BUILD retains exact stage objective and glyph correspondence: "+str(stage))
 func _check(ok: bool,message: String) -> void:
 	checks+=1
 	if not ok:

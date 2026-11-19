@@ -1,6 +1,8 @@
 ## PHASEの一画面UIと手動操作を提供する。
 extends Control
 const I=preload("res://game/unit_identity.gd")
+const A=preload("res://game/assembly_identity.gd")
+const ASSEMBLY_DIALOG=preload("res://ui/assembly_dialog.gd")
 const C = preload("res://game/catalog.gd")
 const M = preload("res://game/phase_math.gd")
 const B = preload("res://game/battle.gd")
@@ -93,6 +95,10 @@ var message_time := 0.0
 var toasts: Array=[]
 var drops: Array=[]
 var build_dialog: Control
+var assembly_button: Button
+var assembly_dialog: Control
+var opponent_assembly: Dictionary=A.default_profile("ENEMY")
+var view_camp="PLAYER"
 var name_edit: LineEdit
 var name_hint: Label
 var name_before_edit=""
@@ -219,24 +225,34 @@ func _draw() -> void:
 		var p: Vector2=_board_point(t.cell,Vector2(35,3-(t.age*24 if not reduced_motion else 0)))
 		_center(t.text,p,24,color,mono)
 
+func _assembly_rows() -> Array:
+	var rows=[]
+	var width=0.0
+	for camp in ["PLAYER","ENEMY"]:
+		var hp=0.0;var maximum=0.0
+		for u in battle.units:
+			if u.camp==camp:hp+=u.hp;maximum+=u.max_hp
+		var text="%s / %s" % [_hp(hp),_hp(maximum)]
+		width=maxf(width,mono.get_string_size(text,HORIZONTAL_ALIGNMENT_LEFT,-1,T.BATTLE_HP_FONT_SIZE).x)
+		rows.append({"camp":camp,"hp":hp,"maximum":maximum,"text":text})
+	var value_x=minf(T.BATTLE_HP_VALUE_X,T.BATTLE_HP_RIGHT-width)
+	var baseline_offset=(mono.get_ascent(T.BATTLE_HP_FONT_SIZE)-mono.get_descent(T.BATTLE_HP_FONT_SIZE))/2
+	for i in range(rows.size()):
+		var row=rows[i];var center_y=T.BATTLE_HP_BASELINE+i*T.BATTLE_HP_STEP-baseline_offset
+		row.center_y=center_y
+		row.emblem=Rect2(Vector2(T.BATTLE_LEFT_ORIGIN.x,center_y-T.ASSEMBLY_EMBLEM_RADIUS),Vector2.ONE*T.ASSEMBLY_EMBLEM_RADIUS*2)
+		row.bar=Rect2(T.BATTLE_HP_BAR.position.x,center_y-T.BATTLE_HP_BAR.size.y/2,value_x-T.BATTLE_HP_GAP-T.BATTLE_HP_BAR.position.x,T.BATTLE_HP_BAR.size.y)
+		row.text_origin=Vector2(value_x,center_y+baseline_offset)
+		row.text_rect=Rect2(value_x,center_y-mono.get_height(T.BATTLE_HP_FONT_SIZE)/2,width,mono.get_height(T.BATTLE_HP_FONT_SIZE))
+	return rows
+
 func _draw_left() -> void:
 	_text("PHASE",Vector2(T.BATTLE_LEFT_ORIGIN.x,T.BATTLE_TITLE_BASELINE),47,WHITE)
-	var y=T.BATTLE_HP_BASELINE
-	for camp in ["PLAYER","ENEMY"]:
-		var hp=0.0
-		var max_hp=0.0
-		for u in battle.units:
-			if u.camp==camp:
-				hp+=u.hp
-				max_hp+=u.max_hp
-		var color=CYAN if camp=="PLAYER" else status_colors[1]
-		var value="%s / %s" % [_hp(hp),_hp(max_hp)]
-		var value_x=minf(T.BATTLE_HP_VALUE_X,T.BATTLE_HP_RIGHT-mono.get_string_size(value,HORIZONTAL_ALIGNMENT_LEFT,-1,T.BATTLE_HP_FONT_SIZE).x)
-		var bar_end=value_x-T.BATTLE_HP_GAP
-		_text(camp,Vector2(T.BATTLE_LEFT_ORIGIN.x,y),T.BATTLE_HP_FONT_SIZE,color,mono)
-		_bar(Rect2(Vector2(T.BATTLE_HP_BAR.position.x,y+T.BATTLE_HP_BAR.position.y),Vector2(bar_end-T.BATTLE_HP_BAR.position.x,T.BATTLE_HP_BAR.size.y)),hp/maxf(1,max_hp),color)
-		_text(value,Vector2(value_x,y),T.BATTLE_HP_FONT_SIZE,WHITE,mono)
-		y+=T.BATTLE_HP_STEP
+	for row in _assembly_rows():
+		var profile=_assembly_profile(row.camp)
+		_assembly_emblem(self,row.emblem.get_center(),T.ASSEMBLY_EMBLEM_RADIUS,profile,row.camp)
+		_bar(row.bar,row.hp/maxf(1,row.maximum),A.health(profile))
+		_text(row.text,row.text_origin,T.BATTLE_HP_FONT_SIZE,WHITE,mono)
 	_draw_timeline()
 
 func _timeline_view() -> Dictionary:
@@ -272,7 +288,6 @@ func _draw_timeline() -> void:
 		var active=card.index==selected or card.index==timeline_hover
 		var color=CYAN if active else MUTED
 		_ring(self,card.center,T.TIMELINE_RADIUS,card.unit,card.index==battle.actor)
-		_center(_fit_text(I.slot(card.unit)+" / "+V.unit_name(card.unit),T.TIMELINE_NAME_WIDTH,T.TIMELINE_NAME_FONT),card.center+T.TIMELINE_NAME_OFFSET,T.TIMELINE_NAME_FONT,CYAN if card.unit.camp=="PLAYER" else status_colors[1])
 		_center(_hp(card.unit.hp)+"/"+_hp(card.unit.max_hp),card.center+Vector2(0,38),T.TIMELINE_HP_FONT,color if active else WHITE,mono)
 		var factor_origin=card.center+Vector2(-factor_width/2,56)
 		_text("I:"+_factor_field(M.sync(card.unit,1).factor*100)+"%",factor_origin,T.TIMELINE_FACTOR_FONT,status_colors[1],mono)
@@ -354,7 +369,7 @@ func _draw_board() -> void:
 					u.guard_active=true
 				var center=pos+T.UNIT_BOARD_CENTER*BOARD_SCALE
 				_ring(self,center,T.UNIT_BOARD_RADIUS*BOARD_SCALE,u,i==battle.actor)
-				_unit_slot_tag(center,u)
+				_ownership_marker(center,u)
 				if i==selected or i==timeline_hover:
 					_draw_cell_focus(rect,MAGENTA)
 				if decision.mode=="TARGET" and not movement.active and decision.valid_target(decision.actor,i,decision.selected_skill):
@@ -373,7 +388,7 @@ func _draw_board() -> void:
 	if movement.active:
 		var center=BOARD+(movement.position()+Vector2.ONE*0.5)*CELL
 		_ring(self,center,T.UNIT_BOARD_RADIUS*BOARD_SCALE,movement.unit(),true)
-		_unit_slot_tag(center,movement.unit())
+		_ownership_marker(center,movement.unit())
 	elif battle.mode=="MOVE":
 		for segment in _route_segments():
 			draw_line(segment[0],segment[1],CYAN,T.ROUTE_LINE_WIDTH*BOARD_SCALE,true)
@@ -465,12 +480,8 @@ func panel_description(cell: Vector2i) -> String:
 		var field: Dictionary=view.cells[cell]
 		var lines=[("AFTER MOVE / " if view.preview.has(cell) else "")+"EQUIPMENT x%.1f ON ENTRY" % field.factor]
 		for name in ["SLOW","FAST"]:
-			var ids=[]
-			for source in field.sources:
-				if source.kind!=name:continue
-				for unit in view.world:
-					if unit.id==source.id and unit.camp==source.camp:ids.append(_unit_ref(unit))
-			if not ids.is_empty():lines.append(name+" / "+", ".join(ids))
+			var count=field.sources.filter(func(source):return source.kind==name).size()
+			if count>0:lines.append(name+" FIELD"+(" x%d" % count if count>1 else ""))
 		if field.kinds.has("SLOW") and field.kinds.has("FAST"):lines.append("SLOW + FAST cancel.")
 		text+=("\n" if not text.is_empty() else "")+"\n".join(lines)
 	return text
@@ -530,22 +541,10 @@ func _draw_info() -> void:
 	var forecast=_utility_preview()
 	if not forecast.is_empty():
 		index=forecast.target
-		_text("%sPREVIEW / UNIT %s" % ["" if forecast.kind=="GUARD" else forecast.kind+" ",I.slot(forecast.units[index])],T.BATTLE_INFO_CLASS-Vector2(0,24),13,MUTED,mono)
+		_text("%sPREVIEW" % ("" if forecast.kind=="GUARD" else forecast.kind+" "),T.BATTLE_INFO_CLASS-Vector2(0,24),13,MUTED,mono)
 	var u: Dictionary=forecast.units[index] if not forecast.is_empty() else (planning.projected.units[index] if planning.active() and selected<0 else _display_units()[index])
-	var name_lines=[]
-	var name_font=T.BATTLE_NAME_FONT
-	while true:
-		var name_line=""
-		name_lines=[]
-		for character in I.slot(u)+" / "+V.unit_name(u):
-			if not name_line.is_empty() and font.get_string_size(name_line+character,HORIZONTAL_ALIGNMENT_LEFT,-1,name_font).x>T.BATTLE_NAME_WIDTH:
-				name_lines.append(name_line);name_line=""
-			name_line+=character
-		if not name_line.is_empty():name_lines.append(name_line)
-		if name_lines.size()<=T.BATTLE_NAME_MAX_LINES or name_font<=1:break
-		# 単一コードポイントでも幅の広いUnicode合字を含め、全文を領域内へ収める。
-		name_font-=1
-	for line in range(name_lines.size()):_text(name_lines[line],T.BATTLE_NAME_ORIGIN+Vector2(0,line*T.BATTLE_NAME_LINE),name_font,WHITE)
+	_assembly_emblem(self,T.ASSEMBLY_INFO_CENTER,T.ASSEMBLY_EMBLEM_RADIUS,_assembly_profile(u.camp),u.camp)
+	accessibility_description="Inspected unit: "+V.unit_name(u)
 	var camp_color=CYAN if u.camp=="PLAYER" else status_colors[1]
 	var core_code=M.layout_code(u.class_name)
 	var class_text="CLASS: "+core_code
@@ -569,12 +568,12 @@ func _draw_info() -> void:
 		position_px.y+=T.BATTLE_SKILL_STEP
 	if cpu_enabled and battle.result.is_empty():
 		var phase=("AIMING" if movement.landed else "MOVING") if movement.active and movement.cpu else (cpu_turn.phase if cpu_turn.active else "READY")
-		var name=_unit_ref(battle.units[cpu_turn.actor]) if cpu_turn.active else ""
 		var stopped=cpu_paused or not window_focused or is_instance_valid(auxiliary)
-		_text(_fit_text("CPU %s / %s" % [name,"PAUSED" if stopped else phase],400,14,mono),T.CPU_CONTROL_ORIGIN+Vector2(0,14),14,MUTED,mono)
+		_text(_fit_text("CPU / "+("PAUSED" if stopped else phase),400,14,mono),T.CPU_CONTROL_ORIGIN+Vector2(0,14),14,MUTED,mono)
 		if cpu_turn.active and cpu_turn.phase in ["ACTION","TARGET"]:
-			var action="WAIT" if cpu_turn.command.skill.is_empty() else C.SKILLS[cpu_turn.command.skill].label+" → "+_unit_ref(battle.units[cpu_turn.command.target])
-			_text(_fit_text(action,400,13,mono),T.CPU_CONTROL_ORIGIN+Vector2(0,-12),13,WHITE,mono)
+			var action="WAIT" if cpu_turn.command.skill.is_empty() else C.SKILLS[cpu_turn.command.skill].label
+			_text(_fit_text(action,350,13,mono),T.CPU_CONTROL_ORIGIN+Vector2(0,-12),13,WHITE,mono)
+			if not cpu_turn.command.skill.is_empty():V.unit_emblem(self,T.CPU_CONTROL_ORIGIN+Vector2(380,-17),11,battle.units[cpu_turn.command.target],_assembly_profile(battle.units[cpu_turn.command.target].camp))
 
 func _equipment_icon(key: String, rect: Rect2, tint: Color) -> void:
 	draw_texture_rect(ICONS[key],rect,false,tint)
@@ -769,11 +768,11 @@ func _confirm_plan() -> void:
 func _confirm_dialog() -> void:
 	_clear_overlay();_hud()
 	var panel=_modal(Rect2(700,380,420,220),false,true)
-	_label(panel,_fit_text(_unit_ref(battle.units[battle.actor])+" / READY",370,18),Rect2(25,16,370,32),18,WHITE)
+	_unit_action_heading(panel,"READY",battle.units[battle.actor])
 	var decision=planning.projected
 	var text="MOVE / FINISH" if not decision.result.is_empty() else ("WAIT" if decision.selected_skill.is_empty() else C.SKILLS[decision.selected_skill].label)
-	if planning.target>=0 and planning.target!=battle.actor:text+=" → "+_unit_ref(battle.units[planning.target])
-	var summary=_label(panel,_fit_text(text,370,16),Rect2(25,60,370,32),16,MUTED)
+	if planning.target>=0 and planning.target!=battle.actor:_unit_badge(panel,Vector2(376,76),13,battle.units[planning.target])
+	var summary=_label(panel,_fit_text(text,325,16),Rect2(25,60,325,32),16,MUTED)
 	summary.tooltip_text=text
 	_button(panel,"CONFIRM",Rect2(25,105,370,42),_confirm_plan)
 	_button(panel,"BACK",Rect2(25,158,370,42),_plan_back)
@@ -904,7 +903,7 @@ func _action_dialog() -> void:
 			active.append(skill)
 	var height=185+active.size()*63
 	var panel=_modal(Rect2(700,330,420,height),false,true)
-	_label(panel,_fit_text(_unit_ref(battle.units[battle.actor])+" / ACTION",370,18),Rect2(25,16,370,32),18,WHITE)
+	_unit_action_heading(panel,"ACTION",battle.units[battle.actor])
 	_button(panel,"WAIT",Rect2(25,63,370,48),_wait_action)
 	for i in range(active.size()):
 		var skill: String=active[i]
@@ -974,7 +973,8 @@ func _build() -> void:
 	_toggle(panel,"ENEMY CPU",T.BUILD_CPU_TOGGLE_RECT,cpu_enabled,func(value):cpu_enabled=value;_build())
 	if debug_session.available():
 		_toggle(panel,"UNLOCK ALL",T.DEBUG_TOGGLE_RECT,collection.temporary,func(value):_toggle_debug(value))
-	_label(panel,"SHARED ARCHIVE   %d ARMS / %d GEAR / %d MUTATIONS     %s" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size(),"PLAYER: HUMAN / ENEMY: CPU" if cpu_enabled else "BOTH SIDES: HUMAN"],Rect2(left,83,1240,26),14,MUTED)
+	_label(panel,"SHARED ARCHIVE   %d ARMS / %d GEAR / %d MUTATIONS     %s" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size(),"PLAYER: HUMAN / ENEMY: CPU" if cpu_enabled else "BOTH SIDES: HUMAN"],Rect2(left,83,880,26),14,MUTED)
+	_build_assembly_entry(panel)
 	var b: Dictionary=collection.builds[edit_unit]
 	_label(panel,"NAME",Rect2(left,132,62,40),14,MUTED)
 	name_edit=LineEdit.new();name_edit.position=Vector2(left+70,132);name_edit.size=Vector2(330,40)
@@ -1042,11 +1042,11 @@ func _build() -> void:
 		_choice_button(panel,"skill",C.SKILLS[current].label if C.SKILLS.has(current) else "NONE",Rect2(right,176+i*53,342,43),i)
 	_label(panel,"OPERATION",Rect2(right,390,342,26),15,MUTED)
 	_choice_button(panel,"operation",C.stages()[collection.stage_index].name,Rect2(right,432,342,44))
-	_wrapped_label(panel,_unit_references(C.stages()[collection.stage_index].brief),Rect2(right,496,342,52),17,WHITE)
+	_objective_label(panel,C.stages()[collection.stage_index].brief,Rect2(right,496,342,52),17,WHITE)
 	var stage_hint=C.stages()[collection.stage_index].hint
 	if cpu_enabled and collection.stage_index==0:
 		stage_hint="Compare routes. The CPU controls A, B and C."
-	_wrapped_label(panel,_unit_references(stage_hint),Rect2(right,564,342,120),16,MUTED)
+	_objective_label(panel,stage_hint,Rect2(right,564,342,120),16,MUTED)
 	build_preview=Control.new()
 	build_preview.position=Vector2(left,456)
 	build_preview.size=Vector2(400,220)
@@ -1076,6 +1076,36 @@ func _build() -> void:
 		start.add_theme_stylebox_override(state,style)
 	_refresh_build()
 
+func _assembly_profile(camp: String) -> Dictionary:
+	return collection.assembly if camp=="PLAYER" else opponent_assembly
+
+func _assembly_emblem(canvas: CanvasItem,center: Vector2,radius: float,profile: Dictionary,camp: String) -> void:
+	V.assembly_emblem(canvas,center,radius,profile,camp)
+
+func _build_assembly_entry(panel: Control) -> void:
+	_label(panel,"ASSEMBLY",Rect2(934,83,92,26),13,MUTED)
+	assembly_button=_button(panel,_fit_text(A.label(collection.assembly),192,17),T.ASSEMBLY_BUILD_ENTRY,_open_assembly)
+	assembly_button.icon=null
+	assembly_button.alignment=HORIZONTAL_ALIGNMENT_LEFT;assembly_button.add_theme_font_size_override("font_size",17)
+	assembly_button.tooltip_text="Assembly / "+A.label(collection.assembly)+" / "+collection.assembly.color
+	for state in ["normal","hover","pressed","focus","disabled"]:
+		var style=assembly_button.get_theme_stylebox(state).duplicate();style.content_margin_left=42
+		if state=="normal":style.border_width_bottom=T.UI_FIELD_LINE;style.border_color=EDGE
+		assembly_button.add_theme_stylebox_override(state,style)
+	var emblem=Control.new();emblem.position=Vector2(4,3);emblem.size=Vector2(30,30);emblem.mouse_filter=Control.MOUSE_FILTER_IGNORE;assembly_button.add_child(emblem)
+	emblem.draw.connect(func():_assembly_emblem(emblem,Vector2(15,15),12,collection.assembly,"PLAYER"))
+
+func _open_assembly() -> void:
+	if not build_open:return
+	_close_aux()
+	var panel=_modal(T.ASSEMBLY_DIALOG_RECT,true)
+	assembly_dialog=ASSEMBLY_DIALOG.new();panel.add_child(assembly_dialog);assembly_dialog.configure(self,collection)
+	assembly_dialog.cancelled.connect(_close_aux)
+	assembly_dialog.applied.connect(func():_close_aux();_build();_focus_assembly.call_deferred())
+
+func _focus_assembly() -> void:
+	if is_instance_valid(assembly_button):assembly_button.grab_focus()
+
 func _name_changed(value: String) -> void:
 	if not build_open:return
 	collection.unit_names[edit_unit]=I.normalize(value)
@@ -1083,7 +1113,7 @@ func _name_changed(value: String) -> void:
 	_refresh_build()
 
 func _update_name_hint() -> void:
-	if is_instance_valid(name_hint):name_hint.text="32 characters / blank uses "+I.PLAYER_NAMES[edit_unit]
+	if is_instance_valid(name_hint):name_hint.text="32 characters / blank uses a default"
 
 func _finish_name_edit() -> void:
 	if not is_instance_valid(name_edit) or not build_open:return
@@ -1278,7 +1308,7 @@ func _start_battle() -> void:
 	_follow_turn()
 	_clear_overlay()
 	_hud()
-	_notify("UNIT %s / %s — Click adjacent empty cells, then double-click the endpoint." % [_unit_ref(battle.units[battle.actor]),battle.units[battle.actor].camp])
+	_notify("Click adjacent empty cells, then double-click the endpoint.")
 
 func _result() -> void:
 	planning.reset();playback_command={}
@@ -1343,7 +1373,7 @@ func _help() -> void:
 	_label(panel,"Name 3 PLAYER slots. Max 3 skills; NONE allowed.\nCLASS: CORE order; MUTATION: one equipment ring.\nVIRSL = STANDARD; VLSRI is free. Others: MUTATION unlocks.\nUNLOCK ALL: temporary, debug only, never saved.",Rect2(36,631,500,98),16,WHITE)
 	_label(panel,"READING THE SIGNAL",Rect2(580,589,500,28),16,CYAN)
 	_label(panel,"Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage.\nSAVE / LOAD are explicit. Old saves are backed up.",Rect2(580,631,510,66),18,WHITE)
-	_label(panel,"P1-P3 / E1-E3: fixed slots. Names: 32 characters; duplicates allowed.",Rect2(580,706,510,22),13,MUTED)
+	_label(panel,"Crests identify units and assemblies. A gray mark means your unit.",Rect2(580,706,510,22),13,MUTED)
 	_button(panel,"CLOSE / ESC",Rect2(36,736,800,44),_close_aux)
 	_button(panel,"SKILLS",Rect2(856,736,228,44),_skill_help)
 
@@ -1500,23 +1530,34 @@ func _fit_text(value: String,width: float,size_px: int,face: Font=null) -> Strin
 	while not shown.is_empty() and typeface.get_string_size(shown+"…",HORIZONTAL_ALIGNMENT_LEFT,-1,size_px).x>width:shown=shown.substr(0,shown.length()-1)
 	return shown+"…"
 
-func _unit_ref(u: Dictionary) -> String:
-	return I.slot(u)+" / "+_fit_text(V.unit_name(u),180,16)
+func _unit_badge(parent: Control,center: Vector2,radius: float,u: Dictionary) -> Control:
+	var badge=Control.new();badge.position=center-Vector2.ONE*radius;badge.size=Vector2.ONE*radius*2;badge.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	badge.accessibility_name=V.unit_name(u);badge.set_meta("unit_id",u.id);badge.set_meta("unit_camp",u.camp)
+	parent.add_child(badge);badge.draw.connect(func():V.unit_emblem(badge,Vector2.ONE*radius,radius,u,_assembly_profile(u.camp)))
+	return badge
 
-func _unit_slot_tag(center: Vector2,u: Dictionary) -> void:
-	_text(I.slot(u),center+T.UNIT_SLOT_OFFSET,T.UNIT_SLOT_FONT,CYAN if u.camp=="PLAYER" else status_colors[1],mono)
+func _unit_action_heading(panel: Control,text: String,u: Dictionary) -> void:
+	_unit_badge(panel,Vector2(43,32),14,u)
+	_label(panel,text,Rect2(70,16,325,32),18,WHITE)
 
-func _unit_references(text: String) -> String:
-	var regex=RegEx.create_from_string("\\b(0[123]|[ABC])\\b")
-	var matches=regex.search_all(text)
-	for index in range(matches.size()-1,-1,-1):
-		var match=matches[index];var id=match.get_string()
-		var camp="PLAYER" if id.begins_with("0") else "ENEMY"
-		text=text.substr(0,match.get_start())+I.slot({"id":id,"camp":camp})+text.substr(match.get_end())
-	return text
+func _reference_unit(id: String) -> Dictionary:
+	var camp="PLAYER" if id.begins_with("0") else "ENEMY"
+	var index=I.PLAYER_IDS.find(id) if camp=="PLAYER" else I.ENEMY_IDS.find(id)
+	return C.unit(id,camp,Vector2i.ZERO,collection.builds[index] if camp=="PLAYER" else C.default_build(),collection.unit_names[index] if camp=="PLAYER" else "")
+
+func _objective_label(parent: Control,text: String,rect: Rect2,font_px: int,color: Color) -> Control:
+	var view=load("res://ui/unit_reference_text.gd").new();parent.add_child(view);view.configure(self,text,rect,font_px,color)
+	return view
+
+func _ownership_marker(center: Vector2,u: Dictionary) -> void:
+	if not A.owns(u,view_camp):return
+	var point=center+T.OWNER_MARK_OFFSET
+	var scale_px=maxf(0.001,(get_viewport_transform()*get_global_transform()).get_scale().x)
+	draw_arc(point,T.OWNER_MARK_RADIUS,0,TAU,32,T.OWNER_MARK_COLOR,T.OWNER_MARK_PIXEL_MIN/scale_px,true)
+	draw_circle(point,T.OWNER_MARK_INNER,T.OWNER_MARK_COLOR,true,-1,true)
 
 func _ring(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,active: bool=false) -> void:
-	V.ring(canvas,center,radius,u,active,ring_colors,CYAN,mono)
+	V.ring(canvas,center,radius,u,active,ring_colors,CYAN,mono,_assembly_profile(u.camp))
 
 func _restart() -> void:
 	cpu_turn.reset()
@@ -1595,6 +1636,7 @@ func _close_aux() -> void:
 		auxiliary.queue_free()
 	auxiliary=null
 	build_dialog=null
+	assembly_dialog=null
 	_restore_focus.call_deferred(previous)
 
 func _clear_overlay() -> void:

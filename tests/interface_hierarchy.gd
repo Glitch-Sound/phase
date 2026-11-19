@@ -29,7 +29,7 @@ func _build_inventory() -> void:
 	var buttons=panel.find_children("*","Button",true,false).filter(func(c):return not c.has_meta("build_choice")).map(func(c):return c.text)
 	_check(options.size()==9 and spins.size()==5,"class, two equipment, two mutation, three skills and stage remain editable")
 	buttons.sort()
-	var expected_buttons=["ENEMY CPU","HELP","LOAD","QUIT","SAVE","SETTINGS","START","SLOT 1","SLOT 2","SLOT 3"]
+	var expected_buttons=["ORBIT","ENEMY CPU","HELP","LOAD","QUIT","SAVE","SETTINGS","START","SLOT 1","SLOT 2","SLOT 3"]
 	if OS.is_debug_build():expected_buttons.append("UNLOCK ALL")
 	expected_buttons.sort()
 	_check(buttons==expected_buttons,"complete exact BUILD operation set includes CPU and the debug-only choice")
@@ -54,10 +54,11 @@ func _stages() -> void:
 		game._build()
 		await process_frame
 		var options=game.overlay.get_child(1).find_children("*","Button",true,false).filter(func(c):return c.has_meta("build_choice"))
-		var texts=game.overlay.find_children("*","Label",true,false).map(func(c):return c.text)
+		var objectives=game.overlay.find_children("*","Control",true,false).filter(func(node):return node.get_script()!=null and node.get_script().resource_path=="res://ui/unit_reference_text.gd")
 		var stage=game.C.stages()[i]
-		_check(options[-1].text==stage.name and texts.has(game._unit_references(stage.brief)) and texts.has(game._unit_references(stage.hint)),"complete stage identity, victory condition and hint remain "+str(i))
-		var hint=game.overlay.find_children("*","Label",true,false).filter(func(c):return c.text==game._unit_references(stage.hint))[0]
+		var sources=objectives.map(func(view):return "".join(view.parts.map(func(part):return part.unit.id if part.has("unit") else part.text)))
+		_check(options[-1].text==stage.name and sources==[stage.brief,stage.hint],"complete stage identity, victory condition and hint remain "+str(i))
+		var hint=objectives[1]
 		_check(hint.get_global_rect().end.x<=options[-1].get_global_rect().end.x,"stage hint wraps within the deployment column "+str(i))
 	game.collection.stage_index=0
 	_check(game.mono.get_string_size("96",HORIZONTAL_ALIGNMENT_LEFT,-1,game.T.BUILD_EQUIPMENT_VALUE_FONT).x<game.T.BUILD_EQUIPMENT_STAT_STEP,"largest legal equipment delta fits its fixed column")

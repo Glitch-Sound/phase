@@ -56,7 +56,7 @@ static func candidates(collection: RefCounted,index: int,kind: String,slot: int=
 		var stages=C.stages()
 		for i in range(stages.size()):
 			var stage=stages[i]
-			result.append(_row(str(i),stage.name,_display_ids(stage.brief)+"\n"+_display_ids(stage.hint),"OPERATION",true,str(i)==equipped))
+			result.append(_row(str(i),stage.name,stage.brief+"\n"+stage.hint,"OPERATION",true,str(i)==equipped))
 	return result
 
 ## 絞り込んだ行を返す。rowsは候補、statusは能力番号で負なら全件、minimumは下限。戻り値は下限以上を値降順にした独立した配列。候補自体を変更しない。
@@ -119,6 +119,3 @@ static func _skill_group(id: String) -> String:
 	if effect=="MOVE +1":return "MOVEMENT"
 	if effect=="IGNORE PANEL":return "PANELS"
 	return "FIELDS"
-
-static func _display_ids(text: String) -> String:
-	return RegEx.create_from_string("\\b0([123])\\b").sub(text,"$1",true)

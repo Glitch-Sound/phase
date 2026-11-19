@@ -1,4 +1,5 @@
 extends SceneTree
+const A=preload("res://game/assembly_identity.gd")
 const V=preload("res://ui/visuals.gd")
 const C=preload("res://game/catalog.gd")
 const T=preload("res://game/tuning.gd")
@@ -31,7 +32,7 @@ func _test_glyph(visual) -> void:
 			_check(arc.role==["CORE","GEAR","ARMS"][r] and arc.color==P.PRESETS.DEFAULT[s+1],"layer and palette mapping %d/%d" % [r,s])
 			_check(arc.start>deg_to_rad(s*72.0-90) and arc.end<deg_to_rad((s+1)*72.0-90),"each sector has a real boundary gap %d/%d" % [r,s])
 			_check(is_equal_approx(arc.radius,24.0*T.new().get("UNIT_RING_RADII")[r]) and is_equal_approx(arc.width,maxf(T.new().get("UNIT_MIN_LINE"),24.0*T.new().get("UNIT_RING_WIDTH"))),"single-source thin geometry %d/%d" % [r,s])
-	_check(glyph.arcs[15].role=="HP" and glyph.arcs[15].color==Color.WHITE,"HP is white independently of palette")
+	_check(glyph.arcs[15].role=="HP" and glyph.arcs[15].color==A.health(A.default_profile("PLAYER")),"HP uses the independent bright assembly color")
 	_check(glyph.arcs[15].radius+glyph.arcs[15].width/2<glyph.arcs[0].radius-glyph.arcs[0].width/2,"HP is entirely inside CORE")
 	_check(u==before,"render description does not mutate the model")
 	for hp in [0,50,89,100]:
@@ -84,8 +85,6 @@ func _test_screens() -> void:
 	game._build()
 	await process_frame
 	var texts=game.overlay.find_children("*","Label",true,false).map(func(l):return l.text)
-	_check(texts.has("P1 REACH (9,0) / KEEP P1 ALIVE / STOP E2 (0,9)"),"BUILD objective uses display names")
-	_check(texts.has("Lose if P1 falls. E1 guards the exit; P2 and P3 can intercept E2."),"BUILD hint uses display names")
 	var stages=game.C.stages()
 	_check(stages.map(func(stage):return stage.name).slice(0,2)==["01 / INTERFERENCE","02 / SEVERANCE"],"stage numbering remains unchanged")
 	game._help()
@@ -106,7 +105,7 @@ func _test_screens() -> void:
 	game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 	await process_frame
 	texts=game.overlay.find_children("*","Label",true,false).map(func(l):return l.text)
-	_check(texts.has("P1 / Kestrel / ACTION") and not texts.has("UNIT 01 / ACTION"),"ACTION uses presentation name")
+	_check(texts.has("ACTION") and not texts.any(func(text):return text.contains("Kestrel")),"ACTION identifies its actor by crest instead of a text name")
 	_check(game.battle.units.map(func(u):return u.id)==["01","02","A","B"],"all screen transitions preserve internal IDs")
 ## REQ-030-S04
 func _test_board_fit(game) -> void:

@@ -53,6 +53,7 @@ static func _crosses_name(a: Vector2,b: Vector2,rect: Rect2) -> bool:
 	return false
 const M = preload("res://game/phase_math.gd")
 const I=preload("res://game/unit_identity.gd")
+const A=preload("res://game/assembly_identity.gd")
 const P = preload("res://ui/palette.gd")
 const TEXT = P.TEXT
 const T = preload("res://game/tuning.gd")
@@ -61,8 +62,9 @@ const T = preload("res://game/tuning.gd")
 static func unit_name(u: Dictionary) -> String:
 	return I.effective_name(str(u.get("display_name","")),u.id,u.camp)
 
-## ユニット記号を記述する。radiusは基準半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色。戻り値は円弧と目盛り、中央の紋章と防御図形の描画データ。副作用なし。
-static func glyph(radius: float, u: Dictionary, selected: bool, colors: Array, accent: Color) -> Dictionary:
+## ユニット記号を記述する。radiusは基準半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色、assemblyは独立した所属設定。戻り値は円弧と目盛り、中央の紋章と防御図形の描画データ。副作用なし。
+static func glyph(radius: float, u: Dictionary, selected: bool, colors: Array, accent: Color,assembly: Dictionary={}) -> Dictionary:
+	if assembly.is_empty():assembly=A.default_profile(u.camp)
 	var arcs=[]
 	for r in range(3):
 		var rad=radius*T.UNIT_RING_RADII[r]
@@ -74,18 +76,18 @@ static func glyph(radius: float, u: Dictionary, selected: bool, colors: Array, a
 			arcs.append({"role":["CORE","GEAR","ARMS"][r],"radius":rad,"start":start+gap/2,"end":end-gap/2,"color":colors[status],"width":maxf(T.UNIT_MIN_LINE,radius*T.UNIT_RING_WIDTH)})
 	var health=clampf(u.hp/maxf(1.0,u.max_hp),0.0,1.0)
 	if health>0:
-		arcs.append({"role":"HP","radius":radius*T.UNIT_HP_RADIUS,"start":-PI/2,"end":-PI/2+TAU*health,"color":T.UNIT_HP_COLOR,"width":maxf(T.UNIT_HP_MIN_LINE,radius*T.UNIT_HP_WIDTH)})
+		arcs.append({"role":"HP","radius":radius*T.UNIT_HP_RADIUS,"start":-PI/2,"end":-PI/2+TAU*health,"color":A.health(assembly),"width":maxf(T.UNIT_HP_MIN_LINE,radius*T.UNIT_HP_WIDTH)})
 	var guard={}
 	if u.get("guard_active",false) and u.hp>0:
 		var points=[]
 		for i in range(T.UNIT_GUARD_SIDES):
 			points.append(Vector2.from_angle(-PI/2-PI/T.UNIT_GUARD_SIDES+TAU*i/T.UNIT_GUARD_SIDES)*radius*T.UNIT_GUARD_RADIUS)
 		guard={"points":points,"fill":Color(TEXT,T.UNIT_GUARD_FILL_ALPHA),"color":Color(accent,T.UNIT_GUARD_LINE_ALPHA),"width":radius*T.UNIT_GUARD_WIDTH}
-	return {"guard":guard,"arcs":arcs,"tick":{"from":Vector2(0,-radius*T.UNIT_TICK_RADII.x),"to":Vector2(0,-radius*T.UNIT_TICK_RADII.y),"color":accent if selected else TEXT,"width":maxf(T.UNIT_MIN_LINE,radius*T.UNIT_TICK_WIDTH)},"name":"","identicon":I.recipe(unit_name(u),u.get("identicon_version",I.VERSION)),"identicon_radius":radius*T.UNIT_IDENTICON_RADIUS,"font_size":maxi(T.UNIT_NAME_MIN,roundi(radius*T.UNIT_NAME_SIZE))}
+	return {"guard":guard,"arcs":arcs,"tick":{"from":Vector2(0,-radius*T.UNIT_TICK_RADII.x),"to":Vector2(0,-radius*T.UNIT_TICK_RADII.y),"color":accent if selected else TEXT,"width":maxf(T.UNIT_MIN_LINE,radius*T.UNIT_TICK_WIDTH)},"name":"","identicon":I.recipe(unit_name(u),u.get("identicon_version",I.VERSION)),"identicon_color":A.color(assembly),"identicon_radius":radius*T.UNIT_IDENTICON_RADIUS,"font_size":maxi(T.UNIT_NAME_MIN,roundi(radius*T.UNIT_NAME_SIZE))}
 
-## 記号を描く。canvasは描画先、centerは中心、radiusは基準半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色、typefaceは既存呼び出しとの共通フォント。戻り値なし。副作用は描画。
-static func ring(canvas: CanvasItem, center: Vector2, radius: float, u: Dictionary, selected: bool, colors: Array, accent: Color, typeface: Font) -> void:
-	var g=glyph(radius,u,selected,colors,accent)
+## 記号を描く。canvasは描画先、centerは中心、radiusは基準半径、uは現在配置、selectedは行動中、colorsは5色、accentは行動色、typefaceは共通フォント、assemblyは独立した所属設定。戻り値なし。副作用は描画。
+static func ring(canvas: CanvasItem, center: Vector2, radius: float, u: Dictionary, selected: bool, colors: Array, accent: Color, typeface: Font,assembly: Dictionary={}) -> void:
+	var g=glyph(radius,u,selected,colors,accent,assembly)
 	# viewport_transformはRetinaを含む実描画倍率を既に持つ。OSのDPIを追加で掛けない。
 	var scale_px=(canvas.get_viewport_transform()*canvas.get_global_transform()).get_scale().x
 	if not g.guard.is_empty():
@@ -99,14 +101,32 @@ static func ring(canvas: CanvasItem, center: Vector2, radius: float, u: Dictiona
 		var style=stroke_style(arc,scale_px)
 		canvas.draw_arc(center,arc.radius,arc.start,arc.end,style.points,arc.color,style.width,true)
 	canvas.draw_line(center+g.tick.from,center+g.tick.to,g.tick.color,g.tick.width,true)
-	# HPの芯と名前から独立し、少数の単色の形だけを円内へ収める。
-	var color=Color(TEXT,T.UNIT_IDENTICON_ALPHA)
-	for polygon in g.identicon.get("polygons",[]):
+	_identicon(canvas,center,g.identicon_radius,g.identicon,Color(g.identicon_color,T.UNIT_IDENTICON_ALPHA))
+
+## ユニット紋章だけを描く。canvasは描画先、centerとradiusは位置と半径、uとassemblyは独立したユニットと所属の表示設定。副作用は描画だけ。
+static func unit_emblem(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,assembly: Dictionary={}) -> void:
+	if assembly.is_empty():assembly=A.default_profile(u.camp)
+	_identicon(canvas,center,radius,I.recipe(unit_name(u),u.get("identicon_version",I.VERSION)),Color(A.color(assembly),T.UNIT_IDENTICON_ALPHA))
+
+static func _identicon(canvas: CanvasItem,center: Vector2,radius: float,shape: Dictionary,color: Color) -> void:
+	var scale_px=maxf(0.001,(canvas.get_viewport_transform()*canvas.get_global_transform()).get_scale().x)
+	for polygon in shape.get("polygons",[]):
 		var points=PackedVector2Array()
-		for point in polygon:points.append(center+point*g.identicon_radius)
+		for point in polygon:points.append(center+point*radius)
 		canvas.draw_colored_polygon(points,color)
 		points.append(points[0])
 		canvas.draw_polyline(points,color,maxf(T.UNIT_IDENTICON_EDGE,T.UNIT_IDENTICON_PIXEL_MIN/maxf(0.001,scale_px)),true)
+
+## 所属紋章を描く。canvasは描画先、centerは中心、radiusは半径、profileは表示設定、campは空欄の既定陣営。戻り値なし。副作用は描画だけ。
+static func assembly_emblem(canvas: CanvasItem,center: Vector2,radius: float,profile: Dictionary,camp: String="PLAYER") -> void:
+	var shape=A.recipe(A.label(profile,camp),profile.get("version",A.VERSION))
+	var ink=A.color(profile)
+	var scale_px=maxf(0.001,(canvas.get_viewport_transform()*canvas.get_global_transform()).get_scale().x)
+	for polygon in shape.get("polygons",[]):
+		var points=PackedVector2Array()
+		for point in polygon:points.append(center+point*radius)
+		canvas.draw_colored_polygon(points,ink);points.append(points[0])
+		canvas.draw_polyline(points,ink,maxf(T.ASSEMBLY_EMBLEM_EDGE,T.ASSEMBLY_EMBLEM_PIXEL_MIN/scale_px),true)
 
 ## 物理描画に適した線を返す。arcは円弧の記述、pixel_scaleは論理1pxに対応する物理倍率。戻り値は線幅と頂点数。副作用なし。
 static func stroke_style(arc: Dictionary, pixel_scale: float) -> Dictionary:

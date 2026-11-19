@@ -1,6 +1,7 @@
 ## 共有開放一覧、ビルド、乱数ドロップと検証付き保存を管理する。
 extends RefCounted
 const I=preload("res://game/unit_identity.gd")
+const A=preload("res://game/assembly_identity.gd")
 const C = preload("res://game/catalog.gd")
 const M = preload("res://game/phase_math.gd")
 const T = preload("res://game/tuning.gd")
@@ -9,6 +10,7 @@ var mutations: Array=["NORMAL"]
 var skills: Array=[C.DAMAGE,C.HEAL]
 var builds: Array=[]
 var unit_names: Array=I.PLAYER_NAMES.duplicate()
+var assembly: Dictionary=A.default_profile("PLAYER")
 var stage_index := 0
 var last_backup := ""
 var temporary := false
@@ -109,7 +111,7 @@ func roll_loot(rng: RandomNumberGenerator) -> Array:
 
 ## 保存用状態を返す。戻り値は編集から独立したJSON互換の辞書。
 func snapshot() -> Dictionary:
-	return {"version":T.SAVE_VERSION,"identicon_version":I.VERSION,"unit_names":unit_names.duplicate(),"items":items.duplicate(true),"mutations":mutations.duplicate(),"skills":skills.duplicate(),"builds":builds.duplicate(true),"stage_index":stage_index}
+	return {"version":T.SAVE_VERSION,"identicon_version":I.VERSION,"unit_names":unit_names.duplicate(),"assembly":assembly.duplicate(true),"items":items.duplicate(true),"mutations":mutations.duplicate(),"skills":skills.duplicate(),"builds":builds.duplicate(true),"stage_index":stage_index}
 
 ## 状態を保存する。pathは保存先。戻り値は成功時空文字、失敗時説明。既存ファイルを別名バックアップする。
 func save_to(path: String) -> String:
@@ -160,6 +162,7 @@ func load_from(path: String) -> String:
 		return error
 	var data: Dictionary=parser.data.duplicate(true)
 	unit_names=data.unit_names.duplicate()
+	assembly={"name":data.assembly.name,"color":data.assembly.color,"version":A.VERSION}
 	items=data.items.duplicate(true)
 	mutations=data.mutations.duplicate()
 	skills=data.skills.duplicate()
@@ -170,9 +173,10 @@ func load_from(path: String) -> String:
 func _validate_snapshot(data: Variant) -> String:
 	if not data is Dictionary or data.get("version",-1)!=T.SAVE_VERSION:
 		return "Unsupported save version. Start a new build."
-	for key in ["items","mutations","skills","builds","stage_index","unit_names","identicon_version"]:
+	for key in ["items","mutations","skills","builds","stage_index","unit_names","identicon_version","assembly"]:
 		if not data.has(key):
 			return "Incomplete save."
+	if not A.valid(data.assembly):return "Invalid assembly name, color or version."
 	if data.identicon_version!=I.VERSION or not data.unit_names is Array or data.unit_names.size()!=C.SQUAD_SIZE:
 		return "Invalid name or identicon version."
 	for name in data.unit_names:

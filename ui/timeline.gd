@@ -28,7 +28,7 @@ static func layout(units: Array, actor: int, rows: Array, finished: bool=false) 
 		for row in rows:
 			if units[row.index].hp<=0:
 				continue
-			events.append({"index":row.index,"time":row.time,"rank":events.size()+1,"repeated":seen.has(row.index),"name":I.slot(units[row.index])+" / "+I.effective_name(units[row.index].get("display_name",""),units[row.index].id,units[row.index].camp)})
+			events.append({"index":row.index,"time":row.time,"rank":events.size()+1,"repeated":seen.has(row.index),"name":I.effective_name(units[row.index].get("display_name",""),units[row.index].id,units[row.index].camp)})
 			if not seen.has(row.index):
 				seen.append(row.index)
 			if events.size()>=T.TIMELINE_EVENTS and seen.size()==alive:
@@ -78,17 +78,16 @@ static func hit(view: Dictionary, point: Vector2) -> Dictionary:
 			return event
 	for card in view.cards:
 		if card.rect.has_point(point):
-			return card.event if not card.event.is_empty() else {"index":card.index,"name":I.slot(card.unit)+" / "+I.effective_name(card.unit.get("display_name",""),card.unit.id,card.unit.camp)}
+			return card.event if not card.event.is_empty() else {"index":card.index,"name":I.effective_name(card.unit.get("display_name",""),card.unit.id,card.unit.camp)}
 	return {}
 
 ## eventは節点、actorは行動番号。戻り値は正確な相対待ち量と0の意味。副作用なし。
 static func caption(event: Dictionary, actor: int) -> String:
 	if event.is_empty():
 		return "FINISHED"
-	var name=str(event.get("name",str(event.index+1)))
 	if not event.has("remaining"):
-		return name+" / DEFEATED"
+		return "DEFEATED"
 	var number=("%.12f" % event.remaining).rstrip("0").rstrip(".")
 	if event.remaining<=B.TIME_EPS:
-		return name+"  "+number+" / "+("ACTING" if event.index==actor and not event.repeated else "QUEUED")
-	return name+"  +"+number
+		return number+" / "+("ACTING" if event.index==actor and not event.repeated else "QUEUED")
+	return "+"+number

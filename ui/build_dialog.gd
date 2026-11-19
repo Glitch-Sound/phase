@@ -27,6 +27,7 @@ var stat_index := -1
 var filter_buttons: Array=[]
 var row_buttons: Dictionary={}
 var preview_area: Control
+var objective_description: Control
 
 ## ダイアログを構成する。owner_uiは画面、dataは所持品、indexは編集番号、selection_kindは選択種、skill_slotは枠。戻り値なし。原本を変更しない。
 func configure(owner_ui: Control,data: RefCounted,index: int,selection_kind: String,skill_slot: int=0) -> void:
@@ -155,7 +156,6 @@ func _refresh_rows(reveal_current: bool=false) -> void:
 		button.text=row.title+("  / EQUIPPED" if row.current else "")+("  / "+row.reason if not row.reason.is_empty() else "")
 		if row.has("stats"):button.text+="\n"+MODEL._stats_text(row.stats)
 		elif kind in ["class_name","arms_mutation","gear_mutation"]:button.text+="\n"+("" if row.get("subtitle","")=="STANDARD" else row.description.get_slice("\n",0))
-		elif kind=="operation":button.text+="\n"+row.description.get_slice("\n",0)
 		button.alignment=HORIZONTAL_ALIGNMENT_LEFT
 		button.custom_minimum_size=Vector2(574,68 if row.has("stats") or kind!="skill" else 46)
 		button.add_theme_font_override("font",host.mono if row.has("stats") else host.font)
@@ -164,11 +164,15 @@ func _refresh_rows(reveal_current: bool=false) -> void:
 		button.disabled=not row.selectable
 		# Tabはフィルター、取消と確定を循環し、長い候補一覧は上下とHome/Endで操作する。
 		button.focus_mode=Control.FOCUS_CLICK
-		button.tooltip_text=row.description+("\n"+row.reason if not row.reason.is_empty() else "")
+		button.tooltip_text="" if kind=="operation" else row.description+("\n"+row.reason if not row.reason.is_empty() else "")
 		button.pressed.connect(func():select_candidate(row.id))
 		button.gui_input.connect(func(event):
 			if event is InputEventKey and navigate(event):button.accept_event())
 		list.add_child(button)
+		if kind=="operation":
+			button.text="";button.accessibility_name=row.title
+			host._label(button,row.title+(" / EQUIPPED" if row.current else ""),Rect2(12,6,550,26),T.CHOICE_ROW_FONT,host.WHITE)
+			host._objective_label(button,row.description.get_slice("\n",0),Rect2(12,36,550,28),14,host.MUTED)
 		if row.get("subtitle","")=="STANDARD":
 			host._label(button,"STANDARD",Rect2(12,38,200,20),T.LAYOUT_STANDARD_FONT,host.MUTED)
 		row_buttons[row.id]=button
@@ -192,6 +196,10 @@ func _refresh_preview() -> void:
 	candidate_name.text=row.title
 	candidate_caption.text=row.get("subtitle","")
 	description.text="" if kind in ["arms","gear"] else row.description
+	if is_instance_valid(objective_description):remove_child(objective_description);objective_description.queue_free()
+	if kind=="operation":
+		description.text=""
+		objective_description=host._objective_label(self,row.description,Rect2(684,442,548,102),17,host.MUTED)
 	apply_button.disabled=not row.selectable
 	preview_area.queue_redraw()
 
@@ -240,8 +248,8 @@ func _draw_operation() -> void:
 			preview_area.draw_rect(Rect2(origin+Vector2(x,y)*cell,Vector2.ONE*(cell-2)),host.EDGE,false,1)
 	for i in range(stage.spawns.size()):
 		var center=origin+(Vector2(stage.spawns[i])+Vector2(0.5,0.5))*cell
-		var color=host.CYAN if i<stage.spawns.size()/2 else host.status_colors[1]
-		preview_area.draw_circle(center,5,color,true,-1,true)
+		var unit=host._reference_unit(host.I.PLAYER_IDS[i] if i<3 else host.I.ENEMY_IDS[i-3])
+		host.V.unit_emblem(preview_area,center,9,unit,host._assembly_profile(unit.camp))
 	if stage.goal.x>=0:
 		preview_area.draw_rect(Rect2(origin+Vector2(stage.goal)*cell,Vector2.ONE*(cell-2)),host.WHITE,false,2)
 	if stage.enemy_goal.x>=0:

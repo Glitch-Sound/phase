@@ -35,7 +35,7 @@ func _run() -> void:
 	if game.has_method("_utility_preview"):
 		var forecast=game._utility_preview()
 		_check(forecast.units[0].pos==Vector2i(5,4) and forecast.units[0].core_angle==0.0 and game.battle.units==before,"hover forecast shares movement and passive rules without mutation")
-	_check(game.info_text.any(func(text):return text=="SWAP PREVIEW / UNIT P2"),"right detail explicitly identifies projected target state")
+	_check(game.info_text.any(func(text):return text=="SWAP PREVIEW"),"right detail explicitly identifies projected target state")
 	game.battle.act(1)
 	game._feedback()
 	_check(game.toasts[-1].text=="SWAP","utility feedback is not plus-zero healing")
@@ -53,7 +53,7 @@ func _run() -> void:
 	game.hover_cell=game.battle.units[0].pos
 	game.queue_redraw()
 	await create_timer(0.08).timeout
-	_check(not game.drawn_text.any(func(record):return record.text=="GUARD") and game.info_text.has("PREVIEW / UNIT P1") and not game.battle.units[0].guard_active,"GUARD target uses a graphic-only preview without mutating live defense")
+	_check(not game.drawn_text.any(func(record):return record.text=="GUARD") and game.info_text.has("PREVIEW") and not game.battle.units[0].guard_active,"GUARD target uses a graphic-only preview without mutating live defense")
 	game.toasts=[]
 	game.battle.act(0)
 	game._feedback()
