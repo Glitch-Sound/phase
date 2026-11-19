@@ -781,7 +781,7 @@ func _feedback() -> void:
 		toasts.append({"cell":u.pos,"text":e.kind,"color":CYAN,"age":0.0})
 		return
 	if e.kind in ["DAMAGE","HEAL"] and not reduced_motion:
-		convergences.append({"cell":u.pos,"age":0.0,"owner":battle})
+		convergences.append({"cell":u.pos,"age":0.0,"owner":battle,"kind":e.kind,"target":e.target})
 	var shown=str(e.amount) if e.kind=="DAMAGE" else _hp(e.actual)
 	toasts.append({"cell":u.pos,"text":("-" if e.kind=="DAMAGE" else "+")+shown,"color":status_colors[1] if e.kind=="DAMAGE" else status_colors[2],"age":0.0})
 	if e.dead:
@@ -804,12 +804,26 @@ func _draw_convergence() -> void:
 	for i in range(battle.units.size()):
 		if battle.units[i].hp<=0:continue
 		var point=BOARD+(movement.position()+Vector2.ONE*0.5)*CELL if movement.active and movement.actor==i else _cell_rect(battle.units[i].pos).get_center()
-		masks.append({"center":point,"radius":radius})
+		masks.append({"center":point,"radius":radius,"index":i})
 	for pulse in convergences:
 		var center=_cell_rect(pulse.cell).get_center()
-		for ring in V.convergence_rings(pulse.age,radius):
-			for line in V.convergence_segments(center,ring.radius,bounds,masks):
-				draw_polyline(line,Color(T.CONVERGENCE_GRAY,T.CONVERGENCE_GRAY,T.CONVERGENCE_GRAY,ring.alpha),width,true)
+		var healing=pulse.kind=="HEAL"
+		# 対象の内側だけを見せ、文字とHP、装備リングは後の既存描画を前面に保つ。
+		var protected=masks.filter(func(m):return not healing or m.index!=pulse.target or not m.center.is_equal_approx(center))
+		if healing and protected.size()<masks.size():
+			var name_size=maxi(T.UNIT_NAME_MIN,roundi(T.UNIT_BOARD_RADIUS*BOARD_SCALE*T.UNIT_NAME_SIZE))
+			var extent=Vector2(mono.get_string_size(V.unit_name(battle.units[pulse.target]),HORIZONTAL_ALIGNMENT_LEFT,-1,name_size).x,mono.get_ascent(name_size)+mono.get_descent(name_size))
+			protected.append({"rect":Rect2(center-extent/2,extent).grow(width/2+0.5/scale_px)})
+		var color=_convergence_color(pulse.kind)
+		for ring in V.convergence_rings(pulse.age,radius,healing):
+			for line in V.convergence_segments(center,ring.radius,bounds,protected):
+				draw_polyline(line,Color(color,ring.alpha),width,true)
+
+func _convergence_color(kind: String) -> Color:
+	var color: Color=ring_colors[2 if kind=="HEAL" else 1]
+	if P.PRESETS.values().has(palette_colors):
+		color=Color.from_hsv(color.h,color.s,maxf(color.v,T.CONVERGENCE_COLOR_VALUE),color.a)
+	return color
 
 func _hud() -> void:
 	if is_instance_valid(hud):

@@ -1,17 +1,20 @@
 ## 実際の位相配置をリングと共通角度空間の円形予測へ描画する。
 extends RefCounted
 
-## 収束する同心円を返す。ageは表示秒、target_radiusは識別を守る対象外周。戻り値は時間差のある半径と透明度。戦闘値は参照も変更もしない。
-static func convergence_rings(age: float,target_radius: float) -> Array:
+## 作用する同心円を返す。ageは表示秒、target_radiusは対象外周、healingは中心から広がる回復か。戻り値は時間差のある半径と透明度。戦闘値は参照も変更もしない。
+static func convergence_rings(age: float,target_radius: float,healing: bool=false) -> Array:
 	var rings=[]
 	for index in range(T.CONVERGENCE_COUNT):
 		var local=age-index*T.CONVERGENCE_STAGGER_SECONDS
 		if local<0 or local>=T.CONVERGENCE_TRAVEL_SECONDS:continue
 		var progress=local/T.CONVERGENCE_TRAVEL_SECONDS
-		rings.append({"radius":lerpf(target_radius*T.CONVERGENCE_OUTER_SCALE,target_radius,progress),"alpha":T.CONVERGENCE_ALPHA*(1-smoothstep(0.75,1.0,progress))})
+		var radius=lerpf(target_radius*T.CONVERGENCE_OUTER_SCALE,target_radius,progress)
+		if healing:
+			radius=lerpf(target_radius*T.CONVERGENCE_HEAL_START_SCALE,target_radius*T.CONVERGENCE_OUTER_SCALE,pow(progress,T.CONVERGENCE_HEAL_EASE_POWER))
+		rings.append({"radius":radius,"alpha":T.CONVERGENCE_ALPHA*(1-smoothstep(0.75,1.0,progress))})
 	return rings
 
-## 円の可視輪郭を返す。centerは固定中心、radiusは半径、boundsは盤内、masksはユニット外形。戻り値は盤外と識別領域を避けた連続線の配列。描画とモデルを変更しない。
+## 円の可視輪郭を返す。centerは固定中心、radiusは半径、boundsは盤内、masksはユニット外形と名前の矩形。戻り値は盤外と識別領域を避けた連続線の配列。描画とモデルを変更しない。
 static func convergence_segments(center: Vector2,radius: float,bounds: Rect2,masks: Array) -> Array:
 	var paths=[];var path=PackedVector2Array()
 	for index in range(T.CONVERGENCE_SEGMENTS):
@@ -19,13 +22,23 @@ static func convergence_segments(center: Vector2,radius: float,bounds: Rect2,mas
 		var b=center+Vector2.from_angle(TAU*(index+1)/T.CONVERGENCE_SEGMENTS)*radius
 		var clear=bounds.has_point(a) and bounds.has_point(b)
 		for mask in masks:
-			if Geometry2D.get_closest_point_to_segment(mask.center,a,b).distance_to(mask.center)<mask.radius:clear=false;break
+			if mask.has("rect"):
+				if _crosses_name(a,b,mask.rect):clear=false;break
+			elif Geometry2D.get_closest_point_to_segment(mask.center,a,b).distance_to(mask.center)<mask.radius:clear=false;break
 		if clear:
 			if path.is_empty():path.append(a)
 			path.append(b)
 		elif not path.is_empty():paths.append(path);path=PackedVector2Array()
 	if not path.is_empty():paths.append(path)
 	return paths
+
+static func _crosses_name(a: Vector2,b: Vector2,rect: Rect2) -> bool:
+	if rect.has_point(a) or rect.has_point(b):return true
+	if maxf(a.x,b.x)<rect.position.x or minf(a.x,b.x)>rect.end.x or maxf(a.y,b.y)<rect.position.y or minf(a.y,b.y)>rect.end.y:return false
+	var corners=[rect.position,rect.position+Vector2(rect.size.x,0),rect.end,rect.position+Vector2(0,rect.size.y)]
+	for i in range(4):
+		if Geometry2D.segment_intersects_segment(a,b,corners[i],corners[(i+1)%4])!=null:return true
+	return false
 const M = preload("res://game/phase_math.gd")
 const P = preload("res://ui/palette.gd")
 const TEXT = P.TEXT
