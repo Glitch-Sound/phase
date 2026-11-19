@@ -11,6 +11,8 @@ func _run() -> void:
 	var ring_method=visual.get_script_method_list().filter(func(m):return m.name=="convergence_rings")[0]
 	_check(ring_method.args.size()==3,"healing has its own outward geometry")
 	if ring_method.args.size()==3:_healing()
+	_check(methods.has("ring_response"),"localized first-contact response exists")
+	if methods.has("ring_response"):_reaction()
 	var game=load("res://tests/fixture_main.gd").new()
 	game.save_path="res://artifacts/runtime/convergence-prototype/no-save.json";game.settings_path="res://artifacts/runtime/convergence-prototype/no-settings.json"
 	root.add_child(game);await process_frame;game.set_process(false)
@@ -41,7 +43,7 @@ func _healing() -> void:
 	_check(visual.convergence_rings(tuning.CONVERGENCE_SECONDS,44,true).is_empty(),"outward circles expire outside without adding wait")
 	var hidden=visual.convergence_segments(Vector2(100,50),12,Rect2(0,0,200,200),[{"center":Vector2.ZERO,"radius":0.0,"rect":Rect2(85,35,30,30)}])
 	_check(hidden.is_empty(),"healing cannot draw through the protected unit name")
-## REQ-021-S04
+## REQ-021-S04、REQ-021-S06
 func _connection(game) -> void:
 	for kind in [game.C.DAMAGE,game.C.HEAL]:
 		game._start_battle();game.battle.actor=0;game.battle.units[0].pos=Vector2i(4,4);game.battle.units[2].pos=Vector2i(5,4)
@@ -51,6 +53,10 @@ func _connection(game) -> void:
 		game._cell_input(Vector2i(5,4))
 		_check(game.battle.turn==2 and game.battle.units[2].hp!=before and game.convergences.size()==1 and game.convergences[0].age==0,"existing effect and turn apply immediately before passive display")
 		_check(game.convergences[0].get("kind","")==game.C.SKILLS[kind].effect and game.convergences[0].get("target",-1)==2,"display receives the real action kind and target")
+		var pulse=game.convergences[0]
+		_check(pulse.has("source_inf") and is_equal_approx(pulse.get("source_inf",-1.0),game.M.sync(game.battle.units[0],1).factor),"response retains original source INF after turn advances")
+		if kind==game.C.HEAL:
+			_check(is_equal_approx(pulse.get("gain_from",-1.0),before/game.battle.units[2].max_hp) and is_equal_approx(pulse.get("gain_to",-1.0),game.battle.units[2].hp/game.battle.units[2].max_hp),"response uses only actual capped HP gain")
 		var history=game.battle.history.duplicate();var hp=game.battle.units[2].hp
 		game._advance_convergence(tuning.CONVERGENCE_SECONDS)
 		_check(game.convergences.is_empty() and game.battle.history==history and game.battle.units[2].hp==hp,"display lifetime never repeats or delays model action")
@@ -68,6 +74,23 @@ func _connection(game) -> void:
 	_check(game.convergences.is_empty(),"auxiliary screen clears circles without a delayed return")
 	game._close_aux();game._feedback();game.battle=game.B.new();game._advance_convergence(0)
 	_check(game.convergences.is_empty(),"replacing battle cannot retain an old center")
+## REQ-021-S06
+func _reaction() -> void:
+	var edge=44.0;var unit=44.0;var contact=tuning.CONVERGENCE_TRAVEL_SECONDS
+	_check(visual.ring_response(contact-0.001,edge,unit,"DAMAGE",0,0).is_empty(),"attack does not react before first contact")
+	var hit=visual.ring_response(contact,edge,unit,"DAMAGE",0,0)
+	var strong=visual.ring_response(contact,edge,unit,"DAMAGE",0,0,true)
+	var later=visual.ring_response(contact+(tuning.CONVERGENCE_SECONDS-contact)*0.5,edge,unit,"DAMAGE",0,0)
+	_check(not hit.is_empty() and hit.arc_angle==TAU and hit.radius>unit*tuning.UNIT_RING_RADII[2] and hit.alpha>later.alpha and strong.alpha>hit.alpha and strong.width>hit.width,"single exterior response decays once and high INF is slightly stronger")
+	_check(visual.ring_response(tuning.CONVERGENCE_SECONDS,edge,unit,"DAMAGE",0,0).is_empty(),"reaction cannot outlive existing circles or restart for later fronts")
+	var start=edge*tuning.CONVERGENCE_HEAL_START_SCALE;var outer=edge*tuning.CONVERGENCE_OUTER_SCALE
+	var crossing=tuning.CONVERGENCE_TRAVEL_SECONDS*pow((unit*tuning.UNIT_HP_RADIUS-start)/(outer-start),1.0/tuning.CONVERGENCE_HEAL_EASE_POWER)
+	_check(visual.ring_response(crossing-0.001,edge,unit,"HEAL",0.8,1).is_empty(),"healing waits only in display until first front crosses HP")
+	var heal=visual.ring_response(crossing,edge,unit,"HEAL",0.8,1.2)
+	_check(not heal.is_empty() and is_equal_approx(heal.radius,unit*tuning.UNIT_HP_RADIUS) and is_equal_approx(heal.start_angle,-PI/2+TAU*0.8) and is_equal_approx(heal.arc_angle,TAU*0.2),"only actual gain interval lights and excess is clipped")
+	_check(visual.ring_response(crossing,edge,unit,"HEAL",0.8,0.8).is_empty(),"zero gain never lights an existing HP segment")
+	var lines=visual.convergence_segments(Vector2(100,100),heal.radius,Rect2(0,0,200,200),[],heal.start_angle,heal.arc_angle)
+	_check(not lines.is_empty() and lines[0][0].is_equal_approx(Vector2(100,100)+Vector2.from_angle(-PI/2+TAU*0.8)*heal.radius) and lines.back()[-1].is_equal_approx(Vector2(100,100)+Vector2.UP*heal.radius),"clipped response geometry covers precisely the gain interval")
 func _clear(paths: Array,board: Rect2,mask: Dictionary) -> bool:
 	for path in paths:
 		for i in range(path.size()-1):

@@ -662,8 +662,9 @@ func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 		queue_redraw()
 		return
 	if battle.mode=="TARGET":
+		var source=battle.actor
 		if index>=0 and battle.act(index):
-			_feedback()
+			_feedback(source)
 			_after_action()
 		else:
 			_notify("Choose a highlighted target. BACK keeps your movement.")
@@ -724,7 +725,7 @@ func _movement_arrived(via_cpu: bool) -> void:
 			cpu_memory.append({"actor":command.actor,"pos":battle.units[command.actor].pos,"skill":command.skill,"target":command.target})
 			cpu_memory=cpu_memory.slice(-T.CPU_MEMORY_LIMIT)
 		if ok:
-			if not command.skill.is_empty():_feedback()
+			if not command.skill.is_empty():_feedback(command.actor)
 			_after_action()
 		else:
 			cpu_paused=via_cpu
@@ -772,7 +773,7 @@ func _after_action() -> void:
 		_result()
 	_hud()
 
-func _feedback() -> void:
+func _feedback(source_index: int=-1) -> void:
 	var e: Dictionary=battle.last_effect
 	var u: Dictionary=battle.units[e.target]
 	if e.kind=="GUARD":
@@ -781,7 +782,10 @@ func _feedback() -> void:
 		toasts.append({"cell":u.pos,"text":e.kind,"color":CYAN,"age":0.0})
 		return
 	if e.kind in ["DAMAGE","HEAL"] and not reduced_motion:
-		convergences.append({"cell":u.pos,"age":0.0,"owner":battle,"kind":e.kind,"target":e.target})
+		var source_inf=M.sync(battle.units[source_index],1).factor if source_index>=0 and source_index<battle.units.size() else 1.0
+		var gain_to=clampf(u.hp/maxf(1.0,u.max_hp),0,1)
+		var gain_from=clampf((u.hp-e.actual)/maxf(1.0,u.max_hp),0,1) if e.kind=="HEAL" else gain_to
+		convergences.append({"cell":u.pos,"age":0.0,"owner":battle,"kind":e.kind,"target":e.target,"source_inf":source_inf,"gain_from":gain_from,"gain_to":gain_to})
 	var shown=str(e.amount) if e.kind=="DAMAGE" else _hp(e.actual)
 	toasts.append({"cell":u.pos,"text":("-" if e.kind=="DAMAGE" else "+")+shown,"color":status_colors[1] if e.kind=="DAMAGE" else status_colors[2],"age":0.0})
 	if e.dead:
@@ -818,6 +822,14 @@ func _draw_convergence() -> void:
 		for ring in V.convergence_rings(pulse.age,radius,healing):
 			for line in V.convergence_segments(center,ring.radius,bounds,protected):
 				draw_polyline(line,Color(color,ring.alpha),width,true)
+
+		var response=V.ring_response(pulse.age,radius,T.UNIT_BOARD_RADIUS*BOARD_SCALE,pulse.kind,pulse.gain_from,pulse.gain_to,pulse.source_inf>=T.RING_RESPONSE_HIGH_INF)
+		if not response.is_empty():
+			var reaction_masks=protected if healing else masks.filter(func(m):return m.index!=pulse.target or not m.center.is_equal_approx(center))
+			var response_color=color.lerp(Color.WHITE,T.RING_RESPONSE_HEAL_WHITE) if healing else Color.WHITE
+			var response_width=maxf(response.width,T.CONVERGENCE_MIN_PIXEL_WIDTH/scale_px)
+			for line in V.convergence_segments(center,response.radius,bounds,reaction_masks,response.start_angle,response.arc_angle):
+				draw_polyline(line,Color(response_color,response.alpha),response_width,true)
 
 func _convergence_color(kind: String) -> Color:
 	var color: Color=ring_colors[2 if kind=="HEAL" else 1]
@@ -1466,7 +1478,7 @@ func _cpu_tick(delta: float) -> void:
 	var event=cpu_turn.advance(battle,delta,false,T.CPU_FAST_SPEED if cpu_fast else 1.0)
 	_follow_turn()
 	if event=="act":
-		_feedback()
+		_feedback(actor)
 	if event in ["act","wait"] or (event=="commit" and not battle.result.is_empty()):
 		cpu_memory.append({"actor":actor,"pos":battle.units[actor].pos,"skill":command.skill,"target":command.target})
 		cpu_memory=cpu_memory.slice(-T.CPU_MEMORY_LIMIT)

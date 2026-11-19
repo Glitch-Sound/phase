@@ -14,12 +14,33 @@ static func convergence_rings(age: float,target_radius: float,healing: bool=fals
 		rings.append({"radius":radius,"alpha":T.CONVERGENCE_ALPHA*(1-smoothstep(0.75,1.0,progress))})
 	return rings
 
-## 円の可視輪郭を返す。centerは固定中心、radiusは半径、boundsは盤内、masksはユニット外形と名前の矩形。戻り値は盤外と識別領域を避けた連続線の配列。描画とモデルを変更しない。
-static func convergence_segments(center: Vector2,radius: float,bounds: Rect2,masks: Array) -> Array:
+## 最初の円の接触反応を返す。ageは表示秒、target_radiusは既存円の終点、unit_radiusは記号半径、kindは効果、gain_fromとgain_toは実HP増分の割合、strongは高INFか。戻り値は1回減衰する縁、非表示なら空。戦闘値は変更しない。
+static func ring_response(age: float,target_radius: float,unit_radius: float,kind: String,gain_from: float,gain_to: float,strong: bool=false) -> Dictionary:
+	if not is_finite(age) or kind not in ["DAMAGE","HEAL"]:return {}
+	var begin=T.CONVERGENCE_TRAVEL_SECONDS;var duration=T.RING_RESPONSE_HIT_SECONDS
+	var radius=unit_radius*T.UNIT_RING_RADII[2]+maxf(T.UNIT_MIN_LINE,unit_radius*T.UNIT_RING_WIDTH)/2+T.RING_RESPONSE_EDGE_OFFSET
+	var start_angle=0.0;var arc_angle=TAU
+	var width=T.RING_RESPONSE_HIGH_WIDTH if strong else T.RING_RESPONSE_HIT_WIDTH
+	var alpha=T.RING_RESPONSE_HIGH_ALPHA if strong else T.RING_RESPONSE_HIT_ALPHA
+	if kind=="HEAL":
+		gain_from=clampf(gain_from,0,1);gain_to=clampf(gain_to,0,1)
+		if gain_to<=gain_from:return {}
+		radius=unit_radius*T.UNIT_HP_RADIUS
+		var inner=target_radius*T.CONVERGENCE_HEAL_START_SCALE;var outer=target_radius*T.CONVERGENCE_OUTER_SCALE
+		begin=T.CONVERGENCE_TRAVEL_SECONDS*pow(clampf((radius-inner)/maxf(0.001,outer-inner),0,1),1.0/T.CONVERGENCE_HEAL_EASE_POWER)
+		duration=T.RING_RESPONSE_HEAL_SECONDS
+		start_angle=-PI/2+TAU*gain_from;arc_angle=TAU*(gain_to-gain_from)
+		width=T.RING_RESPONSE_HEAL_WIDTH;alpha=T.RING_RESPONSE_HEAL_ALPHA
+	var progress=(age-begin)/duration
+	if progress < -0.00000001 or progress>=1:return {}
+	return {"radius":radius,"start_angle":start_angle,"arc_angle":arc_angle,"width":width,"alpha":alpha*(1-smoothstep(0.0,1.0,clampf(progress,0,1)))}
+
+## 円の可視輪郭を返す。centerは固定中心、radiusは半径、boundsは盤内、masksはユニット外形と名前の矩形、start_angleとarc_angleは表示区間。戻り値は盤外と識別領域を避けた連続線の配列。描画とモデルを変更しない。
+static func convergence_segments(center: Vector2,radius: float,bounds: Rect2,masks: Array,start_angle: float=0,arc_angle: float=TAU) -> Array:
 	var paths=[];var path=PackedVector2Array()
 	for index in range(T.CONVERGENCE_SEGMENTS):
-		var a=center+Vector2.from_angle(TAU*index/T.CONVERGENCE_SEGMENTS)*radius
-		var b=center+Vector2.from_angle(TAU*(index+1)/T.CONVERGENCE_SEGMENTS)*radius
+		var a=center+Vector2.from_angle(start_angle+arc_angle*index/T.CONVERGENCE_SEGMENTS)*radius
+		var b=center+Vector2.from_angle(start_angle+arc_angle*(index+1)/T.CONVERGENCE_SEGMENTS)*radius
 		var clear=bounds.has_point(a) and bounds.has_point(b)
 		for mask in masks:
 			if mask.has("rect"):
