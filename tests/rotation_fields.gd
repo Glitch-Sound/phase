@@ -16,7 +16,6 @@ func _initialize() -> void:
 	_check(C.SKILLS[FAST].label=="FAST FIELD / SURROUNDING" and C.SKILLS[SLOW].label=="SLOW FIELD / SURROUNDING","field display names preserve the old fast ID")
 	_entries()
 	_inventory()
-	_retired_save()
 	_check(ResourceLoader.exists("res://game/rotation_field.gd"),"shared field resolver exists")
 	if ResourceLoader.exists("res://game/rotation_field.gd"):
 		_boundaries()
@@ -136,44 +135,10 @@ func _inventory() -> void:
 	l.builds[1].skills=[FAST,SLOW,C.DAMAGE]
 	var copy=L.new()
 	var file="res://artifacts/runtime/rotation-field-save-%d.json" % Time.get_ticks_usec()
-	_check(l.builds.all(func(build):return l.valid_build(build)) and l.save_to(file)=="" and copy.load_from(file)=="" and _json(copy.snapshot())==_json(l.snapshot()),"new passives share three slots and round-trip in v1 without cloud state")
+	_check(l.builds.all(func(build):return l.valid_build(build)) and l.save_to(file)=="" and copy.load_from(file)=="" and _json(copy.snapshot())==_json(l.snapshot()),"new passives share three slots and round-trip in the current format without cloud state")
 	l.skills=[C.DAMAGE,C.HEAL,C.MOVE,C.DAMAGE_DIAGONAL,C.HEAL_DIAGONAL,C.DAMAGE_ORTHOGONAL_TWO,C.HEAL_ORTHOGONAL_TWO,C.DAMAGE_DIAGONAL_TWO,C.HEAL_DIAGONAL_TWO,C.SWAP,C.PUSH,C.GUARD,C.IGNORE_PANEL]
 	l.builds=C.player_builds()
-	_check(l.save_to(file)=="" and copy.load_from(file)=="" and _json(copy.snapshot())==_json(l.snapshot()),"old thirteen-skill v1 preserves inventory and never auto-unlocks fields")
-## REQ-016-S03
-func _retired_save() -> void:
-	var original=L.new().snapshot()
-	original.skills=[C.DAMAGE,C.HEAL,FAST,STOP,SLOW]
-	original.mutations=["NORMAL","VLSRI"]
-	original.stage_index=2
-	original.builds[0].skills=[FAST,STOP,C.DAMAGE]
-	original.builds[1].skills=[STOP]
-	original.builds[2].skills=[C.HEAL,SLOW]
-	_check(not L.new().valid_build(original.builds[0],original),"retired ID is accepted only by legacy loading, never normal build validation")
-	var expected=original.duplicate(true)
-	expected.skills=[C.DAMAGE,C.HEAL,FAST,SLOW]
-	expected.builds[0].skills=[FAST,C.DAMAGE]
-	expected.builds[1].skills=[]
-	var path="res://artifacts/runtime/remove-stop/legacy-%d.json" % Time.get_ticks_usec()
-	var bytes=JSON.stringify(original,"\t")
-	var file=FileAccess.open(path,FileAccess.WRITE);file.store_string(bytes);file.close()
-	var loaded=L.new()
-	_check(loaded.load_from(path)=="" and _json(loaded.snapshot())==_json(expected),"valid old STOP inventory and slots remove only STOP, preserving order and all other data")
-	_check(FileAccess.get_file_as_string(path)==bytes,"legacy load never rewrites the source")
-	var roundtrip=path+".current.json"
-	var copy=L.new()
-	_check(loaded.save_to(roundtrip)=="" and copy.load_from(roundtrip)=="" and _json(copy.snapshot())==_json(expected),"cleaned state can explicitly save and reload without STOP")
-	for kind in ["unknown","duplicate","locked"]:
-		var bad=original.duplicate(true)
-		if kind=="unknown":bad.skills.append("UNKNOWN")
-		elif kind=="duplicate":bad.skills.append(STOP)
-		else:bad.skills.erase(STOP)
-		file=FileAccess.open(path+kind,FileAccess.WRITE);file.store_string(JSON.stringify(bad));file.close()
-		var before=loaded.snapshot()
-		_check(not loaded.load_from(path+kind).is_empty() and loaded.snapshot()==before,"legacy cleanup cannot hide an invalid original "+kind)
-	original.builds=original.builds.slice(0,2)
-	file=FileAccess.open(path+".two",FileAccess.WRITE);file.store_string(JSON.stringify(original));file.close()
-	_check(loaded.load_from(path+".two")=="" and _json(loaded.builds.slice(0,2))==_json(expected.builds.slice(0,2)) and loaded.builds.size()==3 and loaded.builds.all(func(b):return loaded.valid_build(b)),"old two-build save also removes only STOP before the existing third-build supplement")
+	_check(l.save_to(file)=="" and copy.load_from(file)=="" and _json(copy.snapshot())==_json(l.snapshot()),"current thirteen-skill save preserves inventory and never auto-unlocks fields")
 func _battle():
 	var b=B.new()
 	b.start(0,[C.default_build(),C.default_build()],1)

@@ -93,12 +93,12 @@ func _cpu() -> void:
 		if game.movement.active:break
 	_check(game.movement.active,"CPU commit enters the same movement phase")
 	await _draw_frame()
-	_check(game.displayed_text.has("CPU A / MOVING") and game.displayed_text.has("DAMAGE / ADJACENT → 1") and game.drawn_route_segments.is_empty(),"CPU shows its chosen action and target during travel without a route line")
+	_check(game.displayed_text.has("CPU E1 / Onyx / MOVING") and game.displayed_text.has("DAMAGE / ADJACENT → P1 / Kestrel") and game.drawn_route_segments.is_empty(),"CPU shows its chosen action and target during travel without a route line")
 	var hp=game.battle.units[0].hp
 	game._cpu_tick(100)
 	_check(game.battle.units[0].hp==hp,"CPU cannot attack during travel")
 	game._movement_tick(game.movement.duration);await _draw_frame()
-	_check(game.movement.active and game.movement.get("landed")==true and game.battle.units[0].hp==hp and game.displayed_text.has("CPU A / AIMING"),"CPU landing keeps the actor and prepares the attack")
+	_check(game.movement.active and game.movement.get("landed")==true and game.battle.units[0].hp==hp and game.displayed_text.has("CPU E1 / Onyx / AIMING"),"CPU landing keeps the actor and prepares the attack")
 	game.cpu_paused=true;game._movement_tick(100)
 	_check(game.battle.units[0].hp==hp and game.movement.active,"CPU pause also freezes the attack beat")
 	game.cpu_paused=false;game.cpu_fast=true

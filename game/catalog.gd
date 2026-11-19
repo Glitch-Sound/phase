@@ -1,5 +1,6 @@
 ## 許可されたスキル、初期装備、ステージを定義する。
 extends RefCounted
+const I=preload("res://game/unit_identity.gd")
 const M = preload("res://game/phase_math.gd")
 const DAMAGE = "ACTIVE_DAMAGE_ADJACENT"
 const HEAL = "ACTIVE_HEAL_ADJACENT"
@@ -44,8 +45,8 @@ const SKILLS = {
 	FIELD_FAST:{"type":"PASSIVE","effect":"FAST FIELD","area":"SURROUNDING","field":"FAST","label":"FAST FIELD / SURROUNDING","description":"Surrounding others: equipment rotation x1.5."}
 }
 const SQUAD_SIZE = 3
-const PLAYER_IDS = ["01","02","03"]
-const ENEMY_IDS = ["A","B","C"]
+const PLAYER_IDS = I.PLAYER_IDS
+const ENEMY_IDS = I.ENEMY_IDS
 const STARTER_STATS = [[20,20,20,20,20],[20,30,10,20,20],[20,10,30,20,20],[30,10,20,30,10]]
 
 ## 新規装備の全配分を返す。戻り値は各値10以上の10刻みで合計100の126配列。呼び出しごとに独立し、副作用なし。
@@ -129,12 +130,12 @@ static func player_builds() -> Array:
 	support.arms=STARTER_STATS[2].duplicate()
 	return [runner,interceptor,support]
 
-## 戦闘ユニットを作る。idは内部識別子、campは陣営、posは座標、buildは構成。戻り値はHPと角度を初期化した辞書。
-static func unit(id: String, camp: String, pos: Vector2i, build: Dictionary) -> Dictionary:
+## 戦闘ユニットを作る。idは内部識別子、campは陣営、posは座標、buildは構成、display_nameは表示専用の入力名。戻り値はHPと角度を初期化した辞書。
+static func unit(id: String, camp: String, pos: Vector2i, build: Dictionary,display_name: String="") -> Dictionary:
 	var u=build.duplicate(true)
 	# 開始角は従来どおり0度であり、戦闘中のリセット基準だけを別に保持する。
 	var core_start=0.0
-	u.merge({"id":id,"camp":camp,"pos":pos,"core_angle":core_start,"initial_core_angle":core_start,"gear_angle":0.0,"arms_angle":0.0,"moved":0,"guard_active":false},true)
+	u.merge({"id":id,"camp":camp,"display_name":I.effective_name(display_name,id,camp),"identicon_version":I.VERSION,"pos":pos,"core_angle":core_start,"initial_core_angle":core_start,"gear_angle":0.0,"arms_angle":0.0,"moved":0,"guard_active":false},true)
 	u.max_hp=M.max_hp(u)
 	u.hp=u.max_hp
 	u.next_time=M.delay(u)

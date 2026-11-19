@@ -33,7 +33,7 @@ if rg 'SCRIPT ERROR|FAIL:|Failed to load script' artifacts/runtime/ui-output.txt
 fi
 rg 'UI CONNECTIONS: [0-9]+ checks / 0 failures' artifacts/runtime/ui-output.txt
 
-for suite in convergence turn_plan movement movement_ui review_regressions contested_play display_flow design_flow restored_interface map_chrome unit_glyphs arc_strokes ring_palette phase_preview battle_labels time_axis side_information route_clearance panel_generation panel_interface core_panels core_panel_ui panel_play interface_hierarchy cpu_policy cpu_turn cpu_interface cpu_play decision_model decision_interface turn_follow tempo_risk skill_patterns skill_pattern_cpu skill_pattern_ui utility_skills utility_cpu utility_ui rotation_fields rotation_field_ui debug_unlock debug_unlock_ui build_choices build_dialogs three_unit_squads english_ui; do
+for suite in unit_identity unit_identity_ui convergence turn_plan movement movement_ui review_regressions contested_play display_flow design_flow restored_interface map_chrome unit_glyphs arc_strokes ring_palette phase_preview battle_labels time_axis side_information route_clearance panel_generation panel_interface core_panels core_panel_ui panel_play interface_hierarchy cpu_policy cpu_turn cpu_interface cpu_play decision_model decision_interface turn_follow tempo_risk skill_patterns skill_pattern_cpu skill_pattern_ui utility_skills utility_cpu utility_ui rotation_fields rotation_field_ui debug_unlock debug_unlock_ui build_choices build_dialogs three_unit_squads english_ui; do
   godot --headless --path . --script "tests/$suite.gd" --log-file "$PWD/artifacts/runtime/$suite.log" > "artifacts/runtime/$suite-output.txt" 2>&1
   cat "artifacts/runtime/$suite-output.txt"
   if rg 'SCRIPT ERROR|FAIL:|Failed to load script' "artifacts/runtime/$suite-output.txt"; then
@@ -42,6 +42,8 @@ for suite in convergence turn_plan movement movement_ui review_regressions conte
 done
 rg 'CONVERGENCE: [0-9]+ checks / 0 failures' artifacts/runtime/convergence-output.txt
 rg 'TURN PLAN: [0-9]+ checks / 0 failures' artifacts/runtime/turn_plan-output.txt
+rg 'UNIT IDENTITY: [0-9]+ checks / 0 failures' artifacts/runtime/unit_identity-output.txt
+rg 'UNIT IDENTITY UI: [0-9]+ checks / 0 failures' artifacts/runtime/unit_identity_ui-output.txt
 rg 'MOVEMENT: [0-9]+ checks / 0 failures' artifacts/runtime/movement-output.txt
 rg 'MOVEMENT UI: [0-9]+ checks / 0 failures' artifacts/runtime/movement_ui-output.txt
 rg 'REVIEW REGRESSIONS: [0-9]+ checks / 0 failures' artifacts/runtime/review_regressions-output.txt
@@ -97,7 +99,7 @@ rg 'THREE UNIT SQUADS: [0-9]+ checks / 0 failures' artifacts/runtime/three_unit_
 rg 'ENGLISH UI: [0-9]+ checks / 0 failures' artifacts/runtime/english_ui-output.txt
 
 # macOS sandboxの証明書初期化警告を除き、エンジンの描画エラー等も失敗にする。
-for log in convergence-output turn_plan-output movement-output movement_ui-output test-output smoke-output replay-output ui-output review_regressions-output contested_play-output display_flow-output design_flow-output restored_interface-output map_chrome-output unit_glyphs-output arc_strokes-output ring_palette-output phase_preview-output battle_labels-output time_axis-output side_information-output route_clearance-output panel_generation-output panel_interface-output core_panels-output core_panel_ui-output panel_play-output interface_hierarchy-output cpu_policy-output cpu_turn-output cpu_interface-output cpu_play-output decision_model-output decision_interface-output turn_follow-output tempo_risk-output skill_patterns-output skill_pattern_cpu-output skill_pattern_ui-output utility_skills-output utility_cpu-output utility_ui-output rotation_fields-output rotation_field_ui-output debug_unlock-output debug_unlock_ui-output build_choices-output build_dialogs-output three_unit_squads-output english_ui-output; do
+for log in unit_identity-output unit_identity_ui-output convergence-output turn_plan-output movement-output movement_ui-output test-output smoke-output replay-output ui-output review_regressions-output contested_play-output display_flow-output design_flow-output restored_interface-output map_chrome-output unit_glyphs-output arc_strokes-output ring_palette-output phase_preview-output battle_labels-output time_axis-output side_information-output route_clearance-output panel_generation-output panel_interface-output core_panels-output core_panel_ui-output panel_play-output interface_hierarchy-output cpu_policy-output cpu_turn-output cpu_interface-output cpu_play-output decision_model-output decision_interface-output turn_follow-output tempo_risk-output skill_patterns-output skill_pattern_cpu-output skill_pattern_ui-output utility_skills-output utility_cpu-output utility_ui-output rotation_fields-output rotation_field_ui-output debug_unlock-output debug_unlock_ui-output build_choices-output build_dialogs-output three_unit_squads-output english_ui-output; do
   if rg '^ERROR:' "artifacts/runtime/$log.txt" | rg -v '^ERROR: Condition "ret != noErr" is true. Returning: ""$'; then
     exit 1
   fi

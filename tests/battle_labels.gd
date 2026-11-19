@@ -61,7 +61,7 @@ func _check_scene(game, title: String) -> void:
 		_check(hits.is_empty(),"only requested labels absent: "+title+" / "+label+" / "+str(hits))
 	var displayed=game.battle.units[game.selected if game.selected>=0 else game.battle.actor]
 	var code={"STANDARD":"VIRSL","REVERSE":"VLSRI"}.get(displayed.class_name,displayed.class_name)
-	var expected_count=20+2*displayed.skills.size()+int(game.M.singularity(game.battle.preview()))
+	var expected_count=25+2*displayed.skills.size()+int(game.M.singularity(game.battle.preview()))
 	expected_count+=int(code=="VIRSL")
 	for goal in [game.battle.stage.goal,game.battle.stage.enemy_goal]:
 		if Rect2i(0,0,10,10).has_point(goal):

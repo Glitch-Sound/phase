@@ -178,7 +178,7 @@ func _test_notifications() -> void:
 	for state in ["start","invalid-move","invalid-target"]:
 		game._start_battle()
 		await process_frame
-		var expected="UNIT 1 / PLAYER — Click adjacent empty cells, then double-click the endpoint."
+		var expected="UNIT P1 / Kestrel / PLAYER — Click adjacent empty cells, then double-click the endpoint."
 		if state=="invalid-move":
 			game._cell_input(Vector2i(0,9))
 			expected="Add an empty adjacent cell. No revisits. Maximum %d steps." % T.BASE_MOVE

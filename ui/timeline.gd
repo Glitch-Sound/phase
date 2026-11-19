@@ -1,5 +1,6 @@
 ## 戦闘予定を変更せず、独立した行動順点と現在状態の配置を生成する。
 extends RefCounted
+const I=preload("res://game/unit_identity.gd")
 const T=preload("res://game/tuning.gd")
 const B=preload("res://game/battle.gd")
 
@@ -27,7 +28,7 @@ static func layout(units: Array, actor: int, rows: Array, finished: bool=false) 
 		for row in rows:
 			if units[row.index].hp<=0:
 				continue
-			events.append({"index":row.index,"time":row.time,"rank":events.size()+1,"repeated":seen.has(row.index),"name":units[row.index].id.trim_prefix("0") if units[row.index].camp=="PLAYER" else units[row.index].id})
+			events.append({"index":row.index,"time":row.time,"rank":events.size()+1,"repeated":seen.has(row.index),"name":I.slot(units[row.index])+" / "+I.effective_name(units[row.index].get("display_name",""),units[row.index].id,units[row.index].camp)})
 			if not seen.has(row.index):
 				seen.append(row.index)
 			if events.size()>=T.TIMELINE_EVENTS and seen.size()==alive:
@@ -62,7 +63,7 @@ static func layout(units: Array, actor: int, rows: Array, finished: bool=false) 
 			if position>0:
 				cards[side[position]].center.y=maxf(cards[side[position]].center.y,cards[side[position-1]].center.y+T.TIMELINE_CARD_GAP)
 	for card in cards:
-		card.rect=Rect2(card.center-Vector2(T.TIMELINE_CARD_SIZE.x/2,26),T.TIMELINE_CARD_SIZE)
+		card.rect=Rect2(card.center-Vector2(T.TIMELINE_CARD_SIZE.x/2,44),T.TIMELINE_CARD_SIZE)
 	var links=[]
 	for event in events:
 		var card=cards[event.index]
@@ -77,7 +78,7 @@ static func hit(view: Dictionary, point: Vector2) -> Dictionary:
 			return event
 	for card in view.cards:
 		if card.rect.has_point(point):
-			return card.event if not card.event.is_empty() else {"index":card.index,"name":card.unit.id.trim_prefix("0") if card.unit.camp=="PLAYER" else card.unit.id}
+			return card.event if not card.event.is_empty() else {"index":card.index,"name":I.slot(card.unit)+" / "+I.effective_name(card.unit.get("display_name",""),card.unit.id,card.unit.camp)}
 	return {}
 
 ## eventは節点、actorは行動番号。戻り値は正確な相対待ち量と0の意味。副作用なし。

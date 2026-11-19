@@ -7,6 +7,7 @@
 | project.godot、main.tscn | Godot起動点 |
 | game/ | 位相計算、戦闘、収集、カタログ、調整値 |
 | ui/ | 描画、画面、入力 |
+| docs/identicon-v1.md | 端末間で共有する名前と紋章の固定規約 |
 | tests/ | モデルと保存の検証、プレイ再現 |
 | scripts/ | プロダクト検査、トレース検査 |
 | artifacts/ | 検証ログとレビュー |
@@ -20,7 +21,8 @@
 モデルから画面へ依存しない。
 ビルドと収集の保存をgame/collection.gdに集約する。\
 構成候補と可否、原本から独立したプレビューはgame/build_choices.gd、共通の選択画面はui/build_dialog.gdへ置く。
-リングと波形はui/visuals.gdで手続き的に描く。
+game/unit_identity.gdが表示名の規約と固定の幾何を生成し、戦闘の不変IDと構成には名前を混ぜない。\
+リングと波形、円形紋章はui/visuals.gdで手続き的に描く。
 配色と判読性はui/palette.gd、操作アイコンと権利表示はassets/lucide/に集約する。
 CPUの判断はgame/cpu_policy.gd、段階と表示時間はui/cpu_turn.gdへ分離し、どちらも既存のbattleを操作する。
 経路と行動の予定はui/turn_plan.gd、各歩の描画補間はui/movement.gdへ分離する。\

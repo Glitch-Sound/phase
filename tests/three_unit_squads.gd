@@ -37,11 +37,6 @@ func _storage() -> void:
 	_check(l.save_to(path).is_empty(),"three builds can be saved in isolated storage")
 	var loaded=L.new()
 	_check(loaded.load_from(path).is_empty() and loaded.builds.size()==3 and loaded.builds[2].class_name=="REVERSE","third build survives save/load")
-	var legacy=loaded.snapshot();legacy.builds.resize(2);legacy.stage_index=2
-	var legacy_path="res://artifacts/runtime/three-unit-legacy.json"
-	var old_file=FileAccess.open(legacy_path,FileAccess.WRITE);old_file.store_string(JSON.stringify(legacy));old_file.close()
-	var old_bytes=FileAccess.get_file_as_bytes(legacy_path)
-	_check(loaded.load_from(legacy_path).is_empty() and loaded.builds.slice(0,2)==legacy.builds and loaded.builds.size()==3 and loaded.items==legacy.items and loaded.skills==legacy.skills and loaded.mutations==legacy.mutations and loaded.stage_index==2 and FileAccess.get_file_as_bytes(legacy_path)==old_bytes,"valid two-unit save keeps collection and old builds, adds third only in memory")
 	var bad=loaded.snapshot();bad.builds.resize(1)
 	var f=FileAccess.open("res://artifacts/runtime/three-unit-invalid.json",FileAccess.WRITE);f.store_string(JSON.stringify(bad));f.close()
 	var before=loaded.snapshot()

@@ -21,6 +21,7 @@ func _run() -> void:
 	game.battle.panels={}
 	game.battle.actor=0
 	game.battle.units[0].pos=Vector2i(4,4)
+	game.battle.units[0].display_name="Aster"
 	game.battle.units[0].skills=[C.GUARD]
 	if C.SKILLS.has("PASSIVE_FIELD_SLOW_ADJACENT"):game.battle.units[0].skills.append("PASSIVE_FIELD_SLOW_ADJACENT")
 	game.battle.units[1].pos=Vector2i(8,8)
@@ -36,7 +37,7 @@ func _run() -> void:
 		var expected=[Vector2i(3,3),Vector2i(4,3),Vector2i(5,3),Vector2i(3,4),Vector2i(5,4),Vector2i(3,5),Vector2i(4,5),Vector2i(5,5)]
 		_check(_keys(game._field_view().cells.keys())==_keys(expected) and game.field_clouds.size()==1 and game._field_view().get("emitters",[]).size()==1,"exact eight-cell coverage has one continuous source cloud below units")
 		var hint=game.panel_description(Vector2i(5,4))
-		_check(hint=="EQUIPMENT x0.5 ON ENTRY\nSLOW / 1","hover explains exactly the actual multiplier and source")
+		_check(hint=="EQUIPMENT x0.5 ON ENTRY\nSLOW / P1 / Aster","hover explains exactly the actual multiplier and source")
 		game.battle.back()
 		game.battle.mode="MOVE"
 		game.battle.path_click(Vector2i(5,4))

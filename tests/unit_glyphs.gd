@@ -23,7 +23,7 @@ func _test_glyph(visual) -> void:
 	var u=C.unit("01","PLAYER",Vector2i.ZERO,C.default_build())
 	var before=u.duplicate(true)
 	var glyph: Dictionary=visual.glyph(24.0,u,false,P.PRESETS.DEFAULT.slice(1),P.PRESETS.DEFAULT[0])
-	_check(glyph.name=="1","glyph contains centered presentation name")
+	_check(glyph.name.is_empty() and glyph.identicon.version==1,"glyph replaces centered text with its versioned identicon")
 	_check(glyph.arcs.size()==16,"exactly fifteen sectors and HP; no outer frame or track")
 	for r in range(3):
 		for s in range(5):
@@ -68,7 +68,7 @@ func _test_guard(visual) -> void:
 ## REQ-031-S01
 func _test_names(visual) -> void:
 	var ids=["01","02","03","A","B","C"]
-	var expected=["1","2","3","A","B","C"]
+	var expected=["Kestrel","Vesper","Lyra","Onyx","Cipher","Sable"]
 	for i in range(ids.size()):
 		var u=C.unit(ids[i],"PLAYER" if i<3 else "ENEMY",Vector2i.ZERO,C.default_build())
 		_check(visual.unit_name(u)==expected[i] and u.id==ids[i],"display mapping preserves internal identity: "+ids[i])
@@ -79,19 +79,19 @@ func _test_screens() -> void:
 	root.add_child(game)
 	await process_frame
 	var buttons=game.overlay.find_children("*","Button",true,false).map(func(b):return b.text)
-	_check(buttons.has("UNIT 1") and buttons.has("UNIT 2") and not buttons.has("UNIT 01"),"BUILD presents unpadded unit names")
+	_check(buttons.has("SLOT 1") and buttons.has("SLOT 2") and not buttons.has("UNIT 01"),"BUILD presents unpadded unit names")
 	game.collection.stage_index=2
 	game._build()
 	await process_frame
 	var texts=game.overlay.find_children("*","Label",true,false).map(func(l):return l.text)
-	_check(texts.has("1 REACH (9,0) / KEEP 1 ALIVE / STOP B (0,9)"),"BUILD objective uses display names")
-	_check(texts.has("Lose if 1 falls. A guards the exit; 2 and 3 can intercept B."),"BUILD hint uses display names")
+	_check(texts.has("P1 REACH (9,0) / KEEP P1 ALIVE / STOP E2 (0,9)"),"BUILD objective uses display names")
+	_check(texts.has("Lose if P1 falls. E1 guards the exit; P2 and P3 can intercept E2."),"BUILD hint uses display names")
 	var stages=game.C.stages()
 	_check(stages.map(func(stage):return stage.name).slice(0,2)==["01 / INTERFERENCE","02 / SEVERANCE"],"stage numbering remains unchanged")
 	game._help()
 	await process_frame
 	texts=game.auxiliary.find_children("*","Label",true,false).map(func(l):return l.text)
-	_check(texts.any(func(s):return s.begins_with("Edit units 1, 2 and 3.")),"HELP refers to 1 and 2")
+	_check(texts.any(func(s):return s.begins_with("Name 3 PLAYER slots.")),"HELP refers to 1 and 2")
 	game._close_aux()
 	game.collection.stage_index=0
 	game._start_battle()
@@ -106,7 +106,7 @@ func _test_screens() -> void:
 	game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 	await process_frame
 	texts=game.overlay.find_children("*","Label",true,false).map(func(l):return l.text)
-	_check(texts.has("UNIT 1 / ACTION") and not texts.has("UNIT 01 / ACTION"),"ACTION uses presentation name")
+	_check(texts.has("P1 / Kestrel / ACTION") and not texts.has("UNIT 01 / ACTION"),"ACTION uses presentation name")
 	_check(game.battle.units.map(func(u):return u.id)==["01","02","A","B"],"all screen transitions preserve internal IDs")
 ## REQ-030-S04
 func _test_board_fit(game) -> void:
@@ -128,8 +128,7 @@ func _test_board_fit(game) -> void:
 		var tick_from=record.center+g.tick.from
 		var tick_to=record.center+g.tick.to
 		_check(Rect2(cell_origin,Vector2.ONE*T.BATTLE_CELL).grow(-g.tick.width/2).has_point(tick_from) and Rect2(cell_origin,Vector2.ONE*T.BATTLE_CELL).grow(-g.tick.width/2).has_point(tick_to),"marker stays inside cell: "+record.id)
-		var size=game.mono.get_string_size(g.name,HORIZONTAL_ALIGNMENT_LEFT,-1,g.font_size)
-		_check(size.x<T.BATTLE_CELL and size.y<T.BATTLE_CELL,"centered name stays inside cell: "+record.id)
+		_check(g.identicon_radius<T.UNIT_HP_RADIUS*record.radius and g.identicon.polygons.all(func(poly):return Array(poly).all(func(point):return point.length()<=1)),"identicon stays inside HP and cell: "+record.id)
 	game.battle.units=before
 func _check(ok: bool,message: String) -> void:
 	checks+=1

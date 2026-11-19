@@ -67,11 +67,11 @@ func _capture(suffix: String) -> void:
 		root.size=dimensions
 		await process_frame
 		await _shot("build-long-"+str(dimensions.x))
-		var buttons=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="UNIT 2")
+		var buttons=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="SLOT 2")
 		_click(root.get_final_transform()*buttons[0].get_global_rect().get_center())
 		await process_frame
 		_check(game.edit_unit==1,"scaled unit switch "+str(dimensions))
-		var first=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="UNIT 1")[0]
+		var first=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="SLOT 1")[0]
 		_click(root.get_final_transform()*first.get_global_rect().get_center())
 		await process_frame
 		_check(game.edit_unit==0,"scaled switch returns "+str(dimensions))

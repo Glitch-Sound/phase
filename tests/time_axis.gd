@@ -50,8 +50,8 @@ func _test_times() -> void:
 	for i in range(links.size()):
 		_check(links[i].index==rows[i].index and links[i].event==view.events[i],"each point connects only its own unit")
 	_check(view.events[3].repeated and view.events[5].repeated,"future repeats have their own action points")
-	_check(model.caption(view.events[0],0)=="1  0 / ACTING" and model.caption(view.events[1],0)=="2  0 / QUEUED","zero acting and queued are different")
-	_check(model.caption(view.events[2],0)=="A  +0.01","small relative wait is exact and compact")
+	_check(model.caption(view.events[0],0)=="P1 / Kestrel  0 / ACTING" and model.caption(view.events[1],0)=="P2 / Vesper  0 / QUEUED","zero acting and queued are different")
+	_check(model.caption(view.events[2],0)=="E1 / Onyx  +0.01","small relative wait is exact and compact")
 	_check(b.units==before and rows[0]=={"index":0,"time":100.0},"layout is pure")
 	for i in range(4):
 		b.units[i].next_time=100.0
@@ -101,13 +101,13 @@ func _test_progress() -> void:
 	rows[3].time=200.0
 	var smaller=model.layout(b.units,0,rows)
 	_check(smaller.span==100.0 and smaller.events[1].remaining==50.0 and smaller.events[1].get("progress_fraction",-1.0)==0.5,"changed maximum recalculates relative white without changing remaining wait")
-	_check(model.caption(initial.events[1],0)=="2  +50" and model.caption(smaller.events[1],0)=="2  +50","precise waiting number stays truthful as range changes")
+	_check(model.caption(initial.events[1],0)=="P2 / Vesper  +50" and model.caption(smaller.events[1],0)=="P2 / Vesper  +50","precise waiting number stays truthful as range changes")
 	for i in range(4):
 		b.units[i].next_time=100.0
 		rows[i].time=100.0
 	var zero=model.layout(b.units,0,rows)
 	_check(zero.span==0.0 and zero.events.size()==4 and zero.events.all(func(e):return e.get("progress_fraction",-1.0)==1.0),"zero maximum gives full white without division by zero")
-	_check(model.caption(zero.events[0],0)=="1  0 / ACTING" and model.caption(zero.events[1],0)=="2  0 / QUEUED","full white still distinguishes actor and queued zero")
+	_check(model.caption(zero.events[0],0)=="P1 / Kestrel  0 / ACTING" and model.caption(zero.events[1],0)=="P2 / Vesper  0 / QUEUED","full white still distinguishes actor and queued zero")
 
 ## REQ-019-S07
 func _test_current() -> void:
@@ -118,7 +118,7 @@ func _test_current() -> void:
 	_check(view.cards.size()==4 and view.cards.map(func(c):return c.index)==[0,1,2,3],"four current states, no repeated future states")
 	for card in view.cards:
 		_check(card.center.x==(T.TIMELINE_CARD_X.x if card.index<2 else T.TIMELINE_CARD_X.y),"correct camp side")
-		_check(card.rect.position.x>=40 and card.rect.end.x<384 and card.rect.end.y<T.PREVIEW_PANEL.position.y,"cards fit existing left region")
+		_check(card.rect.position.x>=T.BATTLE_BOARD_ORIGIN.y and card.rect.end.x<T.BATTLE_BOARD_ORIGIN.x and card.rect.end.y<T.PREVIEW_PANEL.position.y,"cards fit existing left region")
 		_check(card.unit==b.units[card.index],"state is exact current data")
 		_check(model.hit(view,card.center).index==card.index,"state input selects associated unit")
 	for pair in [[0,1],[2,3]]:

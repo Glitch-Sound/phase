@@ -109,7 +109,7 @@ func _inventory()->void:
 	var load_error=restored.load_from(path)
 	# JSONの数値型を両辺で正規化し、内容の全体を比較する。
 	var round_trip=JSON.parse_string(JSON.stringify(restored.snapshot()))==JSON.parse_string(JSON.stringify(inventory.snapshot()))
-	_check(save_error=="" and load_error=="" and round_trip,"new skills round-trip through isolated version-1 save")
+	_check(save_error=="" and load_error=="" and round_trip,"new skills round-trip through isolated current save")
 	var legacy=L.new()
 	legacy.skills=[C.DAMAGE,C.HEAL,C.MOVE]
 	legacy.builds[0].skills=legacy.skills.duplicate()

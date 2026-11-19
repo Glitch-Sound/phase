@@ -102,8 +102,8 @@ func _test_help_and_build(game) -> void:
 		var texts=[]
 		for label in game.overlay.find_children("*","Label",true,false):
 			texts.append(label.text)
-		# 味方の表示名は利用者の指定で1、2へ変更した。目標そのものは維持する。
-		var expected=["ELIMINATE ALL ENEMY UNITS","DEFEAT A / KEEP 1 ALIVE","1 REACH (9,0) / KEEP 1 ALIVE / STOP B (0,9)","PLAYER HOLD (8,0) / DENY ENEMY (0,9)"]
+		# 目標の対象は表示名と独立した陣営と枠の参照で示す。
+		var expected=["ELIMINATE ALL ENEMY UNITS","DEFEAT E1 / KEEP P1 ALIVE","P1 REACH (9,0) / KEEP P1 ALIVE / STOP E2 (0,9)","PLAYER HOLD (8,0) / DENY ENEMY (0,9)"]
 		_check(texts.has(expected[stage]),"BUILD retains stage objective: "+str(stage))
 func _check(ok: bool,message: String) -> void:
 	checks+=1

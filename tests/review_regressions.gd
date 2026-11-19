@@ -157,20 +157,20 @@ func _test_skill_progress() -> void:
 	for index in range(2):
 		l.builds[index].skills.append(C.MOVE)
 		_check(l.valid_build(l.builds[index]),"collected MOVE is shared")
-	_test_legacy()
+	_test_saved_unlocks()
 
 ## REQ-026-S02
-func _test_legacy() -> void:
+func _test_saved_unlocks() -> void:
 	var l=L.new()
 	var data=l.snapshot()
 	data.skills=[C.DAMAGE,C.HEAL,C.MOVE]
-	data.builds=[C.default_build(),C.default_build()]
+	data.builds=[C.default_build(),C.default_build(),C.default_build()]
 	var p="res://artifacts/runtime/review-legacy.json"
 	var f=FileAccess.open(p,FileAccess.WRITE)
 	f.store_string(JSON.stringify(data))
 	f.close()
-	_check(l.load_from(p).is_empty(),"legacy version 1 accepted")
-	_check(l.skills.size()==3 and l.builds[0].skills.has(C.MOVE),"legacy unlocks preserved")
+	_check(l.load_from(p).is_empty(),"current save with collected skills accepted")
+	_check(l.skills.size()==3 and l.builds[0].skills.has(C.MOVE),"saved unlocks preserved")
 
 ## REQ-015-S03
 func _test_rewards(game: Control) -> void:

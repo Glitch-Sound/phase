@@ -4,6 +4,7 @@
 
 | capability | 内容 |
 | --- | --- |
+| [unit-identity](unit-identity/spec.md) | 名前の入力規約、版付きの紋章、編集と保存 |
 | [phase-rings](phase-rings/spec.md) | 位相、同期、効果量 |
 | [tactical-battle](tactical-battle/spec.md) | 経路、手番、対象、勝敗 |
 | [build-collection](build-collection/spec.md) | ビルド、共有開放、保存 |
