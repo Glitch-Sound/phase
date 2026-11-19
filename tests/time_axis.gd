@@ -176,10 +176,7 @@ func _test_balance(game) -> void:
 	var hp_bottom=T.BATTLE_HP_BASELINE+T.BATTLE_HP_STEP+game.mono.get_height(T.BATTLE_HP_FONT_SIZE)-game.mono.get_ascent(T.BATTLE_HP_FONT_SIZE)
 	var heading_top=T.TIMELINE_TURN_CENTER.y-game.mono.get_ascent(T.TIMELINE_TURN_FONT)
 	var before=heading_top-hp_bottom
-	var orbit_radius=0.0
-	for i in range(T.PREVIEW_RADII.size()):
-		orbit_radius=maxf(orbit_radius,T.PREVIEW_RADII[i]+T.PREVIEW_AMPLITUDES[i])
-	var preview_top=T.PREVIEW_CENTER.y-orbit_radius
+	var preview_top=T.PREVIEW_HEADING_CENTER.y-game.mono.get_ascent(T.TIMELINE_TURN_FONT)
 	var first_factor=game.drawn_text.filter(func(item):return item.text.begins_with("I:"))[0]
 	var factor_offset=first_factor.position.y-game._timeline_view().cards[0].center.y
 	var state_bottom=T.TIMELINE_CARD_MAX+factor_offset+game.mono.get_height(T.TIMELINE_FACTOR_FONT)-game.mono.get_ascent(T.TIMELINE_FACTOR_FONT)
