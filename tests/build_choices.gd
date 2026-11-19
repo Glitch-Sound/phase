@@ -12,6 +12,9 @@ func _run() -> void:
 		_catalog(choices)
 		_preview_and_commit(choices)
 		_contents(choices)
+		_class_catalog(choices)
+		_class_battle()
+		_class_save()
 	print("BUILD CHOICES: %d checks / %d failures" % [checks,failures])
 	quit(0 if failures==0 else 1)
 ## REQ-042-S02
@@ -43,12 +46,70 @@ func _preview_and_commit(model) -> void:
 func _contents(model) -> void:
 	var collection=L.new()
 	var base=collection.builds[0].duplicate(true)
-	var reversed=model.preview(base,"class_name","REVERSE")
-	_check(reversed.class_name=="REVERSE" and reversed.core==base.core and reversed.gear_mutation==base.gear_mutation and reversed.arms_mutation==base.arms_mutation,"class changes CORE order only, never applies a mutation")
+	var reversed=model.preview(base,"class_name","LSRIV")
+	var expected=base.duplicate(true);expected.class_name="LSRIV"
+	_check(reversed==expected and C.M.order(C.unit("01","PLAYER",Vector2i.ZERO,reversed),0)==[4,3,2,1,0],"class changes CORE order only, never applies a mutation")
 	var mutant=model.preview(base,"gear_mutation","LSRIV")
 	_check(mutant.gear_mutation=="LSRIV" and mutant.arms_mutation==base.arms_mutation and mutant.class_name==base.class_name and mutant.gear==base.gear,"mutation changes only target equipment order")
-	_check(model.candidates(collection,0,"class_name").map(func(r):return r.id)==["STANDARD","REVERSE"],"class candidates remain exactly existing two rules")
+	_check(model.candidates(collection,0,"class_name").filter(func(r):return r.current).map(func(r):return r.id)==["VIRSL"],"legacy default selects the standard placement code")
 	_skill_and_operation(model,collection)
+## REQ-045-S01、REQ-042-S02
+func _class_catalog(model) -> void:
+	var collection=L.new()
+	var rows=model.candidates(collection,0,"class_name")
+	var unique={}
+	for row in rows:unique[row.id]=true
+	_check(rows.size()==120 and unique.size()==120 and rows.all(func(row):return row.id.length()==5 and ["V","I","R","S","L"].all(func(letter):return row.id.count(letter)==1)),"CLASS contains every unique five-stat permutation")
+	_check(rows.filter(func(r):return r.selectable).map(func(r):return r.id)==["VIRSL","VLSRI"],"only standard and legacy reverse are initially available")
+	var before=collection.snapshot()
+	_check(not model.commit(collection,0,"class_name","LSRIV") and not model.commit(collection,0,"class_name","VIRSS") and collection.snapshot()==before,"locked and malformed CLASS do not change the build")
+	_check(model.commit(collection,0,"class_name","VLSRI") and collection.mutations==["NORMAL"] and not model.commit(collection,0,"gear_mutation","VLSRI"),"legacy reverse CLASS does not unlock equipment mutation")
+	collection.accept_drop({"kind":"GEAR","stats":[20,20,20,20,20],"mutation":"LSRIV"})
+	var available=model.candidates(collection,0,"class_name").filter(func(r):return r.selectable).map(func(r):return r.id)
+	available.sort()
+	_check(available==["LSRIV","VIRSL","VLSRI"] and model.commit(collection,0,"class_name","LSRIV") and collection.valid_build(collection.builds[0]),"shared mutation unlock makes exactly its CORE placement available")
+	collection.mutations=C.mutation_catalog()
+	_check(model.candidates(collection,0,"class_name").filter(func(r):return r.selectable).size()==120,"all-unlock exposes all 120 CLASS placements")
+## REQ-045-S02
+func _class_battle() -> void:
+	var builds=C.player_builds();builds[0].class_name="LSRIV"
+	var battle=load("res://game/battle.gd").new();battle.start(0,builds,19)
+	battle.panels={Vector2i(4,4):"CLOCKWISE",Vector2i(4,5):"RESET"}
+	var initial=battle.units[0].duplicate(true)
+	var sectors=[]
+	for status in range(5):sectors.append(C.M.sector(initial,0,status))
+	_check(C.M.order(initial,0)==[4,3,2,1,0] and C.M.order(initial,1)==[0,1,2,3,4] and C.M.order(initial,2)==[0,1,2,3,4],"nonstandard CLASS reaches battle and affects CORE only")
+	battle.path_click(Vector2i(4,4))
+	var preview=battle.preview()
+	_check(preview.core_angle==initial.core[3]*1.5 and battle.units[0]==initial and battle.commit_path() and battle.units[0].core_angle==preview.core_angle,"nonstandard CORE rotation preview matches commit without mutating origin")
+	_check(battle.reselect_path() and battle.units[0]==initial,"route reselect restores original nonstandard CORE")
+	battle.path_click(Vector2i(4,5));preview=battle.preview()
+	_check(battle.commit_path() and battle.units[0].core_angle==0.0 and battle.units[0].gear_angle==preview.gear_angle and battle.units[0].arms_angle==preview.arms_angle and battle.units[0].class_name=="LSRIV","RESET preserves selected CLASS and normal equipment entry")
+	var restored=[]
+	for status in range(5):restored.append(C.M.sector(battle.units[0],0,status))
+	battle.start(0,builds,20)
+	var restarted=[]
+	for status in range(5):restarted.append(C.M.sector(battle.units[0],0,status))
+	_check(restored==sectors and restarted==sectors,"RESET and a new battle restore the selected starting sectors")
+## REQ-045-S03
+func _class_save() -> void:
+	var legacy=L.new().snapshot()
+	legacy.builds[0].class_name="STANDARD";legacy.builds[1].class_name="REVERSE"
+	var path="res://artifacts/runtime/class-legacy-disposable.json"
+	var file=FileAccess.open(path,FileAccess.WRITE);file.store_string(JSON.stringify(legacy));file.close()
+	var bytes=FileAccess.get_file_as_bytes(path)
+	var loaded=L.new()
+	_check(loaded.load_from(path).is_empty() and JSON.parse_string(JSON.stringify(loaded.snapshot()))==JSON.parse_string(JSON.stringify(legacy)) and FileAccess.get_file_as_bytes(path)==bytes,"legacy read preserves inventory, literal classes and source bytes")
+	_check(C.M.order(C.unit("01","PLAYER",Vector2i.ZERO,loaded.builds[0]),0)==[0,1,2,3,4] and C.M.order(C.unit("02","PLAYER",Vector2i.ZERO,loaded.builds[1]),0)==[0,4,3,2,1],"legacy STANDARD and REVERSE keep exactly their original order")
+	loaded.mutations.append("LSRIV");loaded.builds[2].class_name="LSRIV"
+	var new_path="res://artifacts/runtime/class-new-disposable.json"
+	var saved=loaded.save_to(new_path);var roundtrip=L.new()
+	_check(saved.is_empty() and roundtrip.load_from(new_path).is_empty() and JSON.parse_string(JSON.stringify(roundtrip.snapshot()))==JSON.parse_string(JSON.stringify(loaded.snapshot())),"new CLASS and legacy classes round-trip together")
+	var before=loaded.snapshot()
+	for invalid in ["VIRSS","IVRSL"]:
+		var bad=before.duplicate(true);bad.builds[0].class_name=invalid
+		file=FileAccess.open(new_path,FileAccess.WRITE);file.store_string(JSON.stringify(bad));file.close()
+		_check(not loaded.load_from(new_path).is_empty() and loaded.snapshot()==before,"malformed or locked CLASS read is atomic: "+invalid)
 ## REQ-042-S04
 func _skill_and_operation(model,collection) -> void:
 	var rows=model.candidates(collection,0,"skill",2)

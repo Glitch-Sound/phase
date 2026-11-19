@@ -495,7 +495,12 @@ func _draw_info() -> void:
 		_text("%sPREVIEW / UNIT %s" % ["" if forecast.kind=="GUARD" else forecast.kind+" ",V.unit_name(forecast.units[index])],T.BATTLE_INFO_CLASS-Vector2(0,24),13,MUTED,mono)
 	var u: Dictionary=forecast.units[index] if not forecast.is_empty() else battle.units[index]
 	var camp_color=CYAN if u.camp=="PLAYER" else status_colors[1]
-	_text("CLASS: "+u.class_name,T.BATTLE_INFO_CLASS,17,camp_color,mono)
+	var core_code=M.layout_code(u.class_name)
+	var class_text="CLASS: "+core_code
+	_text(class_text,T.BATTLE_INFO_CLASS,17,camp_color,mono)
+	if core_code=="VIRSL":
+		var label_width=mono.get_string_size(class_text,HORIZONTAL_ALIGNMENT_LEFT,-1,17).x
+		_text("STANDARD",T.BATTLE_INFO_CLASS+Vector2(label_width+T.LAYOUT_STANDARD_GAP,0),T.LAYOUT_STANDARD_FONT,MUTED,mono)
 	_ring(self,T.BATTLE_INFO_RING,81,u,index==battle.actor)
 	var icon_rect=T.BATTLE_EQUIPMENT_ICON
 	for part in ["ARMS","GEAR"]:
@@ -926,12 +931,21 @@ func _toggle(parent: Control,text: String,rect: Rect2,value: bool,callback: Call
 	button.button_pressed=value
 	button.add_theme_font_size_override("font_size",17)
 	parent.add_child(button)
+	button.alignment=HORIZONTAL_ALIGNMENT_RIGHT
+	var state_font=button.get_theme_font("font")
+	var state_width=ceilf(maxf(state_font.get_string_size("ON",HORIZONTAL_ALIGNMENT_LEFT,-1,13).x,state_font.get_string_size("OFF",HORIZONTAL_ALIGNMENT_LEFT,-1,13).x))
+	button.add_theme_constant_override("h_separation",ceili(state_width+2*T.BUILD_TOGGLE_CONTENT_GAP))
+	var switch_left=rect.size.x-button.get_theme_stylebox("normal").content_margin_right-button.get_theme_icon("unchecked").get_width()
 	button.toggled.connect(callback)
-	_label(button,"ON" if value else "OFF",Rect2(rect.size.x-82,8,40,28),13,CYAN if value else MUTED)
+	var state=_label(button,"ON" if value else "OFF",Rect2(switch_left-T.BUILD_TOGGLE_CONTENT_GAP-state_width,8,state_width,28),13,CYAN if value else MUTED)
+	# Labelの初期テーマで広がった幅を、適用後の文字幅へ戻す。
+	state.size.x=state_width
 	return button
 
 func _choice_button(parent: Control,kind: String,text: String,rect: Rect2,slot: int=0) -> Button:
-	var button=_button(parent,text,rect,func():_open_build_choice(kind,slot))
+	var layout=kind=="class_name" or kind.ends_with("_mutation")
+	var displayed=M.layout_code(text) if layout else text
+	var button=_button(parent,displayed,rect,func():_open_build_choice(kind,slot))
 	button.set_meta("build_choice",kind)
 	button.set_meta("skill_slot",slot)
 	button.alignment=HORIZONTAL_ALIGNMENT_LEFT
@@ -940,7 +954,13 @@ func _choice_button(parent: Control,kind: String,text: String,rect: Rect2,slot: 
 	style.bg_color=Color.TRANSPARENT
 	style.border_color=EDGE
 	style.border_width_bottom=T.UI_FIELD_LINE
+	if layout:
+		style.content_margin_left=12
+		style.content_margin_right=12
 	button.add_theme_stylebox_override("normal",style)
+	if layout and displayed=="VIRSL":
+		var width=button.get_theme_font("font").get_string_size(displayed,HORIZONTAL_ALIGNMENT_LEFT,-1,button.get_theme_font_size("font_size")).x
+		_label(button,"STANDARD",Rect2(12+width+T.LAYOUT_STANDARD_GAP,9,110,24),T.LAYOUT_STANDARD_FONT,MUTED)
 	return button
 
 func _open_build_choice(kind: String,slot: int=0) -> void:
@@ -1009,12 +1029,12 @@ func _result() -> void:
 			_label(panel,C.SKILLS[drop.skill].label,Rect2(40,y,780,33),22,CYAN)
 			_label(panel,drop.skill,Rect2(40,y+36,780,30),14,MUTED)
 		else:
-			var title=C.serial(drop.kind,drop.stats,drop.mutation) if drop.new_item else "MUTATION / "+drop.mutation
+			var title=C.serial(drop.kind,drop.stats,drop.mutation) if drop.new_item else "MUTATION / "+M.layout_code(drop.mutation)
 			_label(panel,title,Rect2(40,y,780,33),20,CYAN)
 			var values=[]
 			for i in range(5):
 				values.append("%s %d" % [["VIT","INF","RES","SPD","LUK"][i],drop.stats[i]])
-			_label(panel," / ".join(values)+(" / "+drop.mutation if drop.new_mutation else ""),Rect2(40,y+36,780,35),16,MUTED)
+			_label(panel," / ".join(values)+(" / "+M.layout_code(drop.mutation) if drop.new_mutation else ""),Rect2(40,y+36,780,35),16,MUTED)
 		y+=91
 	_button(panel,"RETURN TO BUILD",Rect2(40,440,780,54),_build)
 
@@ -1047,7 +1067,7 @@ func _help() -> void:
 		_label(panel,"%s / SEED %d" % [battle.stage.name,battle.panel_seed],Rect2(36,704,1048,24),13,MUTED)
 	_separator(panel,Rect2(36,560,1048,1))
 	_label(panel,"BUILD / ARCHIVE",Rect2(36,589,490,28),16,CYAN)
-	_label(panel,"Edit units 1, 2 and 3. Compare rings and stats.\nUp to 3 skills; NONE is allowed. Unlocks are shared.\nUNLOCK ALL is temporary, debug only and never saved.",Rect2(36,631,500,66),18,WHITE)
+	_label(panel,"Edit units 1, 2 and 3. Max 3 skills; NONE allowed.\nCLASS: CORE order. MUTATION: one equipment ring.\nVIRSL = STANDARD. CLASS VLSRI is always available.\nOther CLASS layouts use shared MUTATION unlocks.\nUNLOCK ALL: temporary, debug only, never saved.",Rect2(36,631,500,98),16,WHITE)
 	_label(panel,"READING THE SIGNAL",Rect2(580,589,500,28),16,CYAN)
 	_label(panel,"Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage.\nSAVE / LOAD are explicit. Old saves are backed up.",Rect2(580,631,510,66),18,WHITE)
 	_button(panel,"CLOSE / ESC",Rect2(36,736,800,44),_close_aux)

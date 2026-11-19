@@ -52,6 +52,8 @@ flowchart LR
 - 新規編成と保存は3体とし、有効な2体保存は既存の構成と収集を維持して3体目をメモリへ補う。\
   補完時も読込元へ自動保存しない。
 - 既存セーブを自動読込、自動上書きしない。
+- COREのCLASSと装備のMUTATIONは配置コードで比較し、対象リングだけへ作用する。\
+  旧CLASSのSTANDARDとREVERSEはVIRSLとVLSRIとして解釈し、読込元と保持した別名を自動で変換しない。
 - OpenSpec設定とゲーム保存を作業先内に置く。
 Godot自身の標準設定はmacOSのApplication Supportを使用するため、制限されたシェルでは初期化警告が出る場合がある。
 - 調整定数はgame/tuning.gdに集約する。

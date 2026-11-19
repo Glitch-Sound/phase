@@ -67,6 +67,10 @@ static func mutation_catalog() -> Array:
 	_mutation_orders("","VIRSL",result)
 	return result
 
+## CLASSの全配置を返す。戻り値は変異と同じ120配置のコードであり、旧別名を含まず副作用はない。
+static func class_catalog() -> Array:
+	return mutation_catalog().map(func(value):return M.layout_code(value))
+
 static func _mutation_orders(prefix: String, remaining: String, result: Array) -> void:
 	if remaining.is_empty():
 		if prefix!="VIRSL":result.append(prefix)

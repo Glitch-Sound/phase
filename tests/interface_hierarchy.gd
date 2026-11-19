@@ -70,11 +70,11 @@ func _editing_and_save(stamp: String) -> void:
 
 	var options=game.overlay.get_child(1).find_children("*","Button",true,false).filter(func(c):return c.has_meta("build_choice"))
 	game._open_build_choice("class_name")
-	game.build_dialog.select_candidate("REVERSE")
+	game.build_dialog.select_candidate("VLSRI")
 	game.build_dialog.confirm()
 	await process_frame
 	game.core_controls[0].value=80
-	_check(game.collection.builds[0].class_name=="REVERSE" and game.collection.builds[0].core.reduce(func(a,b):return a+b,0)==100,"class and core callbacks preserve valid redistribution")
+	_check(game.collection.builds[0].class_name=="VLSRI" and game.collection.builds[0].core.reduce(func(a,b):return a+b,0)==100,"class and core callbacks preserve valid redistribution")
 	game._open_build_choice("arms")
 	game.build_dialog.select_candidate("ARMS-141E0A1414")
 	game.build_dialog.confirm()

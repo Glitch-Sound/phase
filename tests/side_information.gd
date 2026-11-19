@@ -11,7 +11,7 @@ func _run() -> void:
 	await process_frame
 	game._start_battle()
 	await _redraw(game)
-	_check(game.info_text==["CLASS: STANDARD","ARMS-1414141414","GEAR-1414141414","MOVE %d" % game.T.BASE_MOVE,"Move up to %d cells per turn." % game.T.BASE_MOVE,"DAMAGE / ADJACENT","Damage one adjacent enemy.","HEAL / ADJACENT","Heal one adjacent wounded ally."],"exact default right information: "+str(game.info_text))
+	_check(game.info_text==["CLASS: VIRSL","STANDARD","ARMS-1414141414","GEAR-1414141414","MOVE %d" % game.T.BASE_MOVE,"Move up to %d cells per turn." % game.T.BASE_MOVE,"DAMAGE / ADJACENT","Damage one adjacent enemy.","HEAL / ADJACENT","Heal one adjacent wounded ally."],"exact default right information: "+str(game.info_text))
 	_check(game.info_bars.is_empty(),"no allocation bars remain")
 	_check(game.info_rings.size()==1 and game.info_rings[0].center==game.T.BATTLE_INFO_RING and game.info_rings[0].unit==game.battle.units[0],"keep current selected ring at spaced position")
 	for state in ["MOVE","CHOICE","TARGET","RESULT"]:
@@ -34,7 +34,7 @@ func _run() -> void:
 	var before=game.battle.units.duplicate(true)
 	var path=game.battle.path.duplicate()
 	await _redraw(game)
-	_check(game.info_text==["CLASS: REVERSE","ARMS-1414141414-M-IVRSL","GEAR-1414141414-M-LSRIV","MOVE %d" % (game.T.BASE_MOVE+1),"Move up to %d cells per turn." % (game.T.BASE_MOVE+1),"DAMAGE / ADJACENT","Damage one adjacent enemy.","HEAL / ADJACENT","Heal one adjacent wounded ally.","MOVE +1 / SELF","Adds 1 cell to movement."],"mutation and passive skill remain with accurate descriptions: "+str(game.info_text))
+	_check(game.info_text==["CLASS: VLSRI","ARMS-1414141414-M-IVRSL","GEAR-1414141414-M-LSRIV","MOVE %d" % (game.T.BASE_MOVE+1),"Move up to %d cells per turn." % (game.T.BASE_MOVE+1),"DAMAGE / ADJACENT","Damage one adjacent enemy.","HEAL / ADJACENT","Heal one adjacent wounded ally.","MOVE +1 / SELF","Adds 1 cell to movement."],"mutation and passive skill remain with accurate descriptions: "+str(game.info_text))
 	_check(game.info_rings[0].unit==u and game.battle.units==before and game.battle.path==path,"inspection preserves selected state and pending route")
 	await _test_details(game)
 	_test_equipment_layout(game)
@@ -54,7 +54,7 @@ func _test_details(game) -> void:
 		unit.gear=item[0].duplicate()
 		unit.arms=item[0].duplicate()
 		await _redraw(game)
-		_check(game.info_text==["CLASS: REVERSE","ARMS-"+item[1],"GEAR-"+item[1],"MOVE %d" % game.T.BASE_MOVE,"Move up to %d cells per turn." % game.T.BASE_MOVE],"all actual equipment identifiers and no invented skill "+item[1])
+		_check(game.info_text==["CLASS: VLSRI","ARMS-"+item[1],"GEAR-"+item[1],"MOVE %d" % game.T.BASE_MOVE,"Move up to %d cells per turn." % game.T.BASE_MOVE],"all actual equipment identifiers and no invented skill "+item[1])
 	unit.skills=[game.C.MOVE]
 	await _redraw(game)
 	_check(game.info_text.slice(-2)==["MOVE +1 / SELF","Adds 1 cell to movement."] and game.info_text[3]=="MOVE %d" % (game.T.BASE_MOVE+1) and game.info_text[4]=="Move up to %d cells per turn." % (game.T.BASE_MOVE+1),"passive-only description and movement use actual cap")

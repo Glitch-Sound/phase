@@ -20,6 +20,7 @@ var scroll: ScrollContainer
 var apply_button: Button
 var description: Label
 var candidate_name: Label
+var candidate_caption: Label
 var counter: Label
 var minimum: SpinBox
 var stat_index := -1
@@ -71,6 +72,7 @@ func configure(owner_ui: Control,data: RefCounted,index: int,selection_kind: Str
 	preview_area.draw.connect(_draw_preview)
 	add_child(preview_area)
 	candidate_name=host._label(self,"",Rect2(684,376,548,32),18,host.WHITE)
+	candidate_caption=host._label(self,"",Rect2(684,410,548,24),T.LAYOUT_STANDARD_FONT,host.MUTED)
 	description=host._wrapped_label(self,"",Rect2(684,442,548,102),17,host.MUTED)
 	host._button(self,"CANCEL",Rect2(36,752,260,44),cancel,"back")
 	apply_button=host._button(self,"APPLY",Rect2(984,752,260,44),confirm,"check")
@@ -152,7 +154,7 @@ func _refresh_rows(reveal_current: bool=false) -> void:
 		var button=Button.new()
 		button.text=row.title+("  / EQUIPPED" if row.current else "")+("  / "+row.reason if not row.reason.is_empty() else "")
 		if row.has("stats"):button.text+="\n"+MODEL._stats_text(row.stats)
-		elif kind in ["arms_mutation","gear_mutation"]:button.text+="\n"+row.description
+		elif kind in ["class_name","arms_mutation","gear_mutation"]:button.text+="\n"+("" if row.get("subtitle","")=="STANDARD" else row.description.get_slice("\n",0))
 		elif kind=="operation":button.text+="\n"+row.description.get_slice("\n",0)
 		button.alignment=HORIZONTAL_ALIGNMENT_LEFT
 		button.custom_minimum_size=Vector2(574,68 if row.has("stats") or kind!="skill" else 46)
@@ -167,6 +169,8 @@ func _refresh_rows(reveal_current: bool=false) -> void:
 		button.gui_input.connect(func(event):
 			if event is InputEventKey and navigate(event):button.accept_event())
 		list.add_child(button)
+		if row.get("subtitle","")=="STANDARD":
+			host._label(button,"STANDARD",Rect2(12,38,200,20),T.LAYOUT_STANDARD_FONT,host.MUTED)
 		row_buttons[row.id]=button
 	var available=visible_rows.filter(func(row):return row.selectable).size()
 	counter.text="%d shown / %d available   |   Up / Down, Home / End" % [visible_rows.size(),available]
@@ -186,6 +190,7 @@ func _refresh_preview() -> void:
 	if matching.is_empty():return
 	var row=matching[0]
 	candidate_name.text=row.title
+	candidate_caption.text=row.get("subtitle","")
 	description.text="" if kind in ["arms","gear"] else row.description
 	apply_button.disabled=not row.selectable
 	preview_area.queue_redraw()

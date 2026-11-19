@@ -28,7 +28,10 @@ func valid_build(build: Variant, inventory: Dictionary={}) -> bool:
 	for key in fields:
 		if not build.has(key):
 			return false
-	if not build.class_name in ["STANDARD","REVERSE"] or not M.valid_stats(build.core):
+	if not build.class_name is String or not (build.class_name in ["STANDARD","REVERSE"] or M.valid_layout(build.class_name)) or not M.valid_stats(build.core):
+		return false
+	var core_code=M.layout_code(build.class_name)
+	if not core_code in ["VIRSL","VLSRI"] and not inv.mutations.has(core_code):
 		return false
 	for key in ["gear","arms"]:
 		if not M.valid_stats(build[key]) or not inv.items[key.to_upper()].has(C.serial(key.to_upper(),build[key])):

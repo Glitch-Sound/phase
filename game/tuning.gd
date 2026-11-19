@@ -127,8 +127,13 @@ const BUILD_RECT := Rect2(300,115,1320,810)
 # トグル同士を近づけて右へ揃え、ユニット選択との余白を広くする。
 const BUILD_CPU_TOGGLE_RECT := Rect2(988,22,288,43)
 const BUILD_TOGGLE_GAP := 16.0
+# ラベル、ON/OFF、スイッチを小さな間隔でまとめ、項目間の余白と区別する。
+const BUILD_TOGGLE_CONTENT_GAP := 8.0
 const DEBUG_TOGGLE_RECT := Rect2(BUILD_CPU_TOGGLE_RECT.position-Vector2(BUILD_CPU_TOGGLE_RECT.size.x+BUILD_TOGGLE_GAP,0),BUILD_CPU_TOGGLE_RECT.size)
 const CHOICE_ROW_FONT := 16
+# 配置コードを主にし、通常配置の補足だけを小さく添える。
+const LAYOUT_STANDARD_FONT := 13
+const LAYOUT_STANDARD_GAP := 10.0
 const CHOICE_RECT := Rect2(320,130,1280,820)
 const DEBUG_BADGE_RECT := Rect2(40,8,500,28)
 const DEBUG_BADGE_FONT := 18

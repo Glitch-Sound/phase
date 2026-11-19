@@ -16,15 +16,23 @@ static func valid_stats(stats: Variant) -> bool:
 		total+=int(value)
 	return total==100
 
-## 領域配置を返す。uはユニット、ringは内側から0から2。戻り値はステータス番号列。
+## 配置コードを返す。valueは配置または旧別名。戻り値は対応コードで、原本を変更しない。
+static func layout_code(value: String) -> String:
+	if value in ["STANDARD","NORMAL"]:return LETTERS
+	return "VLSRI" if value=="REVERSE" else value
+
+## 配置を検証する。valueは候補値。戻り値は5種類を一度ずつ含むコードの適否。
+static func valid_layout(value: Variant) -> bool:
+	if not value is String or value.length()!=5:return false
+	for letter in LETTERS:
+		if value.count(letter)!=1:return false
+	return true
+
+## 領域配置を返す。uはユニット、ringは内側から0から2。戻り値は対象リングだけのステータス番号列。
 static func order(u: Dictionary, ring: int) -> Array:
-	if ring==0:
-		return NORMAL if u.class_name=="STANDARD" else [0,4,3,2,1]
-	var mutation: String=u["gear_mutation" if ring==1 else "arms_mutation"]
-	if mutation=="NORMAL":
-		return NORMAL
+	var code=layout_code(u.class_name if ring==0 else u["gear_mutation" if ring==1 else "arms_mutation"])
 	var result=[]
-	for letter in mutation:
+	for letter in code:
 		result.append(LETTERS.find(letter))
 	return result
 

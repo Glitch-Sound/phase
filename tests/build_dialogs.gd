@@ -13,6 +13,7 @@ func _run() -> void:
 	if game.has_method("_open_build_choice"):
 		await _dialogs()
 		await _keyboard()
+		await _class_selection()
 		await _presentation()
 	game.queue_free()
 	await process_frame
@@ -67,6 +68,8 @@ func _keyboard() -> void:
 	_check(not is_instance_valid(game.auxiliary) and game.collection.snapshot()==before,"Esc closes dialog without mutation")
 ## REQ-041-S01、REQ-044-S01、REQ-019-S14
 func _presentation() -> void:
+	var layout_fields=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.get_meta("build_choice","") in ["class_name","arms_mutation","gear_mutation"])
+	_check(layout_fields.size()==3 and layout_fields.all(func(b):return b.text=="VIRSL" and b.get_children().any(func(child):return child is Label and child.text=="STANDARD" and child.get_theme_font_size("font_size")<b.get_theme_font_size("font_size"))),"CLASS and mutation use VIRSL with a smaller STANDARD caption")
 	var toggles=game.overlay.find_children("*","CheckButton",true,false)
 	_check(toggles.map(func(c):return c.text).has("UNLOCK ALL") and toggles.map(func(c):return c.text).has("ENEMY CPU"),"unlock and CPU share toggle control")
 	var start=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="START")[0]
@@ -81,6 +84,14 @@ func _presentation() -> void:
 	var unit_end=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="UNIT 3")[0].get_global_rect().end.x
 	var group_gap=cpu.global_position.x-unlock.get_global_rect().end.x
 	_check(group_gap>0 and unlock.global_position.x-unit_end>group_gap and is_equal_approx(cpu.get_global_rect().end.x,start.get_global_rect().end.x),"right-aligned toggles form a closer group than the unit selection gap")
+	var cpu_label_left=cpu.get_global_rect().end.x-cpu.get_theme_stylebox("normal").content_margin_right-cpu.get_theme_icon("unchecked").get_width()-cpu.get_theme_constant("h_separation")-cpu.get_theme_font("font").get_string_size(cpu.text,HORIZONTAL_ALIGNMENT_LEFT,-1,cpu.get_theme_font_size("font_size")).x
+	var visible_gap=cpu_label_left-(unlock.get_global_rect().end.x-unlock.get_theme_stylebox("normal").content_margin_right)
+	for toggle in [unlock,cpu]:
+		var state=toggle.get_children().filter(func(child):return child is Label)[0]
+		var switch_left=toggle.size.x-toggle.get_theme_stylebox("normal").content_margin_right-toggle.get_theme_icon("unchecked").get_width()
+		var separation=toggle.get_theme_constant("h_separation")
+		_check(toggle.alignment==HORIZONTAL_ALIGNMENT_RIGHT and separation>state.size.x and separation<visible_gap and is_equal_approx(switch_left-state.get_rect().end.x,(separation-state.size.x)/2),"toggle label and state sit together beside switch: "+toggle.text)
+	_check(cpu.get_rect()==game.T.BUILD_CPU_TOGGLE_RECT and unlock.get_rect()==game.T.DEBUG_TOGGLE_RECT,"compact contents preserve full toggle click regions")
 	var cpu_rect=cpu.get_global_rect()
 	game.debug_session.allowed=false
 	game._build()
@@ -92,6 +103,28 @@ func _presentation() -> void:
 	await process_frame
 	var text=FileAccess.get_file_as_string("res://ui/main.gd")
 	_check(text.contains('_text("PREVIEW",'),"PREVIEW heading is drawn")
+## REQ-042-S01、REQ-042-S03
+func _class_selection() -> void:
+	game.collection.mutations.append("LSRIV")
+	var before=game.collection.snapshot()
+	game._open_build_choice("class_name")
+	await process_frame
+	var dialog=game.build_dialog
+	var standard=dialog.row_buttons.get("VIRSL")
+	_check(standard!=null and standard.text.begins_with("VIRSL") and standard.get_children().any(func(child):return child is Label and child.text=="STANDARD" and child.get_theme_font_size("font_size")<standard.get_theme_font_size("font_size")),"standard dialog row shows the placement code and small caption")
+	_check(dialog.select_candidate("LSRIV") and dialog.candidate_build.class_name=="LSRIV" and game.collection.snapshot()==before,"CLASS selection previews without changing original")
+	dialog.cancel()
+	await process_frame
+	_check(game.collection.snapshot()==before,"CLASS cancel keeps original")
+	game._open_build_choice("class_name")
+	await process_frame
+	game.build_dialog.select_candidate("LSRIV");game.build_dialog.confirm()
+	await process_frame
+	var field=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.get_meta("build_choice","")=="class_name")[0]
+	_check(game.collection.builds[0].class_name=="LSRIV" and field.text=="LSRIV" and game.collection.builds[0].gear==before.builds[0].gear and game.collection.builds[0].arms==before.builds[0].arms,"CLASS APPLY updates the code and leaves equipment unchanged")
+	game.collection.builds=before.builds.duplicate(true)
+	game._build()
+	await process_frame
 func _check(ok: bool,message: String) -> void:
 	checks+=1
 	if not ok:failures+=1;printerr("FAIL: ",message)

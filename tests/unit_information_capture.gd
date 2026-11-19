@@ -120,7 +120,9 @@ func _capture(suffix: String) -> void:
 		_check(rect.position.x>game.BOARD.x+game.CELL*10 and rect.end.x<=game.T.BATTLE_CONTEXT_BUTTON.end.x and rect.end.y<game.T.BATTLE_CONTEXT_BUTTON.position.y,"GPU text clear of board and menu "+record.text+" / "+suffix)
 		_check(bounds.all(func(other):return not rect.intersects(other)),"GPU text lines do not overlap "+suffix)
 		bounds.append(rect)
-	_check(game.info_text[0]=="CLASS: "+game.battle.units[game.selected if game.selected>=0 else game.battle.actor].class_name,"GPU shows actual selected class")
+	var stored_class=game.battle.units[game.selected if game.selected>=0 else game.battle.actor].class_name
+	var displayed_class={"STANDARD":"VIRSL","REVERSE":"VLSRI"}.get(stored_class,stored_class)
+	_check(game.info_text[0]=="CLASS: "+displayed_class,"GPU shows actual selected class code")
 	if suffix=="comparison":
 		var previous=Image.load_from_file("res://artifacts/ui-review/diamond-reset-battle.png")
 		var masks=[Rect2i(1436,72,408,40),Rect2i(1436,317,408,550)]

@@ -10,6 +10,7 @@ static func current(collection: RefCounted,index: int,kind: String,slot: int=0) 
 	if kind in ["arms","gear"]:return C.serial(kind.to_upper(),b[kind])
 	if kind=="skill":return b.skills[slot] if slot<b.skills.size() else "NONE"
 	if kind=="operation":return str(collection.stage_index)
+	if kind=="class_name":return M.layout_code(b.class_name)
 	return str(b.get(kind,""))
 
 ## 候補を返す。collectionは開放状態、indexは編集番号、kindは選択種、slotはスキル枠。戻り値はIDと内容、可否、現在値を持つ独立した行。原本を変更しない。
@@ -30,10 +31,16 @@ static func candidates(collection: RefCounted,index: int,kind: String,slot: int=
 			result.append(row)
 	elif kind in ["arms_mutation","gear_mutation"]:
 		for id in C.mutation_catalog():
-			result.append(_row(id,id,"Order: "+_order_text(id),kind.trim_suffix("_mutation").to_upper(),collection.mutations.has(id),id==equipped))
+			var part=kind.trim_suffix("_mutation").to_upper()
+			var row=_row(id,M.layout_code(id),part+" order: "+_order_text(id)+"\nOnly "+part+" changes. Shared MUTATION unlocks.",part,collection.mutations.has(id),id==equipped)
+			row.subtitle="STANDARD" if row.title=="VIRSL" else ""
+			result.append(row)
 	elif kind=="class_name":
-		result.append(_row("STANDARD","STANDARD","CORE order: VIT > INF > RES > SPD > LUK.\nEquipment order and values stay unchanged.","CORE",true,equipped=="STANDARD"))
-		result.append(_row("REVERSE","REVERSE","CORE order: VIT > LUK > SPD > RES > INF.\nEquipment order and values stay unchanged.","CORE",true,equipped=="REVERSE"))
+		for id in C.class_catalog():
+			var baseline=id in ["VIRSL","VLSRI"]
+			var row=_row(id,id,"CORE order: "+_order_text(id)+"\nOnly CORE changes. "+("Always available." if baseline else "Uses shared MUTATION unlocks."),"CORE",baseline or collection.mutations.has(id),id==equipped)
+			row.subtitle="STANDARD" if id=="VIRSL" else ""
+			result.append(row)
 	elif kind=="skill":
 		result.append(_row("NONE","NONE","Leave this skill slot empty.","EMPTY",true,equipped=="NONE"))
 		var groups=["DAMAGE","HEAL","POSITION","DEFENSE","MOVEMENT","PANELS","FIELDS"]
@@ -101,7 +108,7 @@ static func _stats_text(stats: Array) -> String:
 
 static func _order_text(id: String) -> String:
 	var parts=[]
-	for letter in "VIRSL" if id=="NORMAL" else id:parts.append(STATUS["VIRSL".find(letter)])
+	for letter in M.layout_code(id):parts.append(STATUS["VIRSL".find(letter)])
 	return " > ".join(parts)
 
 static func _skill_group(id: String) -> String:
