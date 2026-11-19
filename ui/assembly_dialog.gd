@@ -37,9 +37,9 @@ func configure(owner_ui: Control,data: RefCounted) -> void:
 		host._assembly_emblem(preview,Vector2(110,76),62,candidate,"PLAYER")
 		preview.draw_string(host.font,Vector2(30,180),"CREST / BRIGHT HP",HORIZONTAL_ALIGNMENT_LEFT,-1,13,host.MUTED)
 		preview.draw_rect(Rect2(30,200,160,5),A.health(candidate)))
-	host._label(self,"Names may repeat. Your gray ownership mark stays separate.",Rect2(36,378,748,28),14,host.MUTED)
-	host._button(self,"APPLY",Rect2(36,434,360,44),confirm)
-	host._button(self,"CANCEL",Rect2(424,434,360,44),func():cancelled.emit())
+	host._label(self,"Names may repeat. Your ownership mark stays separate.",Rect2(36,host.T.ASSEMBLY_COLOR_NOTE_Y,748,28),14,host.MUTED)
+	host._button(self,"APPLY",Rect2(36,host.T.ASSEMBLY_ACTION_Y,360,44),confirm)
+	host._button(self,"CANCEL",Rect2(424,host.T.ASSEMBLY_ACTION_Y,360,44),func():cancelled.emit())
 	_refresh()
 
 ## 色の候補を選ぶ。keyは安定キー。戻り値なし。不明なキーは無視し原本を変更しない。

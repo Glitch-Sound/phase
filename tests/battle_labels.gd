@@ -11,6 +11,7 @@ func _run() -> void:
 	game.settings_path="res://artifacts/runtime/labels-no-settings-"+str(Time.get_ticks_usec())+".json"
 	root.add_child(game)
 	await process_frame
+	_test_quantities(game)
 	for stage in range(4):
 		game.collection.stage_index=stage
 		game._start_battle()
@@ -90,6 +91,24 @@ func _test_header_input(game) -> void:
 		event.position=Vector2(area.get_center())
 		game._unhandled_input(event)
 		_check(game.battle.units==units and game.battle.path==path and game.selected==2 and not is_instance_valid(game.overlay),"top explanation area has no action: "+str(area))
+## REQ-019-S15
+func _test_quantities(game) -> void:
+	var samples=[0.0,0.2,12.9,12.0,1.000001]
+	_check(samples.map(func(value):return game._hp(value))==["0","1","13","12","2"] and game.has_method("_effect_text"),"combat quantities round up only for display")
+	if not game.has_method("_effect_text"):return
+	var signed=[-12.9,-0.2,-0.0]
+	_check(signed.map(func(value):return game._effect_text(value,"DAMAGE"))==["-13","-1","0"] and signed.map(func(value):return game._effect_text(value,"HEAL"))==["+13","+1","0"],"signed magnitudes round up before the sign and never produce negative zero")
+	var original=game.battle.units.duplicate(true);var effect=game.battle.last_effect.duplicate(true)
+	var own=game.battle.units.filter(func(u):return u.camp=="PLAYER")
+	for u in own:u.hp=0.0;u.max_hp=10.0
+	own[0].hp=0.2;own[0].max_hp=12.9
+	var before=game.battle.units.duplicate(true);var rows=game._assembly_rows()
+	game.battle.last_effect={"kind":"DAMAGE","target":0,"amount":12.9,"actual":12.9,"dead":false};game._feedback()
+	var damage=game.toasts.back().text
+	game.battle.last_effect={"kind":"HEAL","target":0,"amount":0.2,"actual":0.2,"dead":false};game._feedback()
+	_check(rows[0].text=="1 / "+str(13+10*(own.size()-1)) and rows[0].hp==0.2 and is_equal_approx(rows[0].maximum,12.9+10*(own.size()-1)) and damage=="-13" and game.toasts.back().text=="+1" and game.battle.units==before,"HP totals and effect toasts share display rounding while preserving exact battle values and bar inputs")
+	game.battle.units=original;game.battle.last_effect=effect;game.toasts=[];game.convergences=[]
+
 func _check(ok: bool,message: String) -> void:
 	checks+=1
 	if not ok:

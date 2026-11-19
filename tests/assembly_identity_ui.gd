@@ -3,7 +3,7 @@ var game
 var checks=0
 var failures=0
 func _initialize() -> void:_run.call_deferred()
-## REQ-051-S01、REQ-019-S12、REQ-031-S02、REQ-031-S03
+## REQ-051-S01、REQ-019-S12、REQ-031-S02、REQ-031-S03、REQ-052-S01
 func _run() -> void:
 	game=load("res://tests/assembly_audit.gd").new();game.save_path="res://artifacts/runtime/assembly-identity/ui-no-save.json";game.settings_path="res://artifacts/runtime/assembly-identity/ui-no-settings.json"
 	root.add_child(game);await process_frame;game.set_process(false)
@@ -18,15 +18,17 @@ func _run() -> void:
 		_check(game.collection.assembly=={"name":"星環","color":"ICE","version":1} and game.get_viewport().gui_get_focus_owner()==game.assembly_button,"apply stores profile and restores entry focus")
 		game.opponent_assembly=game.collection.assembly.duplicate(true);game.collection.unit_names=["Same","Same","P1"];game._start_battle();await _draw()
 		var rows=game._assembly_rows()
-		_check(rows.size()==2 and rows[0].bar.position.x==rows[1].bar.position.x and rows[0].bar.size==rows[1].bar.size and rows[0].text_origin.x==rows[1].text_origin.x and rows.all(func(r):return is_equal_approx(r.emblem.get_center().y,r.bar.get_center().y) and is_equal_approx(r.center_y,r.text_origin.y-(game.mono.get_ascent(game.T.BATTLE_HP_FONT_SIZE)-game.mono.get_descent(game.T.BATTLE_HP_FONT_SIZE))/2)),"both assembly HP rows share columns and vertical centers")
+		_check(rows.size()==2 and rows[0].bar.position.x==rows[1].bar.position.x and rows[0].bar.size==rows[1].bar.size and rows[0].text_origin.x==rows[1].text_origin.x and rows.all(func(r):return is_equal_approx(r.emblem.get_center().y,r.bar.get_center().y) and is_equal_approx(r.center_y,r.text_origin.y-(game.mono.get_ascent(game.T.BATTLE_HP_FONT_SIZE)-game.mono.get_descent(game.T.BATTLE_HP_FONT_SIZE))/2) and is_equal_approx(r.bar.position.x-r.emblem.end.x,game.T.get_script_constant_map().get("ASSEMBLY_HP_GAP",-1))),"both assembly HP rows share columns and vertical centers")
 		var clean_name=game.displayed_text.all(func(text):return not text.contains("Same") and not text.contains("P1"))
 		game.selected=2;await _draw()
 		_check(clean_name and not game.displayed_text.has("P1") and game.battle.units[2].display_name=="P1","battle uses symbols only while user-supplied names remain unmodified in data")
+		var class_record=game.text_records.filter(func(r):return r.text.begins_with("CLASS:"))[0]
+		var right=game.displayed_assemblies.filter(func(r):return r.center.x>game.BOARD.x+10*game.CELL)[0]
 		var own_ids=game.ownership_marks.map(func(r):return r.unit.id);own_ids.sort()
-		_check(game.displayed_assemblies.any(func(r):return r.center==game.T.ASSEMBLY_INFO_CENTER and r.profile==game.collection.assembly and r.camp=="PLAYER") and own_ids==["01","02","03"] and game.ownership_marks.all(func(r):return game._cell_rect(r.unit.pos).grow(-2*game.T.UI_FOCUS_LINE).encloses(Rect2(r.center-Vector2.ONE*game.T.OWNER_MARK_RADIUS,Vector2.ONE*game.T.OWNER_MARK_RADIUS*2)) and r.center.distance_to(game._cell_rect(r.unit.pos).get_center())>game.T.UNIT_BOARD_RADIUS*game.BOARD_SCALE+game.T.OWNER_MARK_RADIUS),"detail crest and ownership connect to the correct assembly")
+		_check(right.profile==game.collection.assembly and right.camp=="PLAYER" and is_equal_approx(right.center.y,class_record.position.y-(game.mono.get_ascent(class_record.font_size)-game.mono.get_descent(class_record.font_size))/2) and is_equal_approx(class_record.position.x-right.center.x,right.radius+game.T.get_script_constant_map().get("ASSEMBLY_INFO_GAP",0)) and game.ownership_inks.size()==3 and game.ownership_inks.all(func(r):return r.color==Color(Color("9ec8ed"),game.T.get_script_constant_map().get("OWNER_MARK_ALPHA",1))) and own_ids==["01","02","03"] and game.ownership_marks.all(func(r):return game._cell_rect(r.unit.pos).grow(-2*game.T.UI_FOCUS_LINE).encloses(Rect2(r.center-Vector2.ONE*game.T.OWNER_MARK_RADIUS,Vector2.ONE*game.T.OWNER_MARK_RADIUS*2)) and r.center.distance_to(game._cell_rect(r.unit.pos).get_center())>game.T.UNIT_BOARD_RADIUS*game.BOARD_SCALE+game.T.OWNER_MARK_RADIUS),"detail crest and ownership connect to the correct assembly")
 		game.view_camp="ENEMY";game.selected=3;await _draw()
 		own_ids=game.ownership_marks.map(func(r):return r.unit.id);own_ids.sort()
-		_check(own_ids==["A","B","C"] and game.displayed_assemblies.any(func(r):return r.center==game.T.ASSEMBLY_INFO_CENTER and r.camp=="ENEMY"),"same-color and same-crest camps keep viewpoint ownership and detail correspondence")
+		_check(own_ids==["A","B","C"] and game.displayed_assemblies.any(func(r):return r.center.x>game.BOARD.x+10*game.CELL and r.camp=="ENEMY"),"same-color and same-crest camps keep viewpoint ownership and detail correspondence")
 		game.battle.mode="CHOICE";game._action_dialog();await process_frame
 		var badges=game.overlay.find_children("*","Control",true,false).filter(func(node):return node.has_meta("unit_id"))
 		var texts=game.overlay.find_children("*","Label",true,false).map(func(label):return label.text)

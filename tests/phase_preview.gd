@@ -393,7 +393,8 @@ func _test_compact_layout() -> void:
 			game.battle.units[1].hp=0
 		game.queue_redraw()
 		await create_timer(0.08).timeout
-		var expected="0 / 22118.4" if empty else "22118.4 / 22118.4"
+		var total=ceili(T.BASE_HP*pow(96.0/20.0,3)*2)
+		var expected="0 / %d" % total if empty else "%d / %d" % [total,total]
 		var value=game.drawn_text.filter(func(t):return t.text==expected)[0]
 		var bar=game.drawn_bars[0]
 		_check(bar.rect.end.x<_text_bounds(value).position.x and bar.rect.size.x>0 and _text_bounds(value).end.x<board.position.x and value.font_size==T.BATTLE_HP_FONT_SIZE and bar.ratio==(0.0 if empty else 1.0),"maximum valid HP digits remain readable with a valid proportional bar: "+str(empty))

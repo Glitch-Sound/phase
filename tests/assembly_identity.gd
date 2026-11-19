@@ -10,10 +10,10 @@ func _initialize() -> void:
 	if failures==0:
 		A=load("res://game/assembly_identity.gd");_profiles();_geometry();_colors();_ownership();_storage()
 	print("ASSEMBLY IDENTITY: %d checks / %d failures" % [checks,failures]);quit(0 if failures==0 else 1)
-## REQ-050-S01、REQ-051-S02
+## REQ-050-S01、REQ-050-S02、REQ-051-S02
 func _profiles() -> void:
 	var p=A.default_profile("PLAYER");var e=A.default_profile("ENEMY")
-	_check(p=={"name":"ORBIT","color":"JADE","version":1} and e=={"name":"VECTOR","color":"AMBER","version":1},"fixed defaults are independent of player identity")
+	_check(p=={"name":"ORBIT","color":"PEARL","version":1} and e=={"name":"VECTOR","color":"RED","version":1},"fixed defaults are independent of player identity")
 	p.name="";_check(A.valid(p) and A.label(p,"PLAYER")=="ORBIT" and A.label(p,"ENEMY")=="VECTOR","blank names resolve per assembly without changing data")
 	var cases=[{"name":"星環","color":"ICE","version":1},{"name":"bad\nname","color":"ICE","version":1},{"name":"星環","color":"UNKNOWN","version":1},{"name":"星環","color":"ICE","version":2}]
 	_check(cases.map(func(v):return A.valid(v))==[true,false,false,false],"profile validation rejects noncanonical names, unknown keys and versions")
@@ -29,7 +29,7 @@ func _geometry() -> void:
 	_check(A.recipe(A.label(p))==A.recipe(A.label(q)),"color and camp collisions never rewrite a chosen shape")
 ## REQ-050-S02
 func _colors() -> void:
-	var palette={"PEARL":"c9d2dc","JADE":"a1d9c3","ICE":"9ec8ed","AMBER":"e5c38c","LILAC":"c7b1e6","ROSE":"e3adbd"}
+	var palette={"PEARL":"c9d2dc","JADE":"a1d9c3","ICE":"9ec8ed","AMBER":"e5c38c","LILAC":"c7b1e6","ROSE":"e3adbd","RED":"ed8b8b"}
 	_check(A.PALETTE.keys()==palette.keys() and palette.keys().all(func(k):return A.color({"color":k})==Color(palette[k])),"all stable palette keys have fixed colors")
 	var T=load("res://game/tuning.gd")
 	var bg=_luminance(Color("13181d"))

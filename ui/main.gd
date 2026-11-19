@@ -240,8 +240,8 @@ func _assembly_rows() -> Array:
 	for i in range(rows.size()):
 		var row=rows[i];var center_y=T.BATTLE_HP_BASELINE+i*T.BATTLE_HP_STEP-baseline_offset
 		row.center_y=center_y
-		row.emblem=Rect2(Vector2(T.BATTLE_LEFT_ORIGIN.x,center_y-T.ASSEMBLY_EMBLEM_RADIUS),Vector2.ONE*T.ASSEMBLY_EMBLEM_RADIUS*2)
 		row.bar=Rect2(T.BATTLE_HP_BAR.position.x,center_y-T.BATTLE_HP_BAR.size.y/2,value_x-T.BATTLE_HP_GAP-T.BATTLE_HP_BAR.position.x,T.BATTLE_HP_BAR.size.y)
+		row.emblem=Rect2(row.bar.position.x-T.ASSEMBLY_HP_GAP-T.ASSEMBLY_EMBLEM_RADIUS*2,center_y-T.ASSEMBLY_EMBLEM_RADIUS,T.ASSEMBLY_EMBLEM_RADIUS*2,T.ASSEMBLY_EMBLEM_RADIUS*2)
 		row.text_origin=Vector2(value_x,center_y+baseline_offset)
 		row.text_rect=Rect2(value_x,center_y-mono.get_height(T.BATTLE_HP_FONT_SIZE)/2,width,mono.get_height(T.BATTLE_HP_FONT_SIZE))
 	return rows
@@ -380,7 +380,7 @@ func _draw_board() -> void:
 						var amount=M.effect(decision.units[decision.actor],u,effect)
 						if effect=="HEAL":
 							amount=mini(amount,ceili(u.max_hp-u.hp))
-						text=("-" if effect=="DAMAGE" else "+")+str(amount)
+						text=_effect_text(amount,effect)
 					if effect!="GUARD":
 						effect_chips.append({"cell":cell,"text":text,"color":tc,"font_size":16 if effect in ["DAMAGE","HEAL"] else 14})
 				if cpu_turn.active and (cpu_turn.phase=="TARGET" or movement.active) and cpu_turn.command.target==i:
@@ -543,15 +543,17 @@ func _draw_info() -> void:
 		index=forecast.target
 		_text("%sPREVIEW" % ("" if forecast.kind=="GUARD" else forecast.kind+" "),T.BATTLE_INFO_CLASS-Vector2(0,24),13,MUTED,mono)
 	var u: Dictionary=forecast.units[index] if not forecast.is_empty() else (planning.projected.units[index] if planning.active() and selected<0 else _display_units()[index])
-	_assembly_emblem(self,T.ASSEMBLY_INFO_CENTER,T.ASSEMBLY_EMBLEM_RADIUS,_assembly_profile(u.camp),u.camp)
+	var class_origin=T.BATTLE_INFO_CLASS+Vector2(T.ASSEMBLY_EMBLEM_RADIUS*2+T.ASSEMBLY_INFO_GAP,0)
+	var class_center=Vector2(T.BATTLE_INFO_CLASS.x+T.ASSEMBLY_EMBLEM_RADIUS,class_origin.y-(mono.get_ascent(17)-mono.get_descent(17))/2)
+	_assembly_emblem(self,class_center,T.ASSEMBLY_EMBLEM_RADIUS,_assembly_profile(u.camp),u.camp)
 	accessibility_description="Inspected unit: "+V.unit_name(u)
 	var camp_color=CYAN if u.camp=="PLAYER" else status_colors[1]
 	var core_code=M.layout_code(u.class_name)
 	var class_text="CLASS: "+core_code
-	_text(class_text,T.BATTLE_INFO_CLASS,17,camp_color,mono)
+	_text(class_text,class_origin,17,camp_color,mono)
 	if core_code=="VIRSL":
 		var label_width=mono.get_string_size(class_text,HORIZONTAL_ALIGNMENT_LEFT,-1,17).x
-		_text("STANDARD",T.BATTLE_INFO_CLASS+Vector2(label_width+T.LAYOUT_STANDARD_GAP,0),T.LAYOUT_STANDARD_FONT,MUTED,mono)
+		_text("STANDARD",class_origin+Vector2(label_width+T.LAYOUT_STANDARD_GAP,0),T.LAYOUT_STANDARD_FONT,MUTED,mono)
 	_ring(self,T.BATTLE_INFO_RING,81,u,index==battle.actor)
 	var icon_rect=T.BATTLE_EQUIPMENT_ICON
 	for part in ["ARMS","GEAR"]:
@@ -808,8 +810,8 @@ func _feedback() -> void:
 		var gain_to=clampf(u.hp/maxf(1.0,u.max_hp),0,1)
 		var gain_from=clampf((u.hp-e.actual)/maxf(1.0,u.max_hp),0,1) if e.kind=="HEAL" else gain_to
 		convergences.append({"cell":u.pos,"age":0.0,"owner":battle,"kind":e.kind,"target":e.target,"gain_from":gain_from,"gain_to":gain_to})
-	var shown=str(e.amount) if e.kind=="DAMAGE" else _hp(e.actual)
-	toasts.append({"cell":u.pos,"text":("-" if e.kind=="DAMAGE" else "+")+shown,"color":status_colors[1] if e.kind=="DAMAGE" else status_colors[2],"age":0.0})
+	var shown=_effect_text(e.amount if e.kind=="DAMAGE" else e.actual,e.kind)
+	toasts.append({"cell":u.pos,"text":shown,"color":status_colors[1] if e.kind=="DAMAGE" else status_colors[2],"age":0.0})
 	if e.dead:
 		toasts.append({"cell":u.pos,"text":"DEFEATED","color":status_colors[1],"age":-0.65})
 
@@ -1373,7 +1375,7 @@ func _help() -> void:
 	_label(panel,"Name 3 PLAYER slots. Max 3 skills; NONE allowed.\nCLASS: CORE order; MUTATION: one equipment ring.\nVIRSL = STANDARD; VLSRI is free. Others: MUTATION unlocks.\nUNLOCK ALL: temporary, debug only, never saved.",Rect2(36,631,500,98),16,WHITE)
 	_label(panel,"READING THE SIGNAL",Rect2(580,589,500,28),16,CYAN)
 	_label(panel,"Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage.\nSAVE / LOAD are explicit. Old saves are backed up.",Rect2(580,631,510,66),18,WHITE)
-	_label(panel,"Crests identify units and assemblies. A gray mark means your unit.",Rect2(580,706,510,22),13,MUTED)
+	_label(panel,"Crests identify units and assemblies. A small dot marks your units.",Rect2(580,706,510,22),13,MUTED)
 	_button(panel,"CLOSE / ESC",Rect2(36,736,800,44),_close_aux)
 	_button(panel,"SKILLS",Rect2(856,736,228,44),_skill_help)
 
@@ -1553,8 +1555,12 @@ func _ownership_marker(center: Vector2,u: Dictionary) -> void:
 	if not A.owns(u,view_camp):return
 	var point=center+T.OWNER_MARK_OFFSET
 	var scale_px=maxf(0.001,(get_viewport_transform()*get_global_transform()).get_scale().x)
-	draw_arc(point,T.OWNER_MARK_RADIUS,0,TAU,32,T.OWNER_MARK_COLOR,T.OWNER_MARK_PIXEL_MIN/scale_px,true)
-	draw_circle(point,T.OWNER_MARK_INNER,T.OWNER_MARK_COLOR,true,-1,true)
+	var ink=_ownership_color(u)
+	draw_arc(point,T.OWNER_MARK_RADIUS,0,TAU,32,ink,T.OWNER_MARK_PIXEL_MIN/scale_px,true)
+	draw_circle(point,T.OWNER_MARK_INNER,ink,true,-1,true)
+
+func _ownership_color(u: Dictionary) -> Color:
+	return Color(A.color(_assembly_profile(u.camp)),T.OWNER_MARK_ALPHA)
 
 func _ring(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,active: bool=false) -> void:
 	V.ring(canvas,center,radius,u,active,ring_colors,CYAN,mono,_assembly_profile(u.camp))
@@ -1775,7 +1781,11 @@ func _brackets(rect: Rect2, color: Color) -> void:
 		draw_line(p,p+Vector2(0,12*dy),color,2,true)
 
 static func _hp(value: float) -> String:
-	return str(int(value)) if value==floor(value) else "%.1f" % value
+	return str(ceili(value))
+
+static func _effect_text(value: float,kind: String) -> String:
+	var amount=_hp(absf(value))
+	return amount if amount=="0" else ("-" if kind=="DAMAGE" else "+")+amount
 
 static func _distance(a: Vector2i, b: Vector2i) -> int:
 	return absi(a.x-b.x)+absi(a.y-b.y)

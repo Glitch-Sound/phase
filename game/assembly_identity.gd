@@ -4,13 +4,13 @@ const I=preload("res://game/unit_identity.gd")
 const T=preload("res://game/tuning.gd")
 const VERSION=1
 const PREFIX="PHASE/assembly/v1\n"
-const PALETTE={"PEARL":"c9d2dc","JADE":"a1d9c3","ICE":"9ec8ed","AMBER":"e5c38c","LILAC":"c7b1e6","ROSE":"e3adbd"}
+const PALETTE={"PEARL":"c9d2dc","JADE":"a1d9c3","ICE":"9ec8ed","AMBER":"e5c38c","LILAC":"c7b1e6","ROSE":"e3adbd","RED":"ed8b8b"}
 const NAMES={"PLAYER":"ORBIT","ENEMY":"VECTOR"}
-const COLORS={"PLAYER":"JADE","ENEMY":"AMBER"}
+const COLORS={"PLAYER":"PEARL","ENEMY":"RED"}
 
 ## 初期設定を返す。campは陣営。戻り値は編集から独立した名前と安定色キー、版の辞書。副作用なし。
 static func default_profile(camp: String="PLAYER") -> Dictionary:
-	return {"name":NAMES.get(camp,"ORBIT"),"color":COLORS.get(camp,"JADE"),"version":VERSION}
+	return {"name":NAMES.get(camp,"ORBIT"),"color":COLORS.get(camp,"PEARL"),"version":VERSION}
 
 ## 設定の適否を返す。profileは入力候補。戻り値は版と名前、色が有効か。入力を変更しない。
 static func valid(profile: Variant) -> bool:
@@ -21,14 +21,25 @@ static func label(profile: Dictionary,camp: String="PLAYER") -> String:
 	var name=I.normalize(str(profile.get("name","")))
 	return NAMES.get(camp,"Assembly") if name.is_empty() else name
 
-## 紋章の色を返す。profileは検証済みの設定。戻り値は安定キーの不透明色、不明時はJADE。副作用なし。
+## 紋章の色を返す。profileは検証済みの設定。戻り値は安定キーの不透明色、不明時はPEARL。副作用なし。
 static func color(profile: Dictionary) -> Color:
-	return Color(PALETTE.get(profile.get("color","JADE"),PALETTE.JADE))
+	return Color(PALETTE.get(profile.get("color","PEARL"),PALETTE.PEARL))
 
 ## HPの明るい色を返す。profileは表示設定。戻り値は同じ色相で彩度を下げた高明度の不透明色。副作用なし。
 static func health(profile: Dictionary) -> Color:
 	var ink=color(profile)
-	return Color.from_hsv(ink.h,ink.s*T.ASSEMBLY_HP_SATURATION,1.0)
+	var saturation=ink.s*T.ASSEMBLY_HP_SATURATION
+	var result=Color.from_hsv(ink.h,saturation,1.0)
+	# 赤など高彩度の追加色でも、従来の明るいHPの基準を下回らない。
+	while _luminance(result)<T.ASSEMBLY_HP_LUMINANCE_MIN:
+		saturation*=0.5
+		result=Color.from_hsv(ink.h,saturation,1.0)
+	return result
+
+static func _luminance(ink: Color) -> float:
+	var linear=[]
+	for value in [ink.r,ink.g,ink.b]:linear.append(value/12.92 if value<=0.04045 else pow((value+0.055)/1.055,2.4))
+	return linear[0]*0.2126+linear[1]*0.7152+linear[2]*0.0722
 
 ## 所有の適否を返す。unitは不変IDと陣営、view_campは視点。戻り値は整合した自軍か。名前と表示設定を参照せず変更しない。
 static func owns(unit: Dictionary,view_camp: String) -> bool:
