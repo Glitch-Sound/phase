@@ -13,7 +13,7 @@ func _run() -> void:
 	if game.has_method("_open_build_choice"):
 		await _dialogs()
 		await _keyboard()
-		_presentation()
+		await _presentation()
 	game.queue_free()
 	await process_frame
 	print("BUILD DIALOGS: %d checks / %d failures" % [checks,failures])
@@ -72,6 +72,24 @@ func _presentation() -> void:
 	var start=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="START")[0]
 	_check(start.alignment==HORIZONTAL_ALIGNMENT_CENTER,"START label is centered")
 	_check(start.icon==null or start.icon_alignment!=HORIZONTAL_ALIGNMENT_CENTER,"START icon does not overlap the centered label")
+	var content_width=start.get_theme_font("font").get_string_size(start.text,HORIZONTAL_ALIGNMENT_LEFT,-1,start.get_theme_font_size("font_size")).x+start.get_theme_constant("icon_max_width")+start.get_theme_constant("h_separation")
+	for state in ["normal","hover","pressed","focus","disabled"]:
+		var style=start.get_theme_stylebox(state)
+		_check(is_equal_approx(style.content_margin_left,style.content_margin_right) and absf(2*style.content_margin_left+content_width-start.size.x)<1.0,"START icon and text share a centered content area: "+state)
+	var cpu=toggles.filter(func(c):return c.text=="ENEMY CPU")[0]
+	var unlock=toggles.filter(func(c):return c.text=="UNLOCK ALL")[0]
+	var unit_end=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="UNIT 3")[0].get_global_rect().end.x
+	var group_gap=cpu.global_position.x-unlock.get_global_rect().end.x
+	_check(group_gap>0 and unlock.global_position.x-unit_end>group_gap and is_equal_approx(cpu.get_global_rect().end.x,start.get_global_rect().end.x),"right-aligned toggles form a closer group than the unit selection gap")
+	var cpu_rect=cpu.get_global_rect()
+	game.debug_session.allowed=false
+	game._build()
+	await process_frame
+	var release_toggles=game.overlay.find_children("*","CheckButton",true,false)
+	_check(release_toggles.size()==1 and release_toggles[0].text=="ENEMY CPU" and release_toggles[0].get_global_rect()==cpu_rect,"without debug entry CPU stays right-aligned and no empty control remains")
+	game.debug_session.allowed=true
+	game._build()
+	await process_frame
 	var text=FileAccess.get_file_as_string("res://ui/main.gd")
 	_check(text.contains('_text("PREVIEW",'),"PREVIEW heading is drawn")
 func _check(ok: bool,message: String) -> void:

@@ -124,7 +124,10 @@ const BATTLE_HP_GAP := 16.0
 const BATTLE_HP_RIGHT := 360.0
 # BUILDは左から構成と結果、装備の比較、スキルと出撃の3列。
 const BUILD_RECT := Rect2(300,115,1320,810)
-const DEBUG_TOGGLE_RECT := Rect2(570,22,306,43)
+# トグル同士を近づけて右へ揃え、ユニット選択との余白を広くする。
+const BUILD_CPU_TOGGLE_RECT := Rect2(988,22,288,43)
+const BUILD_TOGGLE_GAP := 16.0
+const DEBUG_TOGGLE_RECT := Rect2(BUILD_CPU_TOGGLE_RECT.position-Vector2(BUILD_CPU_TOGGLE_RECT.size.x+BUILD_TOGGLE_GAP,0),BUILD_CPU_TOGGLE_RECT.size)
 const CHOICE_ROW_FONT := 16
 const CHOICE_RECT := Rect2(320,130,1280,820)
 const DEBUG_BADGE_RECT := Rect2(40,8,500,28)

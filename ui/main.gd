@@ -747,7 +747,7 @@ func _build() -> void:
 	_label(panel,"BUILD",Rect2(left,20,200,45),32,WHITE)
 	for i in range(collection.builds.size()):
 		_button(panel,"UNIT %d" % (i+1),Rect2(210+i*110,22,100,43),func():edit_unit=i;_build(),"",i==edit_unit)
-	_toggle(panel,"ENEMY CPU",Rect2(right,22,342,43),cpu_enabled,func(value):cpu_enabled=value;_build())
+	_toggle(panel,"ENEMY CPU",T.BUILD_CPU_TOGGLE_RECT,cpu_enabled,func(value):cpu_enabled=value;_build())
 	if debug_session.available():
 		_toggle(panel,"UNLOCK ALL",T.DEBUG_TOGGLE_RECT,collection.temporary,func(value):_toggle_debug(value))
 	_label(panel,"SHARED ARCHIVE   %d ARMS / %d GEAR / %d MUTATIONS     %s" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size(),"PLAYER: HUMAN / ENEMY: CPU" if cpu_enabled else "BOTH SIDES: HUMAN"],Rect2(left,83,1240,26),14,MUTED)
@@ -826,6 +826,14 @@ func _build() -> void:
 	var start=_button(panel,"START",Rect2(934,730,342,48),_start_battle)
 	start.alignment=HORIZONTAL_ALIGNMENT_CENTER
 	start.icon_alignment=HORIZONTAL_ALIGNMENT_LEFT
+	# 中央アイコンは文字と重なるため、通常の左アイコンのまま合計幅を中央へ収める。
+	var content_width=start.get_theme_font("font").get_string_size(start.text,HORIZONTAL_ALIGNMENT_LEFT,-1,start.get_theme_font_size("font_size")).x+start.get_theme_constant("icon_max_width")+start.get_theme_constant("h_separation")
+	var padding=maxf(0,(start.size.x-content_width)/2)
+	for state in ["normal","hover","pressed","focus","disabled"]:
+		var style=start.get_theme_stylebox(state).duplicate()
+		style.content_margin_left=padding
+		style.content_margin_right=padding
+		start.add_theme_stylebox_override(state,style)
 	_refresh_build()
 
 func _toggle_debug(enabled: bool) -> bool:
