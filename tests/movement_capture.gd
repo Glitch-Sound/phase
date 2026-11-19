@@ -17,12 +17,12 @@ func _click(point: Vector2,double: bool=false) -> void:
 func _cell(cell: Vector2i,double: bool=false) -> void:
 	_click(game._cell_rect(cell).get_center(),double)
 func _shot(name: String) -> void:
-	root.get_texture().get_image().save_png("res://artifacts/runtime/hide-route-"+name+".png")
+	root.get_texture().get_image().save_png("res://artifacts/runtime/arrival-"+name+".png")
 ## REQ-046-S04
 func _run() -> void:
 	game=load("res://tests/movement_audit.gd").new()
-	game.save_path="res://artifacts/runtime/hide-route-gpu-no-save.json"
-	game.settings_path="res://artifacts/runtime/hide-route-gpu-no-settings.json"
+	game.save_path="res://artifacts/runtime/arrival-gpu-no-save.json"
+	game.settings_path="res://artifacts/runtime/arrival-gpu-no-settings.json"
 	root.add_child(game);await _settle()
 	var normal=game.collection.snapshot()
 	_check(game._toggle_debug(true),"isolated actual debug entry")
@@ -73,20 +73,26 @@ func _run() -> void:
 	await _terminal()
 	game._restart();_check(game._toggle_debug(false) and game.collection.snapshot()==normal,"normal BUILD and exact original collection restored")
 	await _settle()
-	var f=FileAccess.open("res://artifacts/runtime/hide-route-gpu.json",FileAccess.WRITE);f.store_string(JSON.stringify({"checks":checks,"failures":failures,"observations":observations,"draw_ms":game.draw_times},"\t"));f.close()
-	print("HIDDEN ROUTE GPU: %d checks / %d failures / normal BUILD restored" % [checks,failures])
+	var f=FileAccess.open("res://artifacts/runtime/arrival-gpu.json",FileAccess.WRITE);f.store_string(JSON.stringify({"checks":checks,"failures":failures,"observations":observations,"draw_ms":game.draw_times},"\t"));f.close()
+	print("ARRIVAL GPU: %d checks / %d failures / normal BUILD restored" % [checks,failures])
 	quit(0 if failures==0 else 1)
 func _same_landing(actual: Dictionary,predicted: Dictionary) -> bool:
 	for key in ["pos","core_angle","gear_angle","arms_angle","class_name","gear_mutation","arms_mutation"]:
 		if actual[key]!=predicted[key]:return false
 	return true
 func _observe(tag: String) -> void:
-	var frames=[];var snapped=false
+	var frames=[];var snapped=false;var held=false
+	var should_hold=game.movement.beat_duration>0
 	for i in range(40):
 		if not game.movement.active:break
 		await _settle(1)
 		if not game.movement.active:break
 		var cell=game.movement.position()
+		for cloud in game.displayed_clouds:
+			if cloud.id!=game.movement.source.id or cloud.camp!=game.movement.source.camp:
+				_check(cloud.opacity==1,"stationary cloud remains visible "+tag)
+			elif game.movement.elapsed>0 and not game.movement.landed:
+				_check(cloud.opacity==0,"moving cloud is completely hidden "+tag)
 		var expected=game.BOARD+(cell+Vector2.ONE*0.5)*game.CELL
 		var rings=game.displayed_rings.filter(func(r):return r.unit.id==game.movement.source.id and Rect2(game.BOARD,Vector2.ONE*game.CELL*10).has_point(r.center))
 		_check(rings.size()==1 and rings[0].center.distance_to(expected)<0.001,"single actual moving glyph at continuous route position "+tag)
@@ -94,10 +100,14 @@ func _observe(tag: String) -> void:
 		for center in [game.T.PREVIEW_CENTER,game.T.BATTLE_INFO_RING]:
 			var side=game.displayed_rings.filter(func(r):return r.center==center)
 			_check(side.size()==1 and side[0].unit==game.movement.unit(),"actual side glyph remains the same changing moving rings "+tag)
-		frames.append({"elapsed":game.movement.elapsed,"position":str(cell),"center":str(expected),"angles":[game.movement.unit().core_angle,game.movement.unit().gear_angle,game.movement.unit().arms_angle],"drawn_route_segments":game.drawn_route_segments.size()})
-		if not snapped:
+		frames.append({"elapsed":game.movement.elapsed,"position":str(cell),"center":str(expected),"angles":[game.movement.unit().core_angle,game.movement.unit().gear_angle,game.movement.unit().arms_angle],"drawn_route_segments":game.drawn_route_segments.size(),"landed":game.movement.landed,"beat_elapsed":game.movement.beat_elapsed})
+		if game.movement.landed and not held:
+			_check(game.battle.history.size()==1 and not is_instance_valid(game.overlay),"landed attack beat retains the actor without another menu")
+			_shot("landed-beat-"+tag);held=true
+		elif not snapped:
 			_shot("mid-"+tag);snapped=true
 	_check(not game.movement.active and frames.size()>0,"travel visibly completes without a stuck frame "+tag)
+	if should_hold:_check(held,"actual GPU frames include the landed attack beat "+tag)
 	observations.append({"tag":tag,"frames":frames})
 func _cpu() -> void:
 	game.cpu_enabled=true;game._start_battle();await _settle()
@@ -113,7 +123,7 @@ func _cpu() -> void:
 	var elapsed=game.movement.elapsed;var hp=game.battle.units[0].hp
 	game._help();await _settle(12)
 	_check(game.movement.elapsed==elapsed and game.battle.units[0].hp==hp,"GPU HELP freezes CPU travel and action")
-	game._close_aux()
+	game._close_aux();game.selected=0
 	await _observe("cpu-1920")
 	for i in range(60):
 		await _settle(1)

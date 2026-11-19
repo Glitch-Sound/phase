@@ -26,9 +26,14 @@ const CPU_MEMORY_LIMIT := 8
 const CPU_TERMINAL_SCORE := 1000000.0
 const CPU_TIMES := {"THINK":0.30,"ROUTE":0.16,"COMMIT":0.14,"ACTION":0.18,"TARGET":0.20,"RESULT":0.40}
 const CPU_FAST_SPEED := 4.0
-# 各歩の位相変化を読める時間を取り、長い経路でも技へ続くテンポを保つ。
-const MOVEMENT_CELL_SECONDS := 0.20
-const MOVEMENT_MAX_SECONDS := 0.65
+# 各歩の変化を読み、長経路も抑えた時間で着地へ進める。
+const MOVEMENT_CELL_SECONDS := 0.28
+const MOVEMENT_MAX_SECONDS := 0.90
+# 移動を伴う攻撃だけ、着地の状態を短く見せてから実行する。
+const MOVEMENT_ATTACK_BEAT_SECONDS := 0.22
+# 発生源だけを出発前に消し、着地の再表示は攻撃前の一拍へ重ねる。
+const MOVEMENT_CLOUD_OUT_SECONDS := 0.12
+const MOVEMENT_CLOUD_IN_SECONDS := 0.18
 const CPU_CONTROL_ORIGIN := Vector2(1440,772)
 const MUTANT_CHANCE := 0.10
 const SAVE_VERSION := 1

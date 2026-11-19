@@ -420,8 +420,10 @@ func _draw_panel_icon(kind: String, rect: Rect2, color: Color) -> void:
 	draw_texture_rect(ICONS[PANEL_VIEWS[kind].icon],rect,false,color)
 
 func _field_cloud(source: Dictionary, preview: bool, phase: float) -> void:
+	var opacity=movement.cloud_alpha(source)
+	if opacity<=0:return
 	var center=BOARD+(movement.position()+Vector2.ONE*0.5)*CELL if movement.active and source.id==movement.source.id and source.camp==movement.source.camp else _cell_rect(source.pos).get_center()
-	V.field_cloud(self,center,CELL,clock,phase,Rect2(BOARD,Vector2.ONE*CELL*10),preview,CYAN)
+	V.field_cloud(self,center,CELL,clock,phase,Rect2(BOARD,Vector2.ONE*CELL*10),preview,CYAN,opacity)
 
 func _field_view() -> Dictionary:
 	var current=F.coverage(_display_units())
@@ -512,7 +514,7 @@ func _utility_preview() -> Dictionary:
 	return decision.action_preview(target) if target>=0 else {}
 
 func _draw_info() -> void:
-	var index=selected if selected>=0 else battle.actor
+	var index=movement.actor if movement.active else (selected if selected>=0 else battle.actor)
 	var forecast=_utility_preview()
 	if not forecast.is_empty():
 		index=forecast.target
@@ -540,7 +542,7 @@ func _draw_info() -> void:
 		_text(C.SKILLS[id].description,position_px+T.BATTLE_INFO_DESCRIPTION_OFFSET,T.BATTLE_INFO_DESCRIPTION_FONT,MUTED)
 		position_px.y+=T.BATTLE_SKILL_STEP
 	if cpu_enabled and battle.result.is_empty():
-		var phase="MOVING" if movement.active and movement.cpu else (cpu_turn.phase if cpu_turn.active else "READY")
+		var phase=("AIMING" if movement.landed else "MOVING") if movement.active and movement.cpu else (cpu_turn.phase if cpu_turn.active else "READY")
 		var name=V.unit_name(battle.units[cpu_turn.actor]) if cpu_turn.active else ""
 		var stopped=cpu_paused or not window_focused or is_instance_valid(auxiliary)
 		_text("CPU %s / %s" % [name,"PAUSED" if stopped else phase],T.CPU_CONTROL_ORIGIN+Vector2(0,14),14,MUTED,mono)
@@ -684,7 +686,8 @@ func _begin_movement(before: Dictionary, route: Array, via_cpu: bool) -> void:
 	timeline_selected_event={}
 	hover_cell=Vector2i(-1,-1)
 	_clear_overlay()
-	if movement.begin(battle,before,route,via_cpu,reduced_motion):
+	var attack=battle.result.is_empty() and C.SKILLS.get(playback_command.get("skill",""),{}).get("effect","")=="DAMAGE"
+	if movement.begin(battle,before,route,via_cpu,reduced_motion,attack):
 		_hud()
 		_movement_tick(0)
 	else:
@@ -692,9 +695,11 @@ func _begin_movement(before: Dictionary, route: Array, via_cpu: bool) -> void:
 	queue_redraw()
 
 func _movement_tick(delta: float) -> void:
-	if not movement.active:return
 	var via_cpu=movement.cpu
 	var blocked=not window_focused or is_instance_valid(auxiliary) or (via_cpu and cpu_paused)
+	if not movement.active:
+		movement.advance_cloud(delta,blocked,T.CPU_FAST_SPEED if via_cpu and cpu_fast else 1.0)
+		return
 	var event=movement.advance(battle,delta,blocked,T.CPU_FAST_SPEED if via_cpu and cpu_fast else 1.0)
 	if event=="arrived":_movement_arrived(via_cpu)
 	elif event=="cancel":

@@ -12,6 +12,8 @@ func _initialize() -> void:
 		_sequence()
 		_boundaries()
 		_angles()
+		_attack_beat()
+		_cloud_fade()
 	print("MOVEMENT: %d checks / %d failures" % [checks,failures])
 	quit(0 if failures==0 else 1)
 func _battle():
@@ -80,6 +82,57 @@ func _angles() -> void:
 	b.panels[Vector2i(4,4)]="COUNTERCLOCKWISE"
 	p.begin(b,source,[Vector2i(4,4)]);p.advance(b,p.duration/2,false);u=p.unit()
 	_check(is_equal_approx(u.core_angle,45) and is_equal_approx(u.gear_angle,350) and is_equal_approx(u.arms_angle,10),"STOP freezes only equipment while counterclockwise CORE still changes during travel")
+## REQ-046-S01、REQ-046-S02、REQ-046-S03
+func _attack_beat() -> void:
+	var b=_battle();var before=b.units[0].duplicate(true);var route=[Vector2i(4,4)]
+	b.path=route.duplicate();b.commit_path()
+	var p=factory.new()
+	_check(p.get("beat_duration")!=null,"movement owns a bounded attack preparation beat")
+	if p.get("beat_duration")==null:return
+	var beat=tuning.get_script_constant_map().get("MOVEMENT_ATTACK_BEAT_SECONDS",0)
+	p.begin(b,before,route,false,false,true)
+	_check(p.beat_duration==beat and beat>0,"requested attack uses the configured preparation time")
+	var state=[b.units.duplicate(true),b.history.duplicate(),b.turn]
+	_check(p.advance(b,p.duration,false)=="landed" and p.active and p.landed and p.position()==Vector2(4,4) and p.unit()==b.units[0],"landing holds the exact final state before completion")
+	p.advance(b,100,true)
+	_check(p.beat_elapsed==0 and state==[b.units,b.history,b.turn],"paused beat accumulates neither display nor battle time")
+	p.advance(b,beat/8,false,4)
+	_check(p.active and is_equal_approx(p.beat_elapsed,beat/2),"fast playback also accelerates the beat")
+	_check(p.advance(b,beat/8+0.000001,false,4)=="arrived" and not p.active and p.advance(b,100,false)=="","attack preparation completes exactly once")
+	p.begin(b,before,route,false,false,true);p.advance(b,p.duration+beat/2,false)
+	_check(p.landed and is_equal_approx(p.beat_elapsed,beat/2),"time crossing the landing boundary carries into the beat")
+	b.turn+=1
+	_check(p.advance(b,100,false)=="cancel" and not p.active,"changed turn cancels a landed pending action")
+	p.begin(b,before,route,false,true,true)
+	_check(p.beat_duration==0 and p.advance(b,0,false)=="arrived","reduced motion adds no preparation hold")
+	_check(not p.begin(b,before,[],false,false,true),"zero-step movement adds no preparation hold")
+## REQ-018-S08、REQ-046-S01、REQ-046-S02、REQ-046-S03
+func _cloud_fade() -> void:
+	var b=_battle();var source=b.units[0].duplicate(true);source.skills=[C.FIELD_STOP]
+	var p=factory.new()
+	_check(p.has_method("cloud_alpha"),"movement exposes only its own cloud visibility")
+	if not p.has_method("cloud_alpha"):return
+	p.begin(b,source,[Vector2i(4,4)],false,false,true)
+	var fade=tuning.MOVEMENT_CLOUD_OUT_SECONDS
+	_check(p.cloud_alpha(source)==1 and p.position()==Vector2(source.pos),"cloud starts visible at the original position")
+	p.advance(b,fade/2,false)
+	_check(p.cloud_alpha(source)>0 and p.cloud_alpha(source)<1 and p.elapsed==0 and p.position()==Vector2(source.pos),"only departure cloud fades before movement starts")
+	var alpha=p.cloud_alpha(source);p.advance(b,100,true)
+	_check(p.cloud_alpha(source)==alpha and p.cloud_alpha(b.units[3])==1,"pause holds opacity and other clouds remain unchanged")
+	p.advance(b,fade/2,false)
+	_check(p.cloud_alpha(source)==0 and p.elapsed==0,"departure is completely clear before the first moving frame")
+	p.advance(b,p.duration,false)
+	_check(p.landed and p.cloud_alpha(source)==0,"cloud remains hidden through travel and begins revealing at the destination")
+	p.advance(b,p.beat_duration,false)
+	_check(not p.active and p.cloud_alpha(source)==1,"attack beat overlaps the whole reveal without another wait")
+	p.begin(b,source,[Vector2i(4,4)]);p.advance(b,fade+p.duration,false)
+	_check(not p.active and p.cloud_alpha(source)==0,"nonattack completes without waiting for the cloud reveal")
+	p.advance_cloud(tuning.MOVEMENT_CLOUD_IN_SECONDS,false)
+	_check(p.cloud_alpha(source)==1,"nonblocking reveal completes after nonattack")
+	p.reset();p.begin(b,source,[])
+	_check(p.cloud_alpha(source)==1,"zero steps and reset never leave a hidden cloud")
+	p.begin(b,source,[Vector2i(4,4)],false,true,true);p.advance(b,0,false)
+	_check(not p.active and p.cloud_alpha(source)==1,"reduced motion skips all cloud fading")
 func _check(ok: bool,note: String) -> void:
 	checks+=1
 	if not ok:failures+=1;printerr("FAIL: ",note)

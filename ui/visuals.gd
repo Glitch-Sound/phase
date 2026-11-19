@@ -270,12 +270,13 @@ static func _field_texture() -> GradientTexture2D:
 	return _cloud_texture
 
 ## 発生源の雲を描く。canvasは描画先、centerは中心、cellはセル幅、secondsは表示時間、phaseは周期差、boardは盤面、previewは予測か、colorは設定色。戻り値なし。副作用はユニットより下の描画だけ。
-static func field_cloud(canvas: CanvasItem, center: Vector2, cell: float, seconds: float, phase: float, board: Rect2, preview: bool, color: Color) -> void:
+## opacityは発生源の移動に合わせる不透明度で、形や効果判定を変更しない。
+static func field_cloud(canvas: CanvasItem, center: Vector2, cell: float, seconds: float, phase: float, board: Rect2, preview: bool, color: Color, opacity: float=1.0) -> void:
 	var layers=field_cloud_shape(center,cell,seconds,phase,board,preview)
 	var texture=_field_texture()
 	var scale_px=maxf(0.001,(canvas.get_viewport_transform()*canvas.get_global_transform()).get_scale().x)
 	var width=T.FIELD_CLOUD_PIXEL_MIN/scale_px
 	for layer in layers:
-		canvas.draw_texture_rect_region(texture,layer.rect,Rect2(layer.uv.position*texture.get_size(),layer.uv.size*texture.get_size()),Color(color,layer.alpha))
+		canvas.draw_texture_rect_region(texture,layer.rect,Rect2(layer.uv.position*texture.get_size(),layer.uv.size*texture.get_size()),Color(color,layer.alpha*opacity))
 		for i in range(layer.trail.size()-1):
-			if i%4<2:canvas.draw_line(layer.trail[i],layer.trail[i+1],Color(color,T.FIELD_CLOUD_PREVIEW_ALPHA),width,true)
+			if i%4<2:canvas.draw_line(layer.trail[i],layer.trail[i+1],Color(color,T.FIELD_CLOUD_PREVIEW_ALPHA*opacity),width,true)
