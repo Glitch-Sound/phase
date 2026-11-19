@@ -758,8 +758,9 @@ func _build() -> void:
 	_label(panel,"SHARED ARCHIVE   %d ARMS / %d GEAR / %d MUTATIONS     %s" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size(),"PLAYER: HUMAN / ENEMY: CPU" if cpu_enabled else "BOTH SIDES: HUMAN"],Rect2(left,83,1240,26),14,MUTED)
 	var b: Dictionary=collection.builds[edit_unit]
 	_label(panel,"CORE / TOTAL 100",Rect2(left,136,400,28),17,WHITE)
-	_label(panel,"CLASS",Rect2(left,184,96,28),14,MUTED)
-	_choice_button(panel,"class_name",b.class_name,Rect2(left+100,176,300,43))
+	var class_title=_label(panel,"CLASS",Rect2(left,176,96,28),14,MUTED)
+	var class_field=_choice_button(panel,"class_name",b.class_name,Rect2(left+100,176,300,43))
+	_align_layout_text(class_field,class_title)
 	core_controls=[]
 	equipment_views={}
 	for k in range(5):
@@ -798,8 +799,9 @@ func _build() -> void:
 				view.draw_string(mono,Vector2(x,40),values[status],HORIZONTAL_ALIGNMENT_LEFT,-1,T.BUILD_EQUIPMENT_VALUE_FONT,WHITE)
 				view.draw_line(Vector2(x,54),Vector2(x+minf(b[key][status],100)*0.6,54),status_colors[status],2))
 		_choice_button(panel,key,C.serial(key.to_upper(),b[key]),Rect2(middle,y+39,T.BUILD_EQUIPMENT_WIDTH,44))
-		_label(panel,"MUTATION",Rect2(middle,y+184,100,24),14,MUTED)
-		_choice_button(panel,key+"_mutation",b[key+"_mutation"],Rect2(middle+116,y+176,T.BUILD_EQUIPMENT_WIDTH-116,40))
+		var mutation_title=_label(panel,"MUTATION",Rect2(middle,y+176,100,24),14,MUTED)
+		var mutation_field=_choice_button(panel,key+"_mutation",b[key+"_mutation"],Rect2(middle+116,y+176,T.BUILD_EQUIPMENT_WIDTH-116,40))
+		_align_layout_text(mutation_field,mutation_title)
 	_wrapped_label(panel,"Choose equipment to compare rings and stat values.",Rect2(middle,656,T.BUILD_EQUIPMENT_WIDTH,42),13,MUTED)
 	_label(panel,"SKILLS / 3 SLOTS",Rect2(right,136,342,30),15,MUTED)
 	for i in range(3):
@@ -957,11 +959,24 @@ func _choice_button(parent: Control,kind: String,text: String,rect: Rect2,slot: 
 	if layout:
 		style.content_margin_left=12
 		style.content_margin_right=12
+		var interactive=button.get_theme_stylebox("hover")
+		style.content_margin_top=interactive.content_margin_top
+		style.content_margin_bottom=interactive.content_margin_bottom
 	button.add_theme_stylebox_override("normal",style)
 	if layout and displayed=="VIRSL":
 		var width=button.get_theme_font("font").get_string_size(displayed,HORIZONTAL_ALIGNMENT_LEFT,-1,button.get_theme_font_size("font_size")).x
-		_label(button,"STANDARD",Rect2(12+width+T.LAYOUT_STANDARD_GAP,9,110,24),T.LAYOUT_STANDARD_FONT,MUTED)
+		var caption=_label(button,"STANDARD",Rect2(12+width+T.LAYOUT_STANDARD_GAP,0,110,24),T.LAYOUT_STANDARD_FONT,MUTED)
+		_align_layout_text(button,caption)
 	return button
+
+func _align_layout_text(button: Button,label: Label) -> void:
+	# 単行Buttonの中央揃えと同じ基準線へ、寸法の違うタイトルと補足を合わせる。
+	var face=button.get_theme_font("font")
+	var size_px=button.get_theme_font_size("font_size")
+	var style=button.get_theme_stylebox("normal")
+	var baseline=style.content_margin_top+(button.size.y-style.content_margin_top-style.content_margin_bottom-face.get_height(size_px))/2+face.get_ascent(size_px)
+	label.vertical_alignment=VERTICAL_ALIGNMENT_TOP
+	label.global_position.y=button.global_position.y+baseline-label.get_theme_font("font").get_ascent(label.get_theme_font_size("font_size"))
 
 func _open_build_choice(kind: String,slot: int=0) -> void:
 	if not build_open:return

@@ -15,6 +15,7 @@ func _run() -> void:
 		await _keyboard()
 		await _class_selection()
 		await _presentation()
+		await _layout_alignment()
 	game.queue_free()
 	await process_frame
 	print("BUILD DIALOGS: %d checks / %d failures" % [checks,failures])
@@ -103,6 +104,28 @@ func _presentation() -> void:
 	await process_frame
 	var text=FileAccess.get_file_as_string("res://ui/main.gd")
 	_check(text.contains('_text("PREVIEW",'),"PREVIEW heading is drawn")
+## REQ-045-S04
+func _layout_alignment() -> void:
+	var original=game.collection.snapshot()
+	var baselines={}
+	var kinds=["class_name","arms_mutation","gear_mutation"]
+	for kind in kinds:
+		var field=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.get_meta("build_choice","")==kind)[0]
+		var title=field.get_parent().get_children().filter(func(child):return child is Label and child.text==("CLASS" if kind=="class_name" else "MUTATION") and absf(child.global_position.y-field.global_position.y)<40)[0]
+		var baseline=field.global_position.y+(field.size.y-field.get_theme_font("font").get_height(field.get_theme_font_size("font_size")))/2+field.get_theme_font("font").get_ascent(field.get_theme_font_size("font_size"))
+		baselines[kind]=baseline
+		var labels=[title]+field.get_children().filter(func(child):return child is Label and child.text=="STANDARD")
+		_check(labels.size()==2 and labels.all(func(label):return is_equal_approx(label.global_position.y+label.get_theme_font("font").get_ascent(label.get_theme_font_size("font_size")),baseline)) and field.get_theme_stylebox("normal").content_margin_top==field.get_theme_stylebox("normal").content_margin_bottom,"layout title, code and STANDARD share one baseline: "+kind)
+	if not game.collection.mutations.has("LSRIV"):game.collection.mutations.append("LSRIV")
+	for kind in kinds:game.collection.builds[0][kind]="LSRIV"
+	game._build()
+	await process_frame
+	var fields=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.get_meta("build_choice","") in kinds)
+	_check(fields.all(func(field):return field.text=="LSRIV" and not field.get_children().any(func(child):return child is Label and child.text=="STANDARD") and is_equal_approx(field.global_position.y+(field.size.y-field.get_theme_font("font").get_height(field.get_theme_font_size("font_size")))/2+field.get_theme_font("font").get_ascent(field.get_theme_font_size("font_size")),baselines[field.get_meta("build_choice")])),"without STANDARD each main code retains its baseline")
+	game.collection.builds=original.builds.duplicate(true)
+	game.collection.mutations=original.mutations.duplicate()
+	game._build()
+	await process_frame
 ## REQ-042-S01、REQ-042-S03
 func _class_selection() -> void:
 	game.collection.mutations.append("LSRIV")
