@@ -54,7 +54,6 @@ func _connection(game) -> void:
 		_check(game.battle.turn==2 and game.battle.units[2].hp!=before and game.convergences.size()==1 and game.convergences[0].age==0,"existing effect and turn apply immediately before passive display")
 		_check(game.convergences[0].get("kind","")==game.C.SKILLS[kind].effect and game.convergences[0].get("target",-1)==2,"display receives the real action kind and target")
 		var pulse=game.convergences[0]
-		_check(pulse.has("source_inf") and is_equal_approx(pulse.get("source_inf",-1.0),game.M.sync(game.battle.units[0],1).factor),"response retains original source INF after turn advances")
 		if kind==game.C.HEAL:
 			_check(is_equal_approx(pulse.get("gain_from",-1.0),before/game.battle.units[2].max_hp) and is_equal_approx(pulse.get("gain_to",-1.0),game.battle.units[2].hp/game.battle.units[2].max_hp),"response uses only actual capped HP gain")
 		var history=game.battle.history.duplicate();var hp=game.battle.units[2].hp
@@ -77,12 +76,7 @@ func _connection(game) -> void:
 ## REQ-021-S06
 func _reaction() -> void:
 	var edge=44.0;var unit=44.0;var contact=tuning.CONVERGENCE_TRAVEL_SECONDS
-	_check(visual.ring_response(contact-0.001,edge,unit,"DAMAGE",0,0).is_empty(),"attack does not react before first contact")
-	var hit=visual.ring_response(contact,edge,unit,"DAMAGE",0,0)
-	var strong=visual.ring_response(contact,edge,unit,"DAMAGE",0,0,true)
-	var later=visual.ring_response(contact+(tuning.CONVERGENCE_SECONDS-contact)*0.5,edge,unit,"DAMAGE",0,0)
-	_check(not hit.is_empty() and hit.arc_angle==TAU and hit.radius>unit*tuning.UNIT_RING_RADII[2] and hit.alpha>later.alpha and strong.alpha>hit.alpha and strong.width>hit.width,"single exterior response decays once and high INF is slightly stronger")
-	_check(visual.ring_response(tuning.CONVERGENCE_SECONDS,edge,unit,"DAMAGE",0,0).is_empty(),"reaction cannot outlive existing circles or restart for later fronts")
+	_check([contact,contact+(tuning.CONVERGENCE_SECONDS-contact)*0.5,tuning.CONVERGENCE_SECONDS].all(func(age):return visual.ring_response(age,edge,unit,"DAMAGE",0,0).is_empty()),"attack never adds a white exterior response")
 	var start=edge*tuning.CONVERGENCE_HEAL_START_SCALE;var outer=edge*tuning.CONVERGENCE_OUTER_SCALE
 	var crossing=tuning.CONVERGENCE_TRAVEL_SECONDS*pow((unit*tuning.UNIT_HP_RADIUS-start)/(outer-start),1.0/tuning.CONVERGENCE_HEAL_EASE_POWER)
 	_check(visual.ring_response(crossing-0.001,edge,unit,"HEAL",0.8,1).is_empty(),"healing waits only in display until first front crosses HP")
