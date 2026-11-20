@@ -262,3 +262,14 @@ const ASSEMBLY_DIALOG_RECT := Rect2(550,244,820,544)
 const ASSEMBLY_COLOR_NOTE_Y := 413.0
 const ASSEMBLY_ACTION_Y := 468.0
 const OWNER_MARK_RADIUS := 6.0
+
+# Languageは表示操作の行へ収め、配色の既存配置を維持する。
+const SETTINGS_LANGUAGE_LABEL := Rect2(524,214,120,26)
+const SETTINGS_LANGUAGE_CHOICE := Rect2(652,205,372,44)
+const SETTINGS_LANGUAGE_NOTE := Rect2(36,254,988,26)
+
+# 日本語本文は既存の段落高に収め、文字サイズは英語と揃える。
+const JAPANESE_PROSE_SPACING := 0
+
+# 既存の目標文の紋章比率。段落の行内領域も同じ直径を確保する。
+const OBJECTIVE_REF_CREST_SCALE := 0.65

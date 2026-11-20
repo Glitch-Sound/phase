@@ -15,6 +15,7 @@ const BUILD_DIALOG = preload("res://ui/build_dialog.gd")
 const V = preload("res://ui/visuals.gd")
 const T = preload("res://game/tuning.gd")
 const P = preload("res://ui/palette.gd")
+const LANGUAGE=preload("res://ui/language.gd")
 const CPU = preload("res://game/cpu_policy.gd")
 const CPU_TURN = preload("res://ui/cpu_turn.gd")
 const MOVEMENT = preload("res://ui/movement.gd")
@@ -60,6 +61,10 @@ var CYAN: Color=palette_colors[0]
 var MAGENTA: Color=palette_colors[0]
 var palette_pickers: Array=[]
 var palette_error: Label
+var copy_language=LANGUAGE.new()
+var preferred_locale_override: Variant=null
+var language_selector: OptionButton
+var language_note: Label
 var settings_path="res://artifacts/runtime/ui-settings.json"
 const BOARD = T.BATTLE_BOARD_ORIGIN
 const CELL = T.BATTLE_CELL
@@ -140,6 +145,8 @@ func _ready() -> void:
 	font.font_names=PackedStringArray(["Helvetica Neue","Hiragino Sans","Arial"])
 	mono=SystemFont.new()
 	mono.font_names=PackedStringArray(["Menlo","Monaco","monospace"])
+	copy_language.preferred_locale=TranslationServer.get_locale() if preferred_locale_override==null else str(preferred_locale_override)
+	copy_language.selection=LANGUAGE.read_from(settings_path+".language.json")
 	palette_colors=P.load_from(settings_path)
 	_set_theme()
 	notice=Label.new()
@@ -218,7 +225,7 @@ func _draw() -> void:
 	_draw_info()
 	_draw_preview()
 	if message_time>0 and not build_open:
-		_text(message,T.BATTLE_MESSAGE_POSITION,18,CYAN)
+		_text(_explain(message),T.BATTLE_MESSAGE_POSITION,18,CYAN)
 	for t in toasts:
 		var color: Color=t.color
 		color.a=clampf((2.4-t.age)/0.7,0,1)
@@ -485,7 +492,7 @@ func panel_description(cell: Vector2i) -> String:
 			if count>0:lines.append(name+" FIELD"+(" x%d" % count if count>1 else ""))
 		if field.kinds.has("SLOW") and field.kinds.has("FAST"):lines.append("SLOW + FAST cancel.")
 		text+=("\n" if not text.is_empty() else "")+"\n".join(lines)
-	return text
+	return _explain(text)
 
 func _update_panel_hint() -> void:
 	if not is_instance_valid(panel_hint):return
@@ -497,6 +504,8 @@ func _update_panel_hint() -> void:
 	var body=" | ".join(Array(lines).slice(1))
 	if panel_hint.get_child(0).text!=lines[0] or detail.text!=body:
 		panel_hint.get_child(1).scroll_vertical=0
+	panel_hint.get_child(0).language=copy_language.locale()
+	detail.language=copy_language.locale()
 	panel_hint.get_child(0).text=lines[0]
 	detail.text=body
 
@@ -547,7 +556,7 @@ func _draw_info() -> void:
 	var class_origin=T.BATTLE_INFO_CLASS+Vector2(T.ASSEMBLY_EMBLEM_RADIUS*2+T.ASSEMBLY_INFO_GAP,0)
 	var class_center=Vector2(T.BATTLE_INFO_CLASS.x+T.ASSEMBLY_EMBLEM_RADIUS,class_origin.y-(mono.get_ascent(17)-mono.get_descent(17))/2)
 	_assembly_emblem(self,class_center,T.ASSEMBLY_EMBLEM_RADIUS,_assembly_profile(u.camp),u.camp)
-	accessibility_description="Inspected unit: "+V.unit_name(u)
+	accessibility_description=_explain("Inspected unit: "+V.unit_name(u))
 	var camp_color=CYAN if u.camp=="PLAYER" else status_colors[1]
 	var core_code=M.layout_code(u.class_name)
 	var class_text="CLASS: "+core_code
@@ -563,11 +572,11 @@ func _draw_info() -> void:
 		_text(C.serial(part,u[part.to_lower()],mutation),Vector2(icon_rect.end.x+T.BATTLE_EQUIPMENT_NAME_GAP,icon_rect.position.y+T.BATTLE_EQUIPMENT_BASELINE),15,WHITE,mono)
 		icon_rect.position.y+=T.BATTLE_EQUIPMENT_STEP
 	_text("MOVE %d" % battle.movement(u),T.BATTLE_INFO_MOVE,16,CYAN,mono)
-	_text("Move up to %d cells per turn." % battle.movement(u),T.BATTLE_INFO_MOVE+T.BATTLE_INFO_DESCRIPTION_OFFSET,T.BATTLE_INFO_DESCRIPTION_FONT,MUTED)
+	_text(_explain("Move up to %d cells per turn." % battle.movement(u)),T.BATTLE_INFO_MOVE+T.BATTLE_INFO_DESCRIPTION_OFFSET,T.BATTLE_INFO_DESCRIPTION_FONT,MUTED)
 	var position_px=T.BATTLE_INFO_SKILLS
 	for id in u.skills:
 		_text(C.SKILLS[id].label,position_px,15,WHITE,mono)
-		_text(C.SKILLS[id].description,position_px+T.BATTLE_INFO_DESCRIPTION_OFFSET,T.BATTLE_INFO_DESCRIPTION_FONT,MUTED)
+		_text(_explain(C.SKILLS[id].description),position_px+T.BATTLE_INFO_DESCRIPTION_OFFSET,T.BATTLE_INFO_DESCRIPTION_FONT,MUTED)
 		position_px.y+=T.BATTLE_SKILL_STEP
 	if cpu_enabled and battle.result.is_empty():
 		var phase=("AIMING" if movement.landed else "MOVING") if movement.active and movement.cpu else (cpu_turn.phase if cpu_turn.active else "READY")
@@ -916,7 +925,7 @@ func _action_dialog() -> void:
 			if decision.valid_target(decision.actor,target,skill):
 				available=true
 		button.disabled=not available
-		button.tooltip_text="No valid target in this pattern." if not available else C.SKILLS[skill].description
+		_set_prose(button,"No valid target in this pattern." if not available else C.SKILLS[skill].description,"tooltip_text")
 	_button(panel,"BACK",Rect2(25,126+active.size()*63,370,48),_reselect_path)
 
 func _choose_battle_skill(skill: String) -> void:
@@ -983,7 +992,7 @@ func _build() -> void:
 	name_edit=LineEdit.new();name_edit.position=Vector2(left+70,132);name_edit.size=Vector2(330,40)
 	name_edit.placeholder_text=I.PLAYER_NAMES[edit_unit];name_edit.text=collection.unit_names[edit_unit]
 	name_edit.add_theme_font_size_override("font_size",20)
-	name_edit.tooltip_text="Up to 32 characters. Blank uses the slot name. Enter / Tab confirms; Esc cancels this edit."
+	_set_prose(name_edit,"Up to 32 characters. Blank uses the slot name. Enter / Tab confirms; Esc cancels this edit.","tooltip_text")
 	panel.add_child(name_edit)
 	name_hint=_label(panel,"",Rect2(left,178,400,20),12,MUTED)
 	name_before_edit=collection.unit_names[edit_unit]
@@ -1014,7 +1023,7 @@ func _build() -> void:
 		panel.add_child(spin)
 		core_controls.append(spin)
 		spin.value_changed.connect(func(value):_core_change(k,int(value)))
-	_label(panel,"MIN 1 / AUTOMATIC REDISTRIBUTION",Rect2(left,408,400,27),14,MUTED)
+	_prose_label(panel,"MIN 1 / AUTOMATIC REDISTRIBUTION",Rect2(left,408,400,27),14,MUTED)
 	for r in range(2):
 		var key="arms" if r==0 else "gear"
 		var y=T.BUILD_EQUIPMENT_ROWS[r]
@@ -1038,7 +1047,7 @@ func _build() -> void:
 		var mutation_title=_label(panel,"MUTATION",Rect2(middle,y+176,100,24),14,MUTED)
 		var mutation_field=_choice_button(panel,key+"_mutation",b[key+"_mutation"],Rect2(middle+116,y+176,T.BUILD_EQUIPMENT_WIDTH-116,40))
 		_align_layout_text(mutation_field,mutation_title)
-	_wrapped_label(panel,"Choose equipment to compare rings and stat values.",Rect2(middle,656,T.BUILD_EQUIPMENT_WIDTH,42),13,MUTED)
+	_prose_wrapped_label(panel,"Choose equipment to compare rings and stat values.",Rect2(middle,656,T.BUILD_EQUIPMENT_WIDTH,42),13,MUTED)
 	_label(panel,"SKILLS / 3 SLOTS",Rect2(right,136,342,30),15,MUTED)
 	for i in range(3):
 		var current: String=b.skills[i] if i<b.skills.size() else "NONE"
@@ -1116,7 +1125,7 @@ func _name_changed(value: String) -> void:
 	_refresh_build()
 
 func _update_name_hint() -> void:
-	if is_instance_valid(name_hint):name_hint.text="32 characters / blank uses a default"
+	if is_instance_valid(name_hint):_set_prose(name_hint,"32 characters / blank uses a default")
 
 func _finish_name_edit() -> void:
 	if not is_instance_valid(name_edit) or not build_open:return
@@ -1134,7 +1143,7 @@ func _toggle_debug(enabled: bool) -> bool:
 		if not build_open:return false
 		var sandbox=debug_session.begin(collection)
 		if sandbox==null:return false
-		debug_ui_state={"palette":palette_colors.duplicate(),"motion":reduced_motion,"unit":edit_unit,"cpu":cpu_enabled,"fast":cpu_fast,"loot":loot_rng.state,"panels":panel_rng.state,"last_seed":last_panel_seed}
+		debug_ui_state={"palette":palette_colors.duplicate(),"motion":reduced_motion,"language":copy_language.selection,"unit":edit_unit,"cpu":cpu_enabled,"fast":cpu_fast,"loot":loot_rng.state,"panels":panel_rng.state,"last_seed":last_panel_seed}
 		collection=sandbox
 		edit_unit=0
 	else:
@@ -1142,6 +1151,8 @@ func _toggle_debug(enabled: bool) -> bool:
 		collection=debug_session.end()
 		palette_colors=debug_ui_state.palette
 		reduced_motion=debug_ui_state.motion
+		copy_language.selection=debug_ui_state.language
+		notice.text=_explain(message)
 		edit_unit=debug_ui_state.unit
 		cpu_enabled=debug_ui_state.cpu
 		cpu_fast=debug_ui_state.fast
@@ -1237,7 +1248,7 @@ func _choice_button(parent: Control,kind: String,text: String,rect: Rect2,slot: 
 	button.set_meta("build_choice",kind)
 	button.set_meta("skill_slot",slot)
 	button.alignment=HORIZONTAL_ALIGNMENT_LEFT
-	button.tooltip_text="Choose "+kind.replace("_"," ").to_upper()
+	_set_prose(button,"Choose "+kind.replace("_"," ").to_upper(),"tooltip_text")
 	var style=StyleBoxFlat.new()
 	style.bg_color=Color.TRANSPARENT
 	style.border_color=EDGE
@@ -1329,7 +1340,7 @@ func _result() -> void:
 	_label(panel,"DEBUG / NOT SAVED" if collection.temporary else "ARCHIVE / NEW SIGNALS",Rect2(40,187,780,27),16,MUTED)
 	var y=235
 	if drops.is_empty():
-		_label(panel,"NO REWARDS IN DEBUG" if collection.temporary else "0 / NO NEW SIGNALS",Rect2(40,y,780,40),23,WHITE)
+		_prose_label(panel,"NO REWARDS IN DEBUG" if collection.temporary else "0 / NO NEW SIGNALS",Rect2(40,y,780,40),23,WHITE)
 	for drop in drops:
 		if drop.has("skill"):
 			_label(panel,C.SKILLS[drop.skill].label,Rect2(40,y,780,33),22,CYAN)
@@ -1348,7 +1359,7 @@ func _help() -> void:
 	_close_aux()
 	var panel=_modal(Rect2(400,135,1120,810),true)
 	_label(panel,"HELP",Rect2(36,25,1048,48),32,WHITE)
-	_wrapped_label(panel,"ENEMY CPU automates enemy turns. OFF lets you play both sides.\nSPEED accelerates; PAUSE stops. Help and focus loss pause the CPU.",Rect2(36,85,1048,56),17,MUTED)
+	_prose_wrapped_label(panel,"ENEMY CPU automates enemy turns. OFF lets you play both sides.\nSPEED accelerates; PAUSE stops. Help and focus loss pause the CPU.",Rect2(36,85,1048,56),17,MUTED)
 	var steps=[
 		["move","01 / ROUTE","Focus follows the acting unit.\nClick route cells to undo later steps.\nScroll over a panel for long details."],
 		["target","02 / ALIGN","3 contours move at different rates.\nTheir colors follow the actual phase.\nAnimation does not change combat."],
@@ -1358,12 +1369,12 @@ func _help() -> void:
 		var x=36+i*354
 		_icon(panel,steps[i][0],Rect2(x,153,28,28),CYAN)
 		_label(panel,steps[i][1],Rect2(x+42,149,298,32),20,WHITE)
-		_label(panel,steps[i][2],Rect2(x,201,340,96 if i==2 else 76),16 if i==2 else 18,MUTED)
+		_prose_label(panel,steps[i][2],Rect2(x,201,340,96 if i==2 else 76),16 if i==2 else 18,MUTED)
 	_separator(panel,Rect2(36,300,1048,1))
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
-	_label(panel,"Move to cardinal neighbors; avoid occupied cells.\nAt least 1 step per turn; no-move WAIT if trapped.\nOrigin / Esc clears the route. No revisits.\nAction BACK / Esc edits the route; target BACK keeps it.\nWhite = progress; gray = wait, scaled to the visible maximum.\nNot a per-unit timer; full circle = zero wait, even if queued.\nVertical spacing is order, not time.",Rect2(36,377,500,174),18,WHITE)
+	_prose_label(panel,"Move to cardinal neighbors; avoid occupied cells.\nAt least 1 step per turn; no-move WAIT if trapped.\nOrigin / Esc clears the route. No revisits.\nAction BACK / Esc edits the route; target BACK keeps it.\nWhite = progress; gray = wait, scaled to the visible maximum.\nNot a per-unit timer; full circle = zero wait, even if queued.\nVertical spacing is order, not time.",Rect2(36,377,500,174),18,WHITE)
 	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
-	_label(panel,"More alignment makes a larger contour.\nINF / RES: final LUK-assisted factors, up to 200%.\nEvery cell turns GEAR anticlockwise, ARMS clockwise.\nCORE: SPD x 1.5 deg; RESET: battle-start angle.\nx5: exact raw INF match and CORE INF <= 10.",Rect2(580,377,510,152),18,WHITE)
+	_prose_label(panel,"More alignment makes a larger contour.\nINF / RES: final LUK-assisted factors, up to 200%.\nEvery cell turns GEAR anticlockwise, ARMS clockwise.\nCORE: SPD x 1.5 deg; RESET: battle-start angle.\nx5: exact raw INF match and CORE INF <= 10.",Rect2(580,377,510,152),18,WHITE)
 	var panel_kinds=["CLOCKWISE","RESET","COUNTERCLOCKWISE"]
 	for i in range(panel_kinds.size()):
 		var view=PANEL_VIEWS[panel_kinds[i]]
@@ -1373,10 +1384,10 @@ func _help() -> void:
 		_label(panel,"%s / SEED %d" % [battle.stage.name,battle.panel_seed],Rect2(200,40,884,24),13,MUTED)
 	_separator(panel,Rect2(36,560,1048,1))
 	_label(panel,"BUILD / ARCHIVE",Rect2(36,589,490,28),16,CYAN)
-	_label(panel,"Name 3 PLAYER slots. Max 3 skills; NONE allowed.\nCLASS: CORE order; MUTATION: one equipment ring.\nVIRSL = STANDARD; VLSRI is free. Others: MUTATION unlocks.\nUNLOCK ALL: temporary, debug only, never saved.",Rect2(36,631,500,98),16,WHITE)
+	_prose_label(panel,"Name 3 PLAYER slots. Max 3 skills; NONE allowed.\nCLASS: CORE order; MUTATION: one equipment ring.\nVIRSL = STANDARD; VLSRI is free. Others: MUTATION unlocks.\nUNLOCK ALL: temporary, debug only, never saved.",Rect2(36,631,500,98),16,WHITE)
 	_label(panel,"READING THE SIGNAL",Rect2(580,589,500,28),16,CYAN)
-	_label(panel,"Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage.\nSAVE / LOAD are explicit. Old saves are backed up.",Rect2(580,631,510,66),18,WHITE)
-	_label(panel,"Crests identify units and assemblies. A small assembly crest marks your units.",Rect2(580,706,510,22),13,MUTED)
+	_prose_label(panel,"Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage.\nSAVE / LOAD are explicit. Old saves are backed up.",Rect2(580,631,510,66),18,WHITE)
+	_prose_label(panel,"Crests identify units and assemblies. A small assembly crest marks your units.",Rect2(580,706,510,22),13,MUTED)
 	_button(panel,"CLOSE / ESC",Rect2(36,736,800,44),_close_aux)
 	_button(panel,"SKILLS",Rect2(856,736,228,44),_skill_help)
 
@@ -1385,12 +1396,12 @@ func _skill_help() -> void:
 	var panel=_modal(Rect2(400,160,1120,760),true)
 	_label(panel,"SKILLS",Rect2(36,25,1048,48),32,WHITE)
 	_label(panel,"SWAP / PUSH",Rect2(36,102,1048,32),20,CYAN)
-	_label(panel,"SWAP: exchange positions with one cardinally adjacent ally.\nPUSH: move one adjacent enemy 1 cell outward into an empty cell. No damage, edges or chain pushes.",Rect2(36,147,1048,68),19,WHITE)
+	_prose_label(panel,"SWAP: exchange positions with one cardinally adjacent ally.\nPUSH: move one adjacent enemy 1 cell outward into an empty cell. No damage, edges or chain pushes.",Rect2(36,147,1048,68),19,WHITE)
 	_label(panel,"GUARD",Rect2(36,245,1048,32),20,CYAN)
-	_label(panel,"After moving, target yourself. Reduce the next attack by %d%%; even zero damage consumes it.\nThe octagon means guarded. No stacking. Moving / healing keeps it; a new battle clears it." % roundi((1-T.GUARD_DAMAGE_MULTIPLIER)*100),Rect2(36,290,1048,68),19,WHITE)
+	_prose_label(panel,"After moving, target yourself. Reduce the next attack by %d%%; even zero damage consumes it.\nThe octagon means guarded. No stacking. Moving / healing keeps it; a new battle clears it." % roundi((1-T.GUARD_DAMAGE_MULTIPLIER)*100),Rect2(36,290,1048,68),19,WHITE)
 	_label(panel,"PANEL IGNORE",Rect2(36,388,1048,32),20,CYAN)
-	_label(panel,"Ignore special CORE panels only. GEAR and ARMS still turn normally.\nSWAP moves both units; PUSH moves its target. Each receives one normal entry and its own passives.",Rect2(36,433,1048,68),19,WHITE)
-	_label(panel,"These actions replace damage or healing; moving first is still required.\nHover a valid target to preview positions and rings.\nForced movement keeps the target clock. All landings resolve before objectives.",Rect2(36,536,1048,88),18,MUTED)
+	_prose_label(panel,"Ignore special CORE panels only. GEAR and ARMS still turn normally.\nSWAP moves both units; PUSH moves its target. Each receives one normal entry and its own passives.",Rect2(36,433,1048,68),19,WHITE)
+	_prose_label(panel,"These actions replace damage or healing; moving first is still required.\nHover a valid target to preview positions and rings.\nForced movement keeps the target clock. All landings resolve before objectives.",Rect2(36,536,1048,88),18,MUTED)
 	_button(panel,"BACK",Rect2(36,670,552,44),_help)
 	_button(panel,"FIELDS",Rect2(608,670,228,44),_field_help)
 	_button(panel,"CLOSE / ESC",Rect2(856,670,228,44),_close_aux)
@@ -1403,10 +1414,10 @@ func _field_help() -> void:
 	var names=["SLOW","FAST"]
 	for i in range(names.size()):
 		_label(panel,"%s FIELD x%.1f" % [names[i],C.FIELD_FACTORS[names[i]]],Rect2(36+i*524,153,510,40),24,CYAN)
-		_label(panel,["Half equipment rotation.","Speed up equipment rotation."][i],Rect2(36+i*524,204,510,40),18,WHITE)
-	_label(panel,"Affects the 8 surrounding cells, including diagonals. Both camps, excluding the source.\nChanges only the GEAR and ARMS rotation for each step.\nCORE, stat values and turn speed stay unchanged.",Rect2(36,285,1048,88),19,WHITE)
-	_label(panel,"Same type applies once. SLOW + FAST cancel to normal x1.\nChecked on each landing; no lingering effect outside the field. Standing still does not rotate rings.\nSWAP and PUSH use the same entry rule after all landing positions are set.",Rect2(36,400,1048,90),19,WHITE)
-	_label(panel,"Clouds drift around the source. Faint broken clouds preview a moved source.\nHover cells to inspect the exact multiplier and source units.\nPANEL IGNORE skips CORE panels, not fields.",Rect2(36,515,1048,88),18,MUTED)
+		_prose_label(panel,["Half equipment rotation.","Speed up equipment rotation."][i],Rect2(36+i*524,204,510,40),18,WHITE)
+	_prose_label(panel,"Affects the 8 surrounding cells, including diagonals. Both camps, excluding the source.\nChanges only the GEAR and ARMS rotation for each step.\nCORE, stat values and turn speed stay unchanged.",Rect2(36,285,1048,88),19,WHITE)
+	_prose_label(panel,"Same type applies once. SLOW + FAST cancel to normal x1.\nChecked on each landing; no lingering effect outside the field. Standing still does not rotate rings.\nSWAP and PUSH use the same entry rule after all landing positions are set.",Rect2(36,400,1048,90),19,WHITE)
+	_prose_label(panel,"Clouds drift around the source. Faint broken clouds preview a moved source.\nHover cells to inspect the exact multiplier and source units.\nPANEL IGNORE skips CORE panels, not fields.",Rect2(36,515,1048,88),18,MUTED)
 	_button(panel,"BACK",Rect2(36,670,800,44),_skill_help)
 	_button(panel,"CLOSE / ESC",Rect2(856,670,228,44),_close_aux)
 
@@ -1420,10 +1431,18 @@ func _settings() -> void:
 	var check=CheckButton.new()
 	check.text="REDUCED MOTION"
 	check.position=Vector2(36,205)
-	check.size=Vector2(988,46)
+	check.size=Vector2(470,46)
 	check.button_pressed=reduced_motion
 	check.toggled.connect(func(value):reduced_motion=value)
 	panel.add_child(check)
+	_label(panel,"Language",T.SETTINGS_LANGUAGE_LABEL,16,MUTED)
+	language_selector=OptionButton.new();language_selector.name="Language"
+	language_selector.position=T.SETTINGS_LANGUAGE_CHOICE.position;language_selector.size=T.SETTINGS_LANGUAGE_CHOICE.size
+	for title in ["System","English","日本語"]:language_selector.add_item(title)
+	language_selector.selected=LANGUAGE.CHOICES.find(copy_language.selection)
+	language_selector.item_selected.connect(func(index):_change_language(LANGUAGE.CHOICES[index]))
+	panel.add_child(language_selector)
+	language_note=_prose_label(panel,"Descriptions only. Names and labels stay unchanged.",T.SETTINGS_LANGUAGE_NOTE,13,MUTED)
 	_label(panel,"COLOR / ACCENT + FIVE SIGNALS",Rect2(36,286,988,28),16,MUTED)
 	var presets=P.PRESETS.keys()
 	for i in range(presets.size()):
@@ -1439,7 +1458,7 @@ func _settings() -> void:
 		picker.size=Vector2(150,64)
 		picker.color=palette_colors[i]
 		picker.edit_alpha=false
-		picker.tooltip_text="Choose color / "+["ACCENT","VIT","INF","RES","SPD","LUK"][i]
+		_set_prose(picker,"Choose color / "+["ACCENT","VIT","INF","RES","SPD","LUK"][i],"tooltip_text")
 		panel.add_child(picker)
 		var editor=picker.get_picker()
 		editor.sampler_visible=false
@@ -1447,7 +1466,7 @@ func _settings() -> void:
 		editor.sliders_visible=false
 		editor.presets_visible=false
 		palette_pickers.append(picker)
-	_label(panel,"RINGS: VIVID PRESETS / CUSTOM COLORS AS CHOSEN",Rect2(36,558,988,30),15,MUTED)
+	_prose_label(panel,"RINGS: VIVID PRESETS / CUSTOM COLORS AS CHOSEN",Rect2(36,558,988,30),15,MUTED)
 	palette_error=_label(panel,"",Rect2(36,600,988,52),17,status_colors[1])
 	_button(panel,"APPLY COLORS",Rect2(36,676,988,48),_apply_colors,"check")
 	_button(panel,"CLOSE / ESC",Rect2(36,742,988,42),_close_aux,"close")
@@ -1458,11 +1477,11 @@ func _apply_colors() -> void:
 		colors.append(picker.color)
 	var error=P.validate(colors)
 	if not error.is_empty():
-		palette_error.text=error
+		_set_prose(palette_error,error)
 		return
 	error="" if collection.temporary else P.save_to(settings_path,colors)
 	if not error.is_empty():
-		palette_error.text=error
+		_set_prose(palette_error,error)
 		return
 	palette_colors=colors
 	_set_theme()
@@ -1478,9 +1497,53 @@ func _apply_colors() -> void:
 		_result()
 	_hud()
 	_settings()
-	palette_error.text="APPLIED / DEBUG / NOT SAVED" if collection.temporary else "APPLIED / Saved separately from your build."
+	_set_prose(palette_error,"APPLIED / DEBUG / NOT SAVED" if collection.temporary else "APPLIED / Saved separately from your build.")
 	palette_error.add_theme_color_override("font_color",CYAN)
 	queue_redraw()
+
+func _explain(source: String) -> String:
+	return copy_language.text(source)
+
+func _set_prose(control: Control,source: String,property: String="text") -> void:
+	var fields: Dictionary=control.get_meta("prose_fields",{})
+	fields[property]=source;control.set_meta("prose_fields",fields)
+	control.set(property,_explain(source))
+	if control is Label and property=="text":
+		if not control.has_meta("prose_wrap"):control.set_meta("prose_wrap",control.autowrap_mode)
+		if not control.has_meta("prose_spacing"):control.set_meta("prose_spacing",control.get_theme_constant("line_spacing"))
+		control.add_theme_constant_override("line_spacing",T.JAPANESE_PROSE_SPACING if copy_language.locale()=="ja" else control.get_meta("prose_spacing"))
+		control.language=copy_language.locale()
+		control.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART if copy_language.locale()=="ja" else control.get_meta("prose_wrap")
+
+func _prose_label(parent: Control,source: String,rect: Rect2,pixels: int=20,color: Color=WHITE,wrap: bool=false) -> Label:
+	var label=_label(parent,source,rect,pixels,color,wrap)
+	label.set_meta("prose_bounds",rect)
+	_set_prose(label,source)
+	return label
+
+func _prose_wrapped_label(parent: Control,source: String,rect: Rect2,pixels: int,color: Color) -> Label:
+	return _prose_label(parent,source,rect,pixels,color,true)
+
+func _refresh_explanations(node: Node) -> void:
+	if node is Control and node.has_meta("prose_fields"):
+		for property in node.get_meta("prose_fields"):_set_prose(node,node.get_meta("prose_fields")[property],property)
+	if node.has_method("refresh_language"):node.refresh_language()
+	for child in node.get_children():_refresh_explanations(child)
+
+func _change_language(choice: String) -> bool:
+	var value=choice if LANGUAGE.CHOICES.has(choice) else "system"
+	var error="" if collection.temporary else LANGUAGE.write_to(settings_path+".language.json",value)
+	if not error.is_empty():
+		if is_instance_valid(language_selector):language_selector.selected=LANGUAGE.CHOICES.find(copy_language.selection)
+		if is_instance_valid(language_note):_set_prose(language_note,error)
+		return false
+	copy_language.selection=value
+	_refresh_explanations(self)
+	if is_instance_valid(language_selector):language_selector.selected=LANGUAGE.CHOICES.find(value)
+	if is_instance_valid(language_note):_set_prose(language_note,"Descriptions only. Names and labels stay unchanged.")
+	if is_instance_valid(notice):notice.text=_explain(message)
+	_update_panel_hint();queue_redraw()
+	return true
 
 func _set_theme() -> void:
 	CYAN=palette_colors[0]
@@ -1747,7 +1810,7 @@ func _notify(text: String) -> void:
 	message=text
 	message_time=7.0
 	if is_instance_valid(notice):
-		notice.text=text
+		notice.text=_explain(text)
 	print("PHASE / ",text)
 
 func _panel(rect: Rect2) -> void:

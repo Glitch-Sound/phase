@@ -12,6 +12,7 @@ func _initialize() -> void:_run.call_deferred()
 ## REQ-044-S01
 func _run() -> void:
 	game=TextProbe.new()
+	game.preferred_locale_override="en"
 	game.settings_path="res://artifacts/runtime/english-no-settings.json"
 	game.save_path="res://artifacts/runtime/english-no-save.json"
 	root.add_child(game)

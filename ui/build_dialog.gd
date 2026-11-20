@@ -42,7 +42,7 @@ func configure(owner_ui: Control,data: RefCounted,index: int,selection_kind: Str
 	if kind=="class_name":title="CLASS"
 	if kind=="skill":title="SKILL / SLOT %d" % (slot+1)
 	host._label(self,title,Rect2(36,24,1000,42),28,host.WHITE)
-	host._label(self,"Select a candidate. Apply to confirm. Esc to cancel.",Rect2(36,70,1180,28),16,host.MUTED)
+	host._prose_label(self,"Select a candidate. Apply to confirm. Esc to cancel.",Rect2(36,70,1180,28),16,host.MUTED)
 	var equipment=kind in ["arms","gear"]
 	if equipment:
 		for i in range(6):
@@ -54,7 +54,7 @@ func configure(owner_ui: Control,data: RefCounted,index: int,selection_kind: Str
 		minimum=SpinBox.new()
 		minimum.position=Vector2(540,108);minimum.size=Vector2(92,40)
 		minimum.min_value=10;minimum.max_value=60;minimum.step=10;minimum.value=10
-		minimum.tooltip_text="Minimum selected stat. Choose VIT, INF, RES, SPD or LUK."
+		host._set_prose(minimum,"Minimum selected stat. Choose VIT, INF, RES, SPD or LUK.","tooltip_text")
 		add_child(minimum)
 		minimum.value_changed.connect(func(_value):_refresh_rows())
 	scroll=ScrollContainer.new()
@@ -156,6 +156,7 @@ func _refresh_rows(reveal_current: bool=false) -> void:
 		button.text=row.title+("  / EQUIPPED" if row.current else "")+("  / "+row.reason if not row.reason.is_empty() else "")
 		if row.has("stats"):button.text+="\n"+MODEL._stats_text(row.stats)
 		elif kind in ["class_name","arms_mutation","gear_mutation"]:button.text+="\n"+("" if row.get("subtitle","")=="STANDARD" else row.description.get_slice("\n",0))
+		host._set_prose(button,button.text)
 		button.alignment=HORIZONTAL_ALIGNMENT_LEFT
 		button.custom_minimum_size=Vector2(574,68 if row.has("stats") or kind!="skill" else 46)
 		button.add_theme_font_override("font",host.mono if row.has("stats") else host.font)
@@ -164,20 +165,20 @@ func _refresh_rows(reveal_current: bool=false) -> void:
 		button.disabled=not row.selectable
 		# Tabはフィルター、取消と確定を循環し、長い候補一覧は上下とHome/Endで操作する。
 		button.focus_mode=Control.FOCUS_CLICK
-		button.tooltip_text="" if kind=="operation" else row.description+("\n"+row.reason if not row.reason.is_empty() else "")
+		host._set_prose(button,"" if kind=="operation" else row.description+("\n"+row.reason if not row.reason.is_empty() else ""),"tooltip_text")
 		button.pressed.connect(func():select_candidate(row.id))
 		button.gui_input.connect(func(event):
 			if event is InputEventKey and navigate(event):button.accept_event())
 		list.add_child(button)
 		if kind=="operation":
-			button.text="";button.accessibility_name=row.title
+			host._set_prose(button,"");button.accessibility_name=row.title
 			host._label(button,row.title+(" / EQUIPPED" if row.current else ""),Rect2(12,6,550,26),T.CHOICE_ROW_FONT,host.WHITE)
 			host._objective_label(button,row.description.get_slice("\n",0),Rect2(12,36,550,28),14,host.MUTED)
 		if row.get("subtitle","")=="STANDARD":
 			host._label(button,"STANDARD",Rect2(12,38,200,20),T.LAYOUT_STANDARD_FONT,host.MUTED)
 		row_buttons[row.id]=button
 	var available=visible_rows.filter(func(row):return row.selectable).size()
-	counter.text="%d shown / %d available   |   Up / Down, Home / End" % [visible_rows.size(),available]
+	host._set_prose(counter,"%d shown / %d available   |   Up / Down, Home / End" % [visible_rows.size(),available])
 	# 開く時だけ装備中へ、絞り込み後は値順の先頭へ移す。
 	if reveal_current:_reveal.call_deferred()
 	else:_scroll_top.call_deferred()
@@ -195,10 +196,10 @@ func _refresh_preview() -> void:
 	var row=matching[0]
 	candidate_name.text=row.title
 	candidate_caption.text=row.get("subtitle","")
-	description.text="" if kind in ["arms","gear"] else row.description
+	host._set_prose(description,"" if kind in ["arms","gear"] else row.description)
 	if is_instance_valid(objective_description):remove_child(objective_description);objective_description.queue_free()
 	if kind=="operation":
-		description.text=""
+		host._set_prose(description,"")
 		objective_description=host._objective_label(self,row.description,Rect2(684,442,548,102),17,host.MUTED)
 	apply_button.disabled=not row.selectable
 	preview_area.queue_redraw()

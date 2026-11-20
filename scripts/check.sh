@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 cd "$(dirname "$0")/.."
+# 既存の英語文言の検査はOSの優先言語に依存させない。
+godot() { command godot --language en "$@"; }
 mkdir -p artifacts/runtime
 node scripts/lint.mjs
 # SVGインポートを含め、初回の検査でも同じアセットを利用する。
@@ -33,7 +35,7 @@ if rg 'SCRIPT ERROR|FAIL:|Failed to load script' artifacts/runtime/ui-output.txt
 fi
 rg 'UI CONNECTIONS: [0-9]+ checks / 0 failures' artifacts/runtime/ui-output.txt
 
-for suite in assembly_identity assembly_identity_ui unit_identity unit_identity_ui convergence turn_plan movement movement_ui review_regressions contested_play display_flow design_flow restored_interface map_chrome unit_glyphs arc_strokes ring_palette phase_preview battle_labels time_axis side_information route_clearance panel_generation panel_interface core_panels core_panel_ui panel_play interface_hierarchy cpu_policy cpu_turn cpu_interface cpu_play decision_model decision_interface turn_follow tempo_risk skill_patterns skill_pattern_cpu skill_pattern_ui utility_skills utility_cpu utility_ui rotation_fields rotation_field_ui debug_unlock debug_unlock_ui build_choices build_dialogs three_unit_squads english_ui; do
+for suite in assembly_identity assembly_identity_ui unit_identity unit_identity_ui convergence turn_plan movement movement_ui review_regressions contested_play display_flow design_flow restored_interface map_chrome unit_glyphs arc_strokes ring_palette phase_preview battle_labels time_axis side_information route_clearance panel_generation panel_interface core_panels core_panel_ui panel_play interface_hierarchy cpu_policy cpu_turn cpu_interface cpu_play decision_model decision_interface turn_follow tempo_risk skill_patterns skill_pattern_cpu skill_pattern_ui utility_skills utility_cpu utility_ui rotation_fields rotation_field_ui debug_unlock debug_unlock_ui build_choices build_dialogs three_unit_squads english_ui language; do
   godot --headless --path . --script "tests/$suite.gd" --log-file "$PWD/artifacts/runtime/$suite.log" > "artifacts/runtime/$suite-output.txt" 2>&1
   cat "artifacts/runtime/$suite-output.txt"
   if rg 'SCRIPT ERROR|FAIL:|Failed to load script' "artifacts/runtime/$suite-output.txt"; then

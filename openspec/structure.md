@@ -6,7 +6,7 @@
 | --- | --- |
 | project.godot、main.tscn | Godot起動点 |
 | game/ | 位相計算、戦闘、収集、カタログ、調整値 |
-| ui/ | 描画、画面、入力 |
+| ui/ | 描画、画面、入力、説明言語 |
 | docs/assembly-v1.md | アセンブリの別図案、色キーと表示規約 |
 | docs/identicon-v1.md | 端末間で共有する名前と紋章の固定規約 |
 | tests/ | モデルと保存の検証、プレイ再現 |
@@ -26,7 +26,9 @@ game/unit_identity.gdが表示名の規約と固定の幾何を生成し、戦�
 game/assembly_identity.gdが独立した所属紋章と安定色キーと共通RGB、視点の所有規則を持ち、ui/assembly_dialog.gdが候補だけを編集する。\
 リングと波形、両方の紋章はui/visuals.gdで手続き的に描く。\
 目標文の固定参照はui/unit_reference_text.gdで紋章へ置換し、名前を非表示のアクセシビリティ用名称に保持する。
-配色と判読性はui/palette.gd、操作アイコンと権利表示はassets/lucide/に集約する。
+配色と判読性はui/palette.gd、操作アイコンと権利表示はassets/lucide/に集約する。\
+説明言語の解決と独立設定はui/language.gd、説明の日本語対訳はui/japanese.gdへ置き、モデルの名称と説明の原文を変更しない。\
+表示は説明の原文を保持して更新し、ui/unit_reference_text.gdの段落組版は固定参照を紋章で描く。
 CPUの判断はgame/cpu_policy.gd、段階と表示時間はui/cpu_turn.gdへ分離し、どちらも既存のbattleを操作する。
 経路と行動の予定はui/turn_plan.gd、各歩の描画補間はui/movement.gdへ分離する。\
 予定は原本を変更せず、描画はモデルへ書き戻さずに画面とCPUの連続実行を同期する。

@@ -9,6 +9,7 @@
 | [tactical-battle](tactical-battle/spec.md) | 経路、手番、対象、勝敗 |
 | [build-collection](build-collection/spec.md) | ビルド、共有開放、保存 |
 | [battle-interface](battle-interface/spec.md) | 画面、入力、オーバーレイ |
+| [display-language](display-language/spec.md) | 説明だけの英日切り替え、自動判定、独立設定 |
 | [battle-movement](battle-movement/spec.md) | 確定経路の移動表示、着地、中断 |
 | [enemy-cpu](enemy-cpu/spec.md) | 敵CPUの判断、モード、操作過程と中断 |
 
