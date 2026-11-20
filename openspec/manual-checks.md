@@ -35,7 +35,7 @@
 | NREQ-002-S01 | 全画面の表現、色、選択、フォーカスを比較する | 既定色とAMBER、macOS | 未確認 | 2026-11-17 | COREパネルのアイコンとHELP、回転後のリングと円形予測の再確認対象とする。開発側の観測はartifacts/core-panel-effects-review.mdに記録する |
 | REQ-030-S03 | 盤面とTURN ORDERの細い円弧の連続性、HP不足との区別を比較する | Godot 4.7.2、Retina、6倍率と独立全画面 | 未確認 | - | 共通の設定色、所有紋章とHP右端を最終確認する。開発側の観測はartifacts/unify-assembly-ink-review.mdへ分ける |
 | REQ-032-S04 | プリセットとカスタムのリング色、背景との区別を確認する | Godot 4.7.2、基準と最小、3プリセット | 未確認 | - | 共通の設定色、所有紋章とHP右端を最終確認する。開発側の観測はartifacts/unify-assembly-ink-review.mdへ分ける |
-| REQ-033-S03 | 近接する4輪郭の一致と不一致、連続色、配色と数値の非表示を比較する | Apple M4、Godot 4.7.2、Retina、基準と最小、全画面 | 未確認 | 2026-11-16 | 経路とリングの分離、HP純白、暗い輪郭の変更後の再確認対象とする。開発時の観測はartifacts/route-hp-phase-review.mdに記録する |
+| REQ-033-S03 | 合成だけの強一致の大きく速い揺れ、不一致の暗さ、個別3輪郭と弱一致の維持を旧新で比較する | Apple M4、Godot 4.7.2、Retina、基準と最小、全画面 | 未確認 | 2026-11-20 | 利用者の最終判断と物理操作は未確認。開発時の観測はartifacts/result-contour-boost-review.mdへ分ける |
 
 ## 観測の境界
 

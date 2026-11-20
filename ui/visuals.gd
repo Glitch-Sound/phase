@@ -202,6 +202,7 @@ static func phase_contours(u: Dictionary, colors: Array) -> Array:
 	var directions=PackedVector2Array()
 	var basis=PackedVector2Array()
 	var profiles=PackedVector3Array()
+	var result_boost=PackedFloat32Array()
 	var clarity_sum=0.0
 	for sample in range(T.PREVIEW_SAMPLES+1):
 		# 最後の点は0度を再利用し、色と形の継ぎ目を一致させる。
@@ -212,6 +213,7 @@ static func phase_contours(u: Dictionary, colors: Array) -> Array:
 		var paint=_phase_paint(sectors,boundaries,angle,colors,field)
 		var strength=sqrt(clampf(paint.clarity,0,1))
 		var gain=lerpf(T.PREVIEW_MIN_GAIN,1.0,strength)
+		result_boost.append(smoothstep(T.PREVIEW_RESULT_BOOST_START,1.0,clampf(paint.clarity,0,1)))
 		var radians=deg_to_rad(angle)
 		var direction=Vector2.from_angle(radians-PI/2)
 		directions.append(direction)
@@ -232,15 +234,20 @@ static func phase_contours(u: Dictionary, colors: Array) -> Array:
 	curves[3].directions=directions
 	curves[3].basis=basis
 	curves[3].profiles=profiles
+	curves[3].boost=result_boost
 	return curves
 
 ## 周期的な座標を返す。curvesは実位相のキャッシュ、secondsは表示時間。戻り値は4本の閉曲線。入力と戦闘値を変更しない。
 static func motion_points(curves: Array, seconds: float) -> Array:
 	var result=[PackedVector2Array(),PackedVector2Array(),PackedVector2Array(),PackedVector2Array()]
 	var oscillators=[]
+	var fast_oscillators=[]
 	for r in range(3):
 		var phase=fposmod(seconds,TAU/curves[r].speed)*curves[r].speed+T.PREVIEW_MOTION_PHASES[r]
 		oscillators.append(Vector2(sin(phase),cos(phase)))
+		var fast_speed=curves[r].speed*T.PREVIEW_RESULT_RATE_SCALE
+		var fast_phase=fposmod(seconds,TAU/fast_speed)*fast_speed+T.PREVIEW_MOTION_PHASES[r]
+		fast_oscillators.append(Vector2(sin(fast_phase),cos(fast_phase)))
 	var shared: Dictionary=curves[3]
 	for i in range(shared.directions.size()):
 		var direction: Vector2=shared.directions[i]
@@ -250,6 +257,12 @@ static func motion_points(curves: Array, seconds: float) -> Array:
 			result[r].append(direction*(T.PREVIEW_RADII[r]+T.PREVIEW_AMPLITUDES[r]*curves[r].envelope[i]*waves[r]))
 		var weights: Vector3=Vector3.ONE*0.25+shared.profiles[i]*0.75
 		var combined=waves.dot(weights)/(weights.x+weights.y+weights.z)
+		# 共通の速い時計を固定角度の重みで混ぜ、長時間でも角度方向の位相差を蓄積しない。
+		if shared.boost[i]>0:
+			var fast_waves=Vector3(wave_basis.dot(fast_oscillators[0]),wave_basis.dot(fast_oscillators[1]),wave_basis.dot(fast_oscillators[2]))
+			var fast_combined=fast_waves.dot(weights)/(weights.x+weights.y+weights.z)
+			var enhanced=tanh(T.PREVIEW_RESULT_WAVE_GAIN*fast_combined)/tanh(T.PREVIEW_RESULT_WAVE_GAIN)
+			combined=lerpf(combined,enhanced,shared.boost[i])
 		result[3].append(direction*(T.PREVIEW_RADII[3]+T.PREVIEW_AMPLITUDES[3]*curves[3].envelope[i]*combined))
 	return result
 

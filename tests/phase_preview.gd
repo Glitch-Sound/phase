@@ -297,10 +297,22 @@ func _test_motion(visual) -> void:
 		_check(absf(first[r][T.PREVIEW_SAMPLES/10].length()-expected)<0.001,"uniform aligned sector peak follows independently calculated periodic wave "+curve.role)
 	var mixed=0.0
 	for r in range(3):
-		var phase=curves[r].speed*times[0]+T.PREVIEW_MOTION_PHASES[r]
+		var phase=curves[r].speed*times[0]*T.PREVIEW_RESULT_RATE_SCALE+T.PREVIEW_MOTION_PHASES[r]
 		mixed+=0.50*sin(phase)+0.30*sin(TAU/5-phase)+0.20*sin(TAU*3/10+phase)
-	var expected_result=T.PREVIEW_RADII[3]+T.PREVIEW_AMPLITUDES[3]*mixed/3
-	_check(absf(first[3][T.PREVIEW_SAMPLES/10].length()-expected_result)<0.001,"result actually combines the three waves")
+	var boosted=tanh(T.PREVIEW_RESULT_WAVE_GAIN*mixed/3)/tanh(T.PREVIEW_RESULT_WAVE_GAIN)
+	var expected_result=T.PREVIEW_RADII[3]+T.PREVIEW_AMPLITUDES[3]*boosted
+	_check(absf(first[3][T.PREVIEW_SAMPLES/10].length()-expected_result)<0.001,"strong result alone uses faster three-wave clock and bounded gain")
+	for clarity in [0.0,1.0/6.0]:
+		u.gear_angle=72.0 if clarity==0 else 0.0;u.arms_angle=144.0 if clarity==0 else 72.0
+		var weak=visual.phase_contours(u,P.PRESETS.DEFAULT.slice(1))
+		var points=visual.motion_points(weak,times[0])
+		var slow_wave=0.0
+		for r in range(3):
+			var phase=curves[r].speed*times[0]+T.PREVIEW_MOTION_PHASES[r]
+			slow_wave+=(0.50*sin(phase)+0.30*sin(TAU/5-phase)+0.20*sin(TAU*3/10+phase))/3
+		var gain=lerpf(T.PREVIEW_RESULT_MIN_GAIN,1.0,sqrt(clarity))*(0.45+0.55*clarity)
+		_check(absf(points[3][T.PREVIEW_SAMPLES/10].length()-(T.PREVIEW_RADII[3]+T.PREVIEW_AMPLITUDES[3]*gain*slow_wave))<0.001,"none and pair result retain the exact old movement "+str(clarity))
+	u=before.duplicate(true)
 	for spd in [1,20,96]:
 		for key in ["core","gear","arms"]:
 			u[key]=[97-spd,1,1,spd,1]

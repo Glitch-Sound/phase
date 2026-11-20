@@ -219,6 +219,10 @@ const PREVIEW_AMPLITUDES := [8.0,8.0,8.0,14.0]
 # 不一致の揺れを抑え、局所的一致の振幅差を動画でも読み取れるようにする。
 const PREVIEW_MIN_GAIN := 0.14
 const PREVIEW_RESULT_MIN_GAIN := 0.025
+# 強一致の合成だけを共通の速い時計と有界な増幅へ混ぜ、個別3波と弱一致は維持する。
+const PREVIEW_RESULT_BOOST_START := 0.35
+const PREVIEW_RESULT_RATE_SCALE := 1.8
+const PREVIEW_RESULT_WAVE_GAIN := 2.4
 # 実境界の両側を滑らかに結び、狭い領域では隣接間隔の半分へ縮める。
 const PREVIEW_BLEND_DEGREES := 8.0
 const PREVIEW_LINE := 0.9
@@ -230,7 +234,7 @@ const PREVIEW_PIXEL_MIN := 0.9
 # RGBと境界の補間を保ち、不一致だけを暗くして一致部分の明るい縁を強調する。
 const PREVIEW_BASE_ALPHA := 0.24
 const PREVIEW_CLEAR_ALPHA := 1.0
-const PREVIEW_RESULT_BASE_ALPHA := 0.12
+const PREVIEW_RESULT_BASE_ALPHA := 0.07
 const PREVIEW_RESULT_CLEAR_ALPHA := 1.0
 
 # 紋章はHP円弧より内側へ置き、位相とHPとは別の単色の形として描く。
