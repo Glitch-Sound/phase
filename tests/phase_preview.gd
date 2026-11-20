@@ -130,11 +130,11 @@ func _test_ui() -> void:
 		_check(game.preview_generation==generation+2,"time does not rebuild cached phase data")
 	game._help()
 	await process_frame
-	var guide=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text=="3 contours move at different rates.\nTheir colors follow the actual phase.\nAnimation does not change combat.")
-	_check(guide.size()==1,"HELP explains overlapping roles and interpolation without an inner-to-outer order")
+	var guide=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text=="Moving turns rings, changing damage,\nhealing and resistance.\nPREVIEW shows the landing state.")
+	_check(guide.size()==1,"short HELP connects movement, ring effects and landing preview without an inner-to-outer order")
 	if guide.size()==1:
 		var label=guide[0]
-		var next=game.auxiliary.find_children("*","Label",true,false).filter(func(item):return item.text.begins_with("Double-click to plan"))[0]
+		var next=game.auxiliary.find_children("*","Label",true,false).filter(func(item):return item.text.begins_with("Double-click the destination"))[0]
 		_check(Array(label.text.split("\n")).all(func(line):return label.position.x+game.font.get_string_size(line,HORIZONTAL_ALIGNMENT_LEFT,-1,18).x<next.position.x),"orbit guide does not cross into next HELP column")
 	game.queue_free()
 	await process_frame

@@ -92,7 +92,7 @@ func _test_help_and_build(game) -> void:
 	var content=[]
 	for label in game.auxiliary.find_children("*","Label",true,false):
 		content.append(label.text)
-	_check(content.any(func(s):return s.contains("Double-click to plan an action.")),"HELP retains endpoint operation")
+	_check(content.has("Double-click the destination, pick skill\nand target, then CONFIRM to move and act.\nORTHO = cardinal; DIAGONAL = diagonal;\n1 / 2 = exact cell distance."),"HELP retains destination double-click, target selection, exact range and final confirmation")
 	game._close_aux()
 	_check(game.battle.path==[Vector2i(4,4)],"HELP keeps pending route")
 	for stage in range(4):

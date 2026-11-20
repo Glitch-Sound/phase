@@ -91,7 +91,7 @@ func _test_screens() -> void:
 	game._help()
 	await process_frame
 	texts=game.auxiliary.find_children("*","Label",true,false).map(func(l):return l.text)
-	_check(texts.any(func(s):return s.begins_with("Name 3 PLAYER slots.")),"HELP refers to 1 and 2")
+	_check(texts.has("CLASS sets CORE order; MUTATION sets equipment order.\nSAVE / LOAD stores or restores builds;\nUNLOCK ALL is debug-only and never saved."),"short HELP distinguishes CORE, equipment and safe debug builds without unit names")
 	game._close_aux()
 	game.collection.stage_index=0
 	game._start_battle()

@@ -18,9 +18,9 @@ func _run() -> void:
 	await process_frame
 	var guides=[]
 	for label in game.auxiliary.find_children("*","Label",true,false):
-		if label.text.contains("SAVE / LOAD are explicit."):
+		if label.text.contains("INF powers damage and healing; RES resists damage."):
 			guides.append(label.text)
-	_check(guides==["Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage.\nSAVE / LOAD are explicit. Old saves are backed up."],"keep corrected INF and RES explanation")
+	_check(guides==["Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage."],"keep corrected INF and RES explanation in short HELP")
 	game._close_aux()
 	game._start_battle()
 	game._cell_input(Vector2i(4,4))

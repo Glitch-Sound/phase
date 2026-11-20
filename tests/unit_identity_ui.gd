@@ -32,10 +32,10 @@ func _run() -> void:
 			layouts.append(lines.is_empty() and game.accessibility_description=="Inspected unit: "+name)
 		_check(layouts.all(func(ok):return ok),"ordinary and wide Unicode names stay nonvisual while retaining accessible metadata")
 		game._help();await process_frame
-		var guide=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text.begins_with("Name 3 PLAYER slots."))[0]
+		var guide=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text.begins_with("CLASS sets CORE order;"))[0]
 		var seed=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text.contains(" / SEED "))[0]
 		var close=game.auxiliary.find_children("*","Button",true,false).filter(func(button):return button.text=="CLOSE / ESC")[0]
-		_check(guide.global_position.y+guide.get_minimum_size().y<close.global_position.y and not guide.get_global_rect().intersects(seed.get_global_rect()),"name guidance and stage reference stay separated above HELP controls")
+		_check(guide.global_position.y+guide.get_minimum_size().y<close.global_position.y and not guide.get_global_rect().intersects(seed.get_global_rect()),"build guidance and stage reference stay separated above HELP controls")
 		game._close_aux()
 	game._restart();game.queue_free();await process_frame
 	print("UNIT IDENTITY UI: %d checks / %d failures" % [checks,failures]);quit(0 if failures==0 else 1)
