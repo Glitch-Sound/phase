@@ -263,8 +263,22 @@ static func motion_points(curves: Array, seconds: float) -> Array:
 			var fast_combined=fast_waves.dot(weights)/(weights.x+weights.y+weights.z)
 			var enhanced=tanh(T.PREVIEW_RESULT_WAVE_GAIN*fast_combined)/tanh(T.PREVIEW_RESULT_WAVE_GAIN)
 			combined=lerpf(combined,enhanced,shared.boost[i])
-		result[3].append(direction*(T.PREVIEW_RADII[3]+T.PREVIEW_AMPLITUDES[3]*curves[3].envelope[i]*combined))
+		var displacement=T.PREVIEW_AMPLITUDES[3]*curves[3].envelope[i]*combined
+		if shared.boost[i]>0:
+			displacement=lerpf(displacement,_expanded_result_displacement(direction,displacement,curves[3].width),shared.boost[i])
+		result[3].append(direction*(T.PREVIEW_RADII[3]+displacement))
 	return result
+
+static func _expanded_result_displacement(direction: Vector2,displacement: float,width: float) -> float:
+	var outer=T.PREVIEW_RESULT_OUTER_RADIUS
+	var bounds=T.PREVIEW_RESULT_BOUNDS
+	if direction.x>0.000001:outer=minf(outer,(bounds.end.x-T.PREVIEW_CENTER.x)/direction.x)
+	elif direction.x < -0.000001:outer=minf(outer,(bounds.position.x-T.PREVIEW_CENTER.x)/direction.x)
+	if direction.y>0.000001:outer=minf(outer,(bounds.end.y-T.PREVIEW_CENTER.y)/direction.y)
+	elif direction.y < -0.000001:outer=minf(outer,(bounds.position.y-T.PREVIEW_CENTER.y)/direction.y)
+	outer-=width/2+T.PREVIEW_RESULT_CLEARANCE
+	var room=outer-T.PREVIEW_RADII[3] if displacement>=0 else T.PREVIEW_RADII[3]-T.PREVIEW_RESULT_INNER_RADIUS
+	return room*tanh(displacement*T.PREVIEW_RESULT_EXCURSION_SCALE/room)
 
 static func _field_colors(field: Dictionary, colors: Array) -> Array:
 	return [colors[field.roles[0]],colors[field.roles[1]],colors[field.roles[2]],field.color]

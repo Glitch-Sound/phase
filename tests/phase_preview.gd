@@ -301,7 +301,12 @@ func _test_motion(visual) -> void:
 		mixed+=0.50*sin(phase)+0.30*sin(TAU/5-phase)+0.20*sin(TAU*3/10+phase)
 	var boosted=tanh(T.PREVIEW_RESULT_WAVE_GAIN*mixed/3)/tanh(T.PREVIEW_RESULT_WAVE_GAIN)
 	var expected_result=T.PREVIEW_RADII[3]+T.PREVIEW_AMPLITUDES[3]*boosted
-	_check(absf(first[3][T.PREVIEW_SAMPLES/10].length()-expected_result)<0.001,"strong result alone uses faster three-wave clock and bounded gain")
+	var direction=Vector2.from_angle(TAU/10-PI/2)
+	var outer=minf(T.PREVIEW_RESULT_OUTER_RADIUS,minf((T.PREVIEW_RESULT_BOUNDS.end.x-T.PREVIEW_CENTER.x)/direction.x,(T.PREVIEW_RESULT_BOUNDS.position.y-T.PREVIEW_CENTER.y)/direction.y))-T.PREVIEW_RESULT_LINE_MAX/2-T.PREVIEW_RESULT_CLEARANCE
+	var offset=expected_result-T.PREVIEW_RADII[3]
+	var room=outer-T.PREVIEW_RADII[3] if offset>=0 else T.PREVIEW_RADII[3]-T.PREVIEW_RESULT_INNER_RADIUS
+	expected_result=T.PREVIEW_RADII[3]+room*tanh(offset*T.PREVIEW_RESULT_EXCURSION_SCALE/room)
+	_check(absf(first[3][T.PREVIEW_SAMPLES/10].length()-expected_result)<0.001,"strong result expands actual displacement into its inner and outer drawing space")
 	for clarity in [0.0,1.0/6.0]:
 		u.gear_angle=72.0 if clarity==0 else 0.0;u.arms_angle=144.0 if clarity==0 else 72.0
 		var weak=visual.phase_contours(u,P.PRESETS.DEFAULT.slice(1))
@@ -341,7 +346,10 @@ func _test_motion(visual) -> void:
 			var points=visual.motion_points(curves,step*0.25)
 			energy+=pow(points[3][T.PREVIEW_SAMPLES/10].length()-T.PREVIEW_RADII[3],2)
 			for r in range(4):
-				bounded=bounded and Array(points[r]).all(func(point):return absf(point.length()-T.PREVIEW_RADII[r])<=T.PREVIEW_AMPLITUDES[r]+0.001 and point.length()-curves[r].width/2>T.PREVIEW_RADIUS)
+				if r<3:
+					bounded=bounded and Array(points[r]).all(func(point):return absf(point.length()-T.PREVIEW_RADII[r])<=T.PREVIEW_AMPLITUDES[r]+0.001 and point.length()-curves[r].width/2>T.PREVIEW_RADIUS)
+				else:
+					bounded=bounded and Array(points[r]).all(func(point):return point.length()>=T.PREVIEW_RESULT_INNER_RADIUS-0.001 and point.length()<=T.PREVIEW_RESULT_OUTER_RADIUS and T.PREVIEW_RESULT_BOUNDS.grow(-curves[r].width/2-T.PREVIEW_RESULT_CLEARANCE).has_point(T.PREVIEW_CENTER+point))
 		_check(bounded,"all moving contours stay circular, bounded and clear of inner rings "+str(angles))
 		energies.append(energy)
 	_check(energies[0]<energies[1] and energies[1]<energies[2],"actual low pair and full overlap increase multi-period result energy "+str(energies))
