@@ -269,6 +269,8 @@ const SETTINGS_LANGUAGE_CHOICE := Rect2(652,205,372,44)
 const SETTINGS_LANGUAGE_NOTE := Rect2(36,254,988,26)
 # HELPの既存SVGだけ、見出しの大文字の実描画中心へ合わせる。
 const HELP_ICON_VERTICAL_OFFSET := -5.5
+# 見出しと本文だけを近づけ、次のセクションと区切りの位置は保つ。
+const HELP_BODY_VERTICAL_OFFSET := -20.0
 
 # 日本語本文は既存の段落高に収め、文字サイズは英語と揃える。
 const JAPANESE_PROSE_SPACING := 0

@@ -1359,7 +1359,7 @@ func _help() -> void:
 	_close_aux()
 	var panel=_modal(Rect2(400,135,1120,810),true)
 	_label(panel,"HELP",Rect2(36,25,1048,48),32,WHITE)
-	_prose_wrapped_label(panel,"ENEMY CPU automates enemy turns. OFF lets you play both sides.\nSPEED accelerates; PAUSE stops. Help and focus loss pause the CPU.",Rect2(36,85,1048,56),17,MUTED)
+	_prose_wrapped_label(panel,"ENEMY CPU automates enemy turns. OFF lets you play both sides.\nSPEED accelerates; PAUSE stops. Help and focus loss pause the CPU.",Rect2(36,85+T.HELP_BODY_VERTICAL_OFFSET,1048,56),17,MUTED)
 	var steps=[
 		["move","01 / ROUTE","Focus follows the acting unit.\nClick route cells to undo later steps.\nScroll over a panel for long details."],
 		["target","02 / ALIGN","3 contours move at different rates.\nTheir colors follow the actual phase.\nAnimation does not change combat."],
@@ -1369,25 +1369,25 @@ func _help() -> void:
 		var x=36+i*354
 		_icon(panel,steps[i][0],Rect2(x,153+T.HELP_ICON_VERTICAL_OFFSET,28,28),CYAN)
 		_label(panel,steps[i][1],Rect2(x+42,149,298,32),20,WHITE)
-		_prose_label(panel,steps[i][2],Rect2(x,201,340,96 if i==2 else 76),16 if i==2 else 18,MUTED)
+		_prose_label(panel,steps[i][2],Rect2(x,201+T.HELP_BODY_VERTICAL_OFFSET,340,96 if i==2 else 76),16 if i==2 else 18,MUTED)
 	_separator(panel,Rect2(36,300,1048,1))
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
-	_prose_label(panel,"Move to cardinal neighbors; avoid occupied cells.\nAt least 1 step per turn; no-move WAIT if trapped.\nOrigin / Esc clears the route. No revisits.\nAction BACK / Esc edits the route; target BACK keeps it.\nWhite = progress; gray = wait, scaled to the visible maximum.\nNot a per-unit timer; full circle = zero wait, even if queued.\nVertical spacing is order, not time.",Rect2(36,377,500,174),18,WHITE)
+	_prose_label(panel,"Move to cardinal neighbors; avoid occupied cells.\nAt least 1 step per turn; no-move WAIT if trapped.\nOrigin / Esc clears the route. No revisits.\nAction BACK / Esc edits the route; target BACK keeps it.\nWhite = progress; gray = wait, scaled to the visible maximum.\nNot a per-unit timer; full circle = zero wait, even if queued.\nVertical spacing is order, not time.",Rect2(36,377+T.HELP_BODY_VERTICAL_OFFSET,500,174),18,WHITE)
 	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
-	_prose_label(panel,"More alignment makes a larger contour.\nINF / RES: final LUK-assisted factors, up to 200%.\nEvery cell turns GEAR anticlockwise, ARMS clockwise.\nCORE: SPD x 1.5 deg; RESET: battle-start angle.\nx5: exact raw INF match and CORE INF <= 10.",Rect2(580,377,510,152),18,WHITE)
+	_prose_label(panel,"More alignment makes a larger contour.\nINF / RES: final LUK-assisted factors, up to 200%.\nEvery cell turns GEAR anticlockwise, ARMS clockwise.\nCORE: SPD x 1.5 deg; RESET: battle-start angle.\nx5: exact raw INF match and CORE INF <= 10.",Rect2(580,377+T.HELP_BODY_VERTICAL_OFFSET,510,152),18,WHITE)
 	var panel_kinds=["CLOCKWISE","RESET","COUNTERCLOCKWISE"]
 	for i in range(panel_kinds.size()):
 		var view=PANEL_VIEWS[panel_kinds[i]]
-		_icon(panel,view.icon,Rect2(580+i*172,514+T.HELP_ICON_VERTICAL_OFFSET,20,20),CYAN)
-		_label(panel,view.short,Rect2(608+i*172,512,140,28),14,WHITE)
+		_icon(panel,view.icon,Rect2(580+i*172,514+T.HELP_ICON_VERTICAL_OFFSET+T.HELP_BODY_VERTICAL_OFFSET,20,20),CYAN)
+		_label(panel,view.short,Rect2(608+i*172,512+T.HELP_BODY_VERTICAL_OFFSET,140,28),14,WHITE)
 	if not build_open:
 		_label(panel,"%s / SEED %d" % [battle.stage.name,battle.panel_seed],Rect2(200,40,884,24),13,MUTED)
 	_separator(panel,Rect2(36,560,1048,1))
 	_label(panel,"BUILD / ARCHIVE",Rect2(36,589,490,28),16,CYAN)
-	_prose_label(panel,"Name 3 PLAYER slots. Max 3 skills; NONE allowed.\nCLASS: CORE order; MUTATION: one equipment ring.\nVIRSL = STANDARD; VLSRI is free. Others: MUTATION unlocks.\nUNLOCK ALL: temporary, debug only, never saved.",Rect2(36,631,500,98),16,WHITE)
+	_prose_label(panel,"Name 3 PLAYER slots. Max 3 skills; NONE allowed.\nCLASS: CORE order; MUTATION: one equipment ring.\nVIRSL = STANDARD; VLSRI is free. Others: MUTATION unlocks.\nUNLOCK ALL: temporary, debug only, never saved.",Rect2(36,631+T.HELP_BODY_VERTICAL_OFFSET,500,98),16,WHITE)
 	_label(panel,"READING THE SIGNAL",Rect2(580,589,500,28),16,CYAN)
-	_prose_label(panel,"Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage.\nSAVE / LOAD are explicit. Old saves are backed up.",Rect2(580,631,510,66),18,WHITE)
-	_prose_label(panel,"Crests identify units and assemblies. A small assembly crest marks your units.",Rect2(580,706,510,22),13,MUTED)
+	_prose_label(panel,"Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage.\nSAVE / LOAD are explicit. Old saves are backed up.",Rect2(580,631+T.HELP_BODY_VERTICAL_OFFSET,510,66),18,WHITE)
+	_prose_label(panel,"Crests identify units and assemblies. A small assembly crest marks your units.",Rect2(580,706+T.HELP_BODY_VERTICAL_OFFSET,510,22),13,MUTED)
 	_button(panel,"CLOSE / ESC",Rect2(36,736,800,44),_close_aux)
 	_button(panel,"SKILLS",Rect2(856,736,228,44),_skill_help)
 
