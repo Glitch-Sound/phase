@@ -215,21 +215,22 @@ const PREVIEW_RATE_GAP := PREVIEW_MOTION_RATE*0.04
 const PREVIEW_MOTION_PHASES := [0.0,TAU/3,TAU*2/3]
 const PREVIEW_SAMPLES := 360
 const PREVIEW_RADII := [78.0,78.8,79.6,78.8]
-const PREVIEW_AMPLITUDES := [6.0,6.0,6.0,10.0]
-# 局所的一致が低い輪郭も読める最小振幅倍率。完全一致で最大振幅になる。
-const PREVIEW_MIN_GAIN := 0.35
+const PREVIEW_AMPLITUDES := [8.0,8.0,8.0,14.0]
+# 不一致の揺れを抑え、局所的一致の振幅差を動画でも読み取れるようにする。
+const PREVIEW_MIN_GAIN := 0.14
+const PREVIEW_RESULT_MIN_GAIN := 0.025
 # 実境界の両側を滑らかに結び、狭い領域では隣接間隔の半分へ縮める。
 const PREVIEW_BLEND_DEGREES := 8.0
 const PREVIEW_LINE := 0.9
-const PREVIEW_LINE_MAX := 1.4
+const PREVIEW_LINE_MAX := 1.7
 # 結果の輪郭を通常の縮小表示でも追えるよう、他の細線より少し太くする。
 const PREVIEW_RESULT_LINE := 2.0
-const PREVIEW_RESULT_LINE_MAX := 3.4
+const PREVIEW_RESULT_LINE_MAX := 3.8
 const PREVIEW_PIXEL_MIN := 0.9
-# 暗い不一致の輪郭も読み取りやすくし、一致時の鮮明さとの差を残す。
-const PREVIEW_BASE_ALPHA := 0.72
+# RGBと境界の補間を保ち、不一致だけを暗くして一致部分の明るい縁を強調する。
+const PREVIEW_BASE_ALPHA := 0.24
 const PREVIEW_CLEAR_ALPHA := 1.0
-const PREVIEW_RESULT_BASE_ALPHA := 0.45
+const PREVIEW_RESULT_BASE_ALPHA := 0.12
 const PREVIEW_RESULT_CLEAR_ALPHA := 1.0
 
 # 紋章はHP円弧より内側へ置き、位相とHPとは別の単色の形として描く。

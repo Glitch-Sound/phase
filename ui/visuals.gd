@@ -224,7 +224,7 @@ static func phase_contours(u: Dictionary, colors: Array) -> Array:
 			color.a=lerpf(T.PREVIEW_BASE_ALPHA,T.PREVIEW_CLEAR_ALPHA,sqrt(clampf(paint.clarity,0,1))) if r<3 else lerpf(T.PREVIEW_RESULT_BASE_ALPHA,T.PREVIEW_RESULT_CLEAR_ALPHA,sqrt(clampf(paint.clarity,0,1)))
 			curves[r].points.append(direction*(T.PREVIEW_RADII[r]+height*T.PREVIEW_AMPLITUDES[r]*gain))
 			curves[r].colors.append(color)
-			curves[r].envelope.append(gain*(0.45+0.55*field.profiles[r]) if r<3 else (0.1+0.9*strength)*(0.45+0.55*field.height))
+			curves[r].envelope.append(gain*(0.45+0.55*field.profiles[r]) if r<3 else lerpf(T.PREVIEW_RESULT_MIN_GAIN,1.0,strength)*(0.45+0.55*field.height))
 	# 線幅は実際の全周平均に従い、毎フレームの乱数や時間では変えない。
 	var mean_strength=sqrt(clarity_sum/T.PREVIEW_SAMPLES)
 	for r in range(4):
