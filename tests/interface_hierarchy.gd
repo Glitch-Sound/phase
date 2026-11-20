@@ -130,6 +130,12 @@ func _surfaces() -> void:
 	game._settings()
 	await process_frame
 	_check_surface(game.auxiliary,"SETTINGS")
+	var footer=game.auxiliary.find_children("*","Button",true,false).filter(func(b):return b.text in ["APPLY COLORS","CLOSE / ESC"])
+	_check(footer.size()==2 and footer.all(func(b):
+		var width=b.get_theme_font("font").get_string_size(b.text,HORIZONTAL_ALIGNMENT_LEFT,-1,b.get_theme_font_size("font_size")).x+b.get_theme_constant("icon_max_width")+b.get_theme_constant("h_separation")
+		return b.alignment==HORIZONTAL_ALIGNMENT_CENTER and b.vertical_icon_alignment==VERTICAL_ALIGNMENT_CENTER and ["normal","hover","pressed","focus","disabled"].all(func(state):
+			var footer_style=b.get_theme_stylebox(state)
+			return is_equal_approx(footer_style.content_margin_left,footer_style.content_margin_right) and is_equal_approx(footer_style.content_margin_left*2+width,b.size.x))),"SETTINGS footer keeps each icon and label together at the button center in every interaction state")
 	game._close_aux()
 	game._start_battle()
 	game._cell_input(Vector2i(4,4))

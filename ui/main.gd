@@ -1468,8 +1468,17 @@ func _settings() -> void:
 		palette_pickers.append(picker)
 	_prose_label(panel,"RINGS: VIVID PRESETS / CUSTOM COLORS AS CHOSEN",Rect2(36,558,988,30),15,MUTED)
 	palette_error=_label(panel,"",Rect2(36,600,988,52),17,status_colors[1])
-	_button(panel,"APPLY COLORS",Rect2(36,676,988,48),_apply_colors,"check")
-	_button(panel,"CLOSE / ESC",Rect2(36,742,988,42),_close_aux,"close")
+	for item in [["APPLY COLORS",Rect2(36,676,988,48),_apply_colors,"check"],["CLOSE / ESC",Rect2(36,742,988,42),_close_aux,"close"]]:
+		var button=_button(panel,item[0],item[1],item[2],item[3])
+		button.alignment=HORIZONTAL_ALIGNMENT_CENTER
+		button.vertical_icon_alignment=VERTICAL_ALIGNMENT_CENTER
+		# 設定の2操作だけ、既存の間隔を保ったアイコンと文字を一組で中央へ置く。
+		var content_width=button.get_theme_font("font").get_string_size(button.text,HORIZONTAL_ALIGNMENT_LEFT,-1,button.get_theme_font_size("font_size")).x+button.get_theme_constant("icon_max_width")+button.get_theme_constant("h_separation")
+		var padding=maxf(0,(button.size.x-content_width)/2)
+		for state in ["normal","hover","pressed","focus","disabled"]:
+			var style=button.get_theme_stylebox(state).duplicate()
+			style.content_margin_left=padding;style.content_margin_right=padding
+			button.add_theme_stylebox_override(state,style)
 
 func _apply_colors() -> void:
 	var colors=[]
