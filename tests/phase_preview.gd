@@ -276,16 +276,6 @@ func _test_smooth_strength(visual) -> void:
 		for i in range(curve.points.size()-1):
 			worst=maxf(worst,curve.points[i].distance_to(curve.points[i+1]))
 		_check(worst<bound,"partial agreement has no radial jump at role boundaries "+curve.role+" / "+str(worst))
-	# 半分ずれた実位相の肩は循環平均の範囲内でつながり、色の領域は移動しない。
-	u=C.unit("01","PLAYER",Vector2i.ZERO,C.default_build())
-	u.arms_angle=36.0
-	var mask=visual.phase_contours(u,P.PRESETS.DEFAULT.slice(1))[3].boost
-	var radius=maxi(1,roundi(T.PREVIEW_RESULT_MASK_HALF_DEGREES*T.PREVIEW_SAMPLES/360/T.PREVIEW_RESULT_MASK_PASSES))
-	var worst=0.0;var bend=0.0
-	for i in range(T.PREVIEW_SAMPLES):
-		worst=maxf(worst,absf(mask[i+1]-mask[i]))
-		bend=maxf(bend,absf(mask[posmod(i-1,T.PREVIEW_SAMPLES)]-2*mask[i]+mask[i+1]))
-	_check(mask[0]==mask[-1] and Array(mask).min()>=0 and Array(mask).max()<=1 and Array(mask).min()<Array(mask).max() and worst<=1.0/(2*radius+1)+0.00001 and bend<=2.0/pow(2*radius+1,2)+0.00001,"result shoulders are smoothly joined across the circular seam")
 ## REQ-033-S01、REQ-033-S02、REQ-033-S05
 func _test_motion(visual) -> void:
 	_check(visual.has_method("motion_points"),"cached phase data has a time-dependent motion evaluator")
@@ -305,19 +295,13 @@ func _test_motion(visual) -> void:
 		var phase=curve.speed*times[0]+T.PREVIEW_MOTION_PHASES[r]
 		var expected=T.PREVIEW_RADII[r]+T.PREVIEW_AMPLITUDES[r]*(0.50*sin(phase)+0.30*sin(2*angle-phase)+0.20*sin(3*angle+phase))
 		_check(absf(first[r][T.PREVIEW_SAMPLES/10].length()-expected)<0.001,"uniform aligned sector peak follows independently calculated periodic wave "+curve.role)
-	# 対象関数を使わず、3装備の速度の平均と余弦、滑らかな空間包絡から求める。
-	var speed=(curves[0].speed+curves[1].speed+curves[2].speed)/3*T.PREVIEW_RESULT_RATE_SCALE
-	var direction=Vector2.from_angle(TAU/10-PI/2)
-	var margin=T.PREVIEW_RESULT_LINE_MAX/2+T.PREVIEW_RESULT_CLEARANCE
-	var bounds=T.PREVIEW_RESULT_BOUNDS.grow(-margin)
-	var power=T.PREVIEW_RESULT_BOUND_POWER
-	var reciprocal=pow(1/(T.PREVIEW_RESULT_OUTER_RADIUS-margin),power)
-	reciprocal+=pow(direction.x/(bounds.end.x-T.PREVIEW_CENTER.x),power)
-	reciprocal+=pow(direction.y/(T.PREVIEW_CENTER.y-bounds.position.y),power)
-	var outer=(pow(reciprocal,-1/power)-T.PREVIEW_RADII[3])*T.PREVIEW_RESULT_PULSE_FILL
-	var expected_result=T.PREVIEW_RADII[3]+lerpf(-T.PREVIEW_RESULT_PULSE_INWARD,outer,(1-cos(speed*times[0]))/2)
-	var repeated=visual.motion_points(curves,times[0]+TAU/speed)[3]
-	_check(absf(first[3][T.PREVIEW_SAMPLES/10].length()-expected_result)<0.001 and first[3][T.PREVIEW_SAMPLES/10].distance_to(repeated[T.PREVIEW_SAMPLES/10])<0.001,"strong result uses one coherent cosine breath in the smooth safe envelope")
+	var mixed=0.0
+	for r in range(3):
+		var phase=curves[r].speed*times[0]*T.PREVIEW_RESULT_RATE_SCALE+T.PREVIEW_MOTION_PHASES[r]
+		mixed+=0.50*sin(phase)+0.30*sin(TAU/5-phase)+0.20*sin(TAU*3/10+phase)
+	var boosted=tanh(T.PREVIEW_RESULT_WAVE_GAIN*mixed/3)/tanh(T.PREVIEW_RESULT_WAVE_GAIN)
+	var expected_result=T.PREVIEW_RADII[3]+T.PREVIEW_AMPLITUDES[3]*boosted
+	_check(absf(first[3][T.PREVIEW_SAMPLES/10].length()-expected_result)<0.001,"strong result alone uses faster three-wave clock and bounded gain")
 	for clarity in [0.0,1.0/6.0]:
 		u.gear_angle=72.0 if clarity==0 else 0.0;u.arms_angle=144.0 if clarity==0 else 72.0
 		var weak=visual.phase_contours(u,P.PRESETS.DEFAULT.slice(1))
@@ -357,10 +341,7 @@ func _test_motion(visual) -> void:
 			var points=visual.motion_points(curves,step*0.25)
 			energy+=pow(points[3][T.PREVIEW_SAMPLES/10].length()-T.PREVIEW_RADII[3],2)
 			for r in range(4):
-				if r<3:
-					bounded=bounded and Array(points[r]).all(func(point):return absf(point.length()-T.PREVIEW_RADII[r])<=T.PREVIEW_AMPLITUDES[r]+0.001 and point.length()-curves[r].width/2>T.PREVIEW_RADIUS)
-				else:
-					bounded=bounded and Array(points[r]).all(func(point):return point.length()>=T.PREVIEW_RESULT_INNER_RADIUS-0.001 and point.length()<=T.PREVIEW_RESULT_OUTER_RADIUS and T.PREVIEW_RESULT_BOUNDS.grow(-curves[r].width/2-T.PREVIEW_RESULT_CLEARANCE).has_point(T.PREVIEW_CENTER+point))
+				bounded=bounded and Array(points[r]).all(func(point):return absf(point.length()-T.PREVIEW_RADII[r])<=T.PREVIEW_AMPLITUDES[r]+0.001 and point.length()-curves[r].width/2>T.PREVIEW_RADIUS)
 		_check(bounded,"all moving contours stay circular, bounded and clear of inner rings "+str(angles))
 		energies.append(energy)
 	_check(energies[0]<energies[1] and energies[1]<energies[2],"actual low pair and full overlap increase multi-period result energy "+str(energies))

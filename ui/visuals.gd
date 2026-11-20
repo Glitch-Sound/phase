@@ -234,25 +234,21 @@ static func phase_contours(u: Dictionary, colors: Array) -> Array:
 	curves[3].directions=directions
 	curves[3].basis=basis
 	curves[3].profiles=profiles
-	curves[3].boost=_smooth_result_mask(result_boost)
-	curves[3].pulse_speed=(speeds[0]+speeds[1]+speeds[2])/3*T.PREVIEW_RESULT_RATE_SCALE
-	var pulse_ranges=PackedVector2Array()
-	for direction in directions:
-		pulse_ranges.append(_result_pulse_range(direction,curves[3].width))
-	curves[3].pulse_ranges=pulse_ranges
+	curves[3].boost=result_boost
 	return curves
 
 ## 周期的な座標を返す。curvesは実位相のキャッシュ、secondsは表示時間。戻り値は4本の閉曲線。入力と戦闘値を変更しない。
 static func motion_points(curves: Array, seconds: float) -> Array:
 	var result=[PackedVector2Array(),PackedVector2Array(),PackedVector2Array(),PackedVector2Array()]
 	var oscillators=[]
+	var fast_oscillators=[]
 	for r in range(3):
 		var phase=fposmod(seconds,TAU/curves[r].speed)*curves[r].speed+T.PREVIEW_MOTION_PHASES[r]
 		oscillators.append(Vector2(sin(phase),cos(phase)))
+		var fast_speed=curves[r].speed*T.PREVIEW_RESULT_RATE_SCALE
+		var fast_phase=fposmod(seconds,TAU/fast_speed)*fast_speed+T.PREVIEW_MOTION_PHASES[r]
+		fast_oscillators.append(Vector2(sin(fast_phase),cos(fast_phase)))
 	var shared: Dictionary=curves[3]
-	# 一つの時計を全角度で共有し、局所の一致区間は移動させない。
-	var phase=fposmod(seconds,TAU/shared.pulse_speed)*shared.pulse_speed
-	var breath=(1-cos(phase))/2
 	for i in range(shared.directions.size()):
 		var direction: Vector2=shared.directions[i]
 		var wave_basis: Vector2=shared.basis[i]
@@ -261,41 +257,14 @@ static func motion_points(curves: Array, seconds: float) -> Array:
 			result[r].append(direction*(T.PREVIEW_RADII[r]+T.PREVIEW_AMPLITUDES[r]*curves[r].envelope[i]*waves[r]))
 		var weights: Vector3=Vector3.ONE*0.25+shared.profiles[i]*0.75
 		var combined=waves.dot(weights)/(weights.x+weights.y+weights.z)
-		var displacement=T.PREVIEW_AMPLITUDES[3]*curves[3].envelope[i]*combined
+		# 共通の速い時計を固定角度の重みで混ぜ、長時間でも角度方向の位相差を蓄積しない。
 		if shared.boost[i]>0:
-			var limits: Vector2=shared.pulse_ranges[i]
-			displacement=lerpf(displacement,lerpf(limits.x,limits.y,breath),shared.boost[i])
-		result[3].append(direction*(T.PREVIEW_RADII[3]+displacement))
+			var fast_waves=Vector3(wave_basis.dot(fast_oscillators[0]),wave_basis.dot(fast_oscillators[1]),wave_basis.dot(fast_oscillators[2]))
+			var fast_combined=fast_waves.dot(weights)/(weights.x+weights.y+weights.z)
+			var enhanced=tanh(T.PREVIEW_RESULT_WAVE_GAIN*fast_combined)/tanh(T.PREVIEW_RESULT_WAVE_GAIN)
+			combined=lerpf(combined,enhanced,shared.boost[i])
+		result[3].append(direction*(T.PREVIEW_RADII[3]+T.PREVIEW_AMPLITUDES[3]*curves[3].envelope[i]*combined))
 	return result
-
-# 対称な循環平均をキャッシュ生成時だけ行う。色は平滑化せず実際の一致のまま描く。
-static func _smooth_result_mask(raw: PackedFloat32Array) -> PackedFloat32Array:
-	var count=T.PREVIEW_SAMPLES
-	var radius=maxi(1,roundi(T.PREVIEW_RESULT_MASK_HALF_DEGREES*count/360/T.PREVIEW_RESULT_MASK_PASSES))
-	var values=raw.slice(0,count)
-	for _pass in range(T.PREVIEW_RESULT_MASK_PASSES):
-		var next=PackedFloat32Array()
-		var total=0.0
-		for j in range(-radius,radius+1):total+=values[posmod(j,count)]
-		for i in range(count):
-			next.append(total/(2*radius+1))
-			total+=values[posmod(i+radius+1,count)]-values[posmod(i-radius,count)]
-		values=next
-	values.append(values[0])
-	return values
-
-# 円と矩形の交差を滑らかなノルムで内包する。動きを上限へ押しつぶさず包絡を先に決める。
-static func _result_pulse_range(direction: Vector2,width: float) -> Vector2:
-	var margin=width/2+T.PREVIEW_RESULT_CLEARANCE
-	var bounds=T.PREVIEW_RESULT_BOUNDS.grow(-margin)
-	var power=T.PREVIEW_RESULT_BOUND_POWER
-	var reciprocal=pow(1/(T.PREVIEW_RESULT_OUTER_RADIUS-margin),power)
-	reciprocal+=pow(maxf(direction.x,0)/(bounds.end.x-T.PREVIEW_CENTER.x),power)
-	reciprocal+=pow(maxf(-direction.x,0)/(T.PREVIEW_CENTER.x-bounds.position.x),power)
-	reciprocal+=pow(maxf(direction.y,0)/(bounds.end.y-T.PREVIEW_CENTER.y),power)
-	reciprocal+=pow(maxf(-direction.y,0)/(T.PREVIEW_CENTER.y-bounds.position.y),power)
-	var outer=(pow(reciprocal,-1/power)-T.PREVIEW_RADII[3])*T.PREVIEW_RESULT_PULSE_FILL
-	return Vector2(-T.PREVIEW_RESULT_PULSE_INWARD,outer)
 
 static func _field_colors(field: Dictionary, colors: Array) -> Array:
 	return [colors[field.roles[0]],colors[field.roles[1]],colors[field.roles[2]],field.color]

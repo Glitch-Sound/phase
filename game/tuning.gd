@@ -219,20 +219,10 @@ const PREVIEW_AMPLITUDES := [8.0,8.0,8.0,14.0]
 # 不一致の揺れを抑え、局所的一致の振幅差を動画でも読み取れるようにする。
 const PREVIEW_MIN_GAIN := 0.14
 const PREVIEW_RESULT_MIN_GAIN := 0.025
-# 強一致の合成だけを共通の速い時計へ混ぜ、個別3波と弱一致は維持する。
+# 強一致の合成だけを共通の速い時計と有界な増幅へ混ぜ、個別3波と弱一致は維持する。
 const PREVIEW_RESULT_BOOST_START := 0.35
 const PREVIEW_RESULT_RATE_SCALE := 1.8
-# 強一致は一つの余弦周期で呼吸し、角度の肩と描画包絡を先に滑らかにする。
-const PREVIEW_RESULT_MASK_HALF_DEGREES := 24.0
-const PREVIEW_RESULT_MASK_PASSES := 3
-const PREVIEW_RESULT_BOUND_POWER := 16.0
-const PREVIEW_RESULT_PULSE_FILL := 0.95
-const PREVIEW_RESULT_PULSE_INWARD := 4.0
-# 強一致の合成は実変位を広げ、内側リングと見出し、下の説明を避けて滑らかに収める。
-const PREVIEW_RESULT_INNER_RADIUS := 64.0
-const PREVIEW_RESULT_OUTER_RADIUS := 112.0
-const PREVIEW_RESULT_BOUNDS := Rect2(60,738,280,218)
-const PREVIEW_RESULT_CLEARANCE := 2.0
+const PREVIEW_RESULT_WAVE_GAIN := 2.4
 # 実境界の両側を滑らかに結び、狭い領域では隣接間隔の半分へ縮める。
 const PREVIEW_BLEND_DEGREES := 8.0
 const PREVIEW_LINE := 0.9
