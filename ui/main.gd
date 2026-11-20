@@ -1367,7 +1367,7 @@ func _help() -> void:
 	]
 	for i in range(3):
 		var x=36+i*354
-		_icon(panel,steps[i][0],Rect2(x,153,28,28),CYAN)
+		_icon(panel,steps[i][0],Rect2(x,153+T.HELP_ICON_VERTICAL_OFFSET,28,28),CYAN)
 		_label(panel,steps[i][1],Rect2(x+42,149,298,32),20,WHITE)
 		_prose_label(panel,steps[i][2],Rect2(x,201,340,96 if i==2 else 76),16 if i==2 else 18,MUTED)
 	_separator(panel,Rect2(36,300,1048,1))
@@ -1378,7 +1378,7 @@ func _help() -> void:
 	var panel_kinds=["CLOCKWISE","RESET","COUNTERCLOCKWISE"]
 	for i in range(panel_kinds.size()):
 		var view=PANEL_VIEWS[panel_kinds[i]]
-		_icon(panel,view.icon,Rect2(580+i*172,514,20,20),CYAN)
+		_icon(panel,view.icon,Rect2(580+i*172,514+T.HELP_ICON_VERTICAL_OFFSET,20,20),CYAN)
 		_label(panel,view.short,Rect2(608+i*172,512,140,28),14,WHITE)
 	if not build_open:
 		_label(panel,"%s / SEED %d" % [battle.stage.name,battle.panel_seed],Rect2(200,40,884,24),13,MUTED)

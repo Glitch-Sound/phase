@@ -267,6 +267,8 @@ const OWNER_MARK_RADIUS := 6.0
 const SETTINGS_LANGUAGE_LABEL := Rect2(524,214,120,26)
 const SETTINGS_LANGUAGE_CHOICE := Rect2(652,205,372,44)
 const SETTINGS_LANGUAGE_NOTE := Rect2(36,254,988,26)
+# HELPの既存SVGだけ、見出しの大文字の実描画中心へ合わせる。
+const HELP_ICON_VERTICAL_OFFSET := -5.5
 
 # 日本語本文は既存の段落高に収め、文字サイズは英語と揃える。
 const JAPANESE_PROSE_SPACING := 0
