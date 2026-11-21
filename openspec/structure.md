@@ -7,6 +7,7 @@
 | project.godot、main.tscn | Godot起動点 |
 | game/ | 位相計算、戦闘、収集、カタログ、調整値 |
 | ui/ | 描画、画面、入力、説明言語 |
+| assets/sfx/ | 本人提供の4音と出典の確認状況 |
 | docs/assembly-v1.md | アセンブリの別図案、色キーと表示規約 |
 | docs/identicon-v1.md | 端末間で共有する名前と紋章の固定規約 |
 | tests/ | モデルと保存の検証、プレイ再現 |
@@ -32,6 +33,8 @@ game/assembly_identity.gdが独立した所属紋章と安定色キーと共通R
 CPUの判断はgame/cpu_policy.gd、段階と表示時間はui/cpu_turn.gdへ分離し、どちらも既存のbattleを操作する。
 経路と行動の予定はui/turn_plan.gd、各歩の描画補間はui/movement.gdへ分離する。\
 予定は原本を変更せず、描画はモデルへ書き戻さずに画面とCPUの連続実行を同期する。
+ui/sfx.gdは手動入力の票、発音条件と音声レーンを所有し、画面からだけ呼び出す。\
+原音はassets/sfxに保持し、権利の確認状況は同じ場所のNOTICE.mdへ記録する。
 
 ## 命名規則
 

@@ -56,7 +56,7 @@ func configure(owner_ui: Control,data: RefCounted,index: int,selection_kind: Str
 		minimum.min_value=10;minimum.max_value=60;minimum.step=10;minimum.value=10
 		host._set_prose(minimum,"Minimum selected stat. Choose VIT, INF, RES, SPD or LUK.","tooltip_text")
 		add_child(minimum)
-		minimum.value_changed.connect(func(_value):_refresh_rows())
+		minimum.value_changed.connect(func(_value):_refresh_rows();host.sfx.selection())
 	scroll=ScrollContainer.new()
 	scroll.position=Vector2(36,166 if equipment else 112)
 	scroll.size=Vector2(600,534 if equipment else 588)
@@ -84,6 +84,7 @@ func configure(owner_ui: Control,data: RefCounted,index: int,selection_kind: Str
 func select_candidate(id: String) -> bool:
 	var matching=rows.filter(func(row):return row.id==id and row.selectable)
 	if matching.is_empty():return false
+	var changed=selected_id!=id
 	selected_id=id
 	candidate_build=MODEL.preview(current_build,kind,id)
 	_refresh_preview()
@@ -93,6 +94,7 @@ func select_candidate(id: String) -> bool:
 		var style=StyleBoxFlat.new();style.bg_color=Color.TRANSPARENT;style.border_color=host.CYAN
 		style.border_width_bottom=T.UI_FOCUS_LINE if key==selected_id else 0
 		button.add_theme_stylebox_override("normal",style)
+	host.sfx.selection(changed)
 	return true
 
 ## 選択を確定する。戻り値なし。候補を再検証し、成功時にだけ原本へ反映して画面を閉じる。

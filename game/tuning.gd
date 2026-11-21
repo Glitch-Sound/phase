@@ -1,6 +1,9 @@
 ## 体験評価で調整する値を一元管理する。
 extends RefCounted
 
+# 本人の原音RMSに合わせた暫定値。選択と回転を控えめにし、強い攻撃素材を回復へ近づける。
+const SFX_VOLUME_DB := {"select":-18.0,"ring_rotate":-18.0,"attack":-15.0,"heal":-8.0}
+
 const BASE_HP := 100.0
 # 位相の落差と有限の反撃評価を組み合わせ、通常対戦を短くする比較値。
 const BASE_DAMAGE := 72.0
