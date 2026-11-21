@@ -22,7 +22,8 @@ chmod +x .githooks/pre-commit
 
 プロダクト検査はscripts/check.sh、仕様とトレースの検査はscripts/check-specs.shが担当する。\
 コミット前のフックがnpm run checkを実行する。\
-生成されたOpenSpecスキルは手で編集しない。
+生成されたOpenSpecスキルは手で編集しない。\
+GitHubへのpushとゲームの公開は行っていない。
 
 ## 参照する文書
 
