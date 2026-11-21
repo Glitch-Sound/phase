@@ -34,15 +34,30 @@ func _selection() -> void:
 	_check(events==[],"selection is excluded from playback even when requested directly")
 ## REQ-055-S01、REQ-055-S02
 func _rotation() -> void:
-	events.clear();sound.reset_battle();var motion=Motion.new()
-	sound.movement_tick(motion);motion.elapsed=0.3;sound.movement_tick(motion);_check(events==[],"preview and incomplete first step are silent")
-	motion.elapsed=1.0/3;sound.movement_tick(motion);sound.movement_tick(motion);_check(events==["ring_rotate"],"simultaneous changing rings make one sound at the cell center")
-	motion.elapsed=2.0/3;sound.movement_tick(motion);_check(events==["ring_rotate"],"a completed step without any actual rotation is silent")
-	motion.elapsed=1;sound.movement_tick(motion);_check(events==["ring_rotate","ring_rotate"],"a later real turn including a full revolution sounds once")
-	sound.suspend();sound.movement_tick(motion);_check(events.size()==2,"pause and repeated final state cannot replay completed steps")
-	sound.reset_battle();motion=Motion.new();motion.duration=0;sound.movement_tick(motion);_check(events.size()==2,"omitted movement does not burst a sequence of step sounds")
-	motion=Motion.new();motion.route=[];sound.movement_tick(motion);_check(events.size()==2,"zero-step movement is silent")
-	sound.reset_battle();motion=Motion.new();motion.elapsed=1;sound.movement_tick(motion);_check(events==["ring_rotate","ring_rotate","ring_rotate","ring_rotate"],"fast updates account once for each actual rotating step without carrying old movement")
+	var alternating=["ring_rotate1","ring_rotate2","ring_rotate1","ring_rotate2","ring_rotate1","ring_rotate2"]
+	for count in [1,3]:
+		events.clear();sound.reset_battle();var motion=Motion.new();motion.route=motion.route.slice(0,count)
+		# 発音は経路に従い、全輪の回転量がゼロでも同じ2拍になる。
+		motion.deltas=motion.deltas.map(func(_delta):return [0.0,0.0,0.0])
+		var times=[];var record=func(_kind):times.append(motion.elapsed)
+		sound.played.connect(record)
+		var expected_times=[0.5,1.0] if count==1 else [1.0/6,1.0/3,0.5,2.0/3,5.0/6,1.0]
+		var no_early=true
+		sound.movement_tick(motion)
+		for index in range(expected_times.size()):
+			motion.elapsed=expected_times[index]-0.00001;sound.movement_tick(motion);no_early=no_early and events.size()==index
+			motion.elapsed=expected_times[index];sound.movement_tick(motion);sound.movement_tick(motion)
+		_check(events==alternating.slice(0,count*2),"one or three real steps produce exactly two alternating sounds per cell, even without rotation")
+		_check(no_early and times==expected_times and motion.elapsed==1.0,"half-step intervals stay equal across cells and end at existing arrival without duplicate updates")
+		sound.played.disconnect(record)
+	events.clear();sound.reset_battle();var motion=Motion.new();motion.elapsed=0.5;sound.movement_tick(motion);var at_pause=events.duplicate();sound.suspend();sound.movement_tick(motion)
+	_check(events==at_pause,"pause and resume at unchanged movement time do not replay past sounds")
+	events.clear();sound.reset_battle();motion=Motion.new();motion.duration=0;sound.movement_tick(motion)
+	motion=Motion.new();motion.route=[];sound.movement_tick(motion)
+	motion=Motion.new();motion.owner=null;motion.elapsed=1;sound.movement_tick(motion)
+	_check(events==[],"omitted movement, zero steps and cancelled movement stay silent")
+	sound.reset_battle();motion=Motion.new();motion.elapsed=1;sound.movement_tick(motion)
+	_check(events==alternating,"fast updates preserve all six ordered cues without adding a wait")
 ## REQ-056-S01、REQ-056-S02
 func _effects() -> void:
 	events.clear();sound.reset_battle();var owner=RefCounted.new()
@@ -56,12 +71,12 @@ func _effects() -> void:
 	sound.reset_battle();sound.effect(owner,1,"DAMAGE",1);_check(events.size()==4,"a new battle may reuse its first history number")
 ## REQ-057-S01
 func _resources() -> void:
-	_check(sound.streams.keys()==["ring_rotate","attack","heal"] and FileAccess.file_exists("res://assets/sfx/select.ogg"),"only three SFX play and the unused selection original remains")
+	_check(sound.streams.keys()==["ring_rotate1","ring_rotate2","attack","heal"] and FileAccess.file_exists("res://assets/sfx/select.ogg"),"only the new movement pair and unchanged effects play; selection original remains")
 	_check(sound.streams.values().all(func(stream):return stream is AudioStreamOggVorbis and stream.get_length()>0 and not stream.loop),"all active original Ogg streams decode without looping")
 	_check(sound.players.size()==2 and sound.players.values().all(func(p):return p.max_polyphony==1 and p.bus=="Master"),"bounded lanes use the existing Master volume")
 	for key in sound.streams:
 		sound._play(key)
-		var lane="effect" if key in ["attack","heal"] else key
+		var lane="effect" if key in ["attack","heal"] else "ring_rotate"
 		_check(sound.players[lane].stream==sound.streams[key] and sound.players[lane].volume_db==sound.T.SFX_VOLUME_DB[key],"stream and configured gain connected: "+key)
 	events.clear();sound.enabled=false;sound._play("attack");_check(events==[],"disabled audio does not emit or play a request");sound.enabled=true
 ## REQ-054-S01、REQ-055-S01、REQ-056-S01
@@ -75,8 +90,8 @@ func _connections() -> void:
 	game._cell_input(Vector2i(4,4));_check(actual==[],"unchanged route click does not beep")
 	await process_frame;await process_frame
 	game._cell_input(Vector2i(5,4));game._cell_input(Vector2i(5,4),true);game._choose_battle_skill(game.C.DAMAGE);game._cell_input(Vector2i(6,4));game._confirm_plan();game._movement_tick(game.T.MOVEMENT_MAX_SECONDS+game.T.MOVEMENT_ATTACK_BEAT_SECONDS)
-	_check(actual==["ring_rotate","ring_rotate","attack"],"real planned move reaches two turning steps then actual damage without selection pips")
-	var after=game.battle.units.duplicate(true);game._feedback();_check(actual.size()==3 and game.battle.units==after,"repeat effect display neither sounds nor changes HP")
+	_check(actual==["ring_rotate1","ring_rotate2","ring_rotate1","ring_rotate2","attack"],"real planned move reaches two steps with four alternating cues then actual damage without selection pips")
+	var after=game.battle.units.duplicate(true);game._feedback();_check(actual.size()==5 and game.battle.units==after,"repeat effect display neither sounds nor changes HP")
 	game._restart();game._start_battle();game.battle.units[1].pos=Vector2i(4,5);game.battle.units[1].hp=game.battle.units[1].max_hp-1
 	game.battle.path_click(Vector2i(4,4));game.battle.commit_path();game.battle.choose_skill(game.C.HEAL);_check(game.battle.act(1),"fixture performs legal capped healing")
 	game._feedback();_check(actual.back()=="heal" and game.battle.last_effect.actual>0,"real healing feedback reaches audio using actual gain")
