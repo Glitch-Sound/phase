@@ -191,32 +191,6 @@ godot --headless --path . --script tests/display_flow.gd
 ゲームの保存はそのディレクトリを使用しない。
 スクリプトエラーやテスト失敗は検査を失敗させ、既知のホスト権限警告とは区別する。
 
-## 開発
-
-指定テンプレートGlitch-Sound/openspec-templateの0.1.1、commit 3224955f87122339c8961563c6d964d90a7c8521を導入した。
-OpenSpec 1.16.0をpackage-lock.jsonで固定する。
-
-### OpenSpecの設定
-
-マシン全体の設定を変更せず、プロジェクト内のキャッシュへ隔離する。
-
-~~~sh
-export XDG_CONFIG_HOME="$PWD/.tool-cache/config"
-export XDG_DATA_HOME="$PWD/.tool-cache/data"
-export OPENSPEC_TELEMETRY=0
-npx --no-install openspec config set profile custom
-npx --no-install openspec config set workflows '["explore","ff","apply","update","verify","sync","archive"]'
-npx --no-install openspec config set delivery skills
-npx --no-install openspec init --tools codex
-git config core.hooksPath .githooks
-chmod +x .githooks/pre-commit
-~~~
-
-プロダクト検査はscripts/check.sh、仕様とトレースの検査はscripts/check-specs.shが担当する。
-コミット前のフックがnpm run checkを実行する。
-生成されたOpenSpecスキルは手で編集しない。
-GitHubへのpushとゲームの公開は行っていない。
-
 ## 配色とUI
 
 minimal dark intelligenceを方針とし、黒い面、位相リング、4波形、HPと同期の棒で情報を伝える。

@@ -5,6 +5,7 @@
 | パス | 責務 |
 | --- | --- |
 | project.godot、main.tscn | Godot起動点 |
+| DEVELOPMENT.md | OpenSpecを使う開発者向けの手順と道具の設定 |
 | game/ | 位相計算、戦闘、収集、カタログ、調整値 |
 | ui/ | 描画、画面、入力、説明言語 |
 | assets/sfx/ | 本人提供の4音と出典の確認状況 |
