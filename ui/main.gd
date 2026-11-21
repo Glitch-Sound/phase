@@ -663,7 +663,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			var hit=TL.hit(_timeline_view(),p)
 			if not hit.is_empty():
-				sfx.selection(selected!=hit.index)
 				selected=hit.index
 				timeline_selected_event=hit.duplicate(true)
 
@@ -689,7 +688,6 @@ func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 	if _cpu_locked():
 		var occupant=battle.at(cell)
 		if occupant>=0:
-			sfx.selection(selected!=occupant)
 			selected=occupant
 		queue_redraw()
 		return
@@ -698,33 +696,28 @@ func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 	timeline_hover_event={}
 	var index=battle.at(cell)
 	if planning.active():
-		if planning.phase=="TARGET" and planning.select(index):
-			sfx.selection();_confirm_dialog()
+		if planning.phase=="TARGET" and planning.select(index):_confirm_dialog()
 		elif planning.phase=="TARGET":_notify("Choose a highlighted target. BACK keeps your planned route.")
 		queue_redraw()
 		return
 	if battle.mode=="TARGET":
 		if index>=0 and battle.act(index):
-			sfx.selection()
 			_feedback()
 			_after_action()
 		else:
 			_notify("Choose a highlighted target. BACK keeps your movement.")
 	elif battle.mode=="MOVE":
 		if index>=0 and cell!=battle.units[battle.actor].pos:
-			sfx.selection(selected!=index)
 			selected=index
 		elif double_click and not battle.path.is_empty() and cell==battle.path.back():
 			if planning.begin(battle):
-				sfx.selection()
 				selected=-1
 				if planning.phase=="READY":_confirm_dialog()
 				else:_action_dialog()
+		elif battle.path_click(cell):
+			selected=-1
 		else:
-			var previous=battle.path.duplicate()
-			if battle.path_click(cell):
-				sfx.selection(previous!=battle.path);selected=-1
-			else:_notify("Add an empty adjacent cell. No revisits. Maximum %d steps." % battle.movement(battle.units[battle.actor]))
+			_notify("Add an empty adjacent cell. No revisits. Maximum %d steps." % battle.movement(battle.units[battle.actor]))
 	queue_redraw()
 
 func _begin_movement(before: Dictionary, route: Array, via_cpu: bool) -> void:
@@ -1191,7 +1184,6 @@ func _core_change(index: int, value: int) -> void:
 		return
 	var core: Array=collection.builds[edit_unit].core
 	var difference=value-int(core[index])
-	sfx.selection(difference!=0)
 	core[index]=value
 	while difference!=0:
 		for offset in range(1,5):
@@ -1251,7 +1243,7 @@ func _toggle(parent: Control,text: String,rect: Rect2,value: bool,callback: Call
 	var state_width=ceilf(maxf(state_font.get_string_size("ON",HORIZONTAL_ALIGNMENT_LEFT,-1,13).x,state_font.get_string_size("OFF",HORIZONTAL_ALIGNMENT_LEFT,-1,13).x))
 	button.add_theme_constant_override("h_separation",ceili(state_width+2*T.BUILD_TOGGLE_CONTENT_GAP))
 	var switch_left=rect.size.x-button.get_theme_stylebox("normal").content_margin_right-button.get_theme_icon("unchecked").get_width()
-	button.toggled.connect(func(pressed):callback.call(pressed);sfx.selection())
+	button.toggled.connect(callback)
 	var state=_label(button,"ON" if value else "OFF",Rect2(switch_left-T.BUILD_TOGGLE_CONTENT_GAP-state_width,8,state_width,28),13,CYAN if value else MUTED)
 	# Labelの初期テーマで広がった幅を、適用後の文字幅へ戻す。
 	state.size.x=state_width
@@ -1450,15 +1442,14 @@ func _settings() -> void:
 	check.position=Vector2(36,205)
 	check.size=Vector2(470,46)
 	check.button_pressed=reduced_motion
-	check.toggled.connect(func(value):reduced_motion=value;sfx.selection())
+	check.toggled.connect(func(value):reduced_motion=value)
 	panel.add_child(check)
 	_label(panel,"Language",T.SETTINGS_LANGUAGE_LABEL,16,MUTED)
 	language_selector=OptionButton.new();language_selector.name="Language"
 	language_selector.position=T.SETTINGS_LANGUAGE_CHOICE.position;language_selector.size=T.SETTINGS_LANGUAGE_CHOICE.size
 	for title in ["System","English","日本語"]:language_selector.add_item(title)
 	language_selector.selected=LANGUAGE.CHOICES.find(copy_language.selection)
-	language_selector.item_selected.connect(func(index):sfx.selection(_change_language(LANGUAGE.CHOICES[index])))
-	sfx.watch_option(language_selector)
+	language_selector.item_selected.connect(func(index):_change_language(LANGUAGE.CHOICES[index]))
 	panel.add_child(language_selector)
 	language_note=_prose_label(panel,"Descriptions only. Names and labels stay unchanged.",T.SETTINGS_LANGUAGE_NOTE,13,MUTED)
 	_label(panel,"COLOR / ACCENT + FIVE SIGNALS",Rect2(36,286,988,28),16,MUTED)
@@ -1475,8 +1466,6 @@ func _settings() -> void:
 		picker.position=Vector2(36+i*166,464)
 		picker.size=Vector2(150,64)
 		picker.color=palette_colors[i]
-		picker.color_changed.connect(func(_color):sfx.selection())
-		picker.get_popup().window_input.connect(sfx.input_event)
 		picker.edit_alpha=false
 		_set_prose(picker,"Choose color / "+["ACCENT","VIT","INF","RES","SPD","LUK"][i],"tooltip_text")
 		panel.add_child(picker)
@@ -1771,7 +1760,7 @@ func _modal(rect: Rect2, is_aux: bool, keep_context: bool=false) -> Control:
 	return panel
 
 func _button(parent: Control, text: String, rect: Rect2, callback: Callable, icon_name: String="", active: bool=false) -> Button:
-	var button=SFX.SelectionButton.new();button.audio=sfx
+	var button=Button.new()
 	button.text=text
 	button.tooltip_text=text
 	var key=icon_name
@@ -1816,8 +1805,7 @@ func _option(parent: Control, values: Array, current: String, rect: Rect2, callb
 		option.add_item(C.SKILLS[value].label if C.SKILLS.has(value) else str(value))
 		option.get_popup().set_item_tooltip(option.item_count-1,str(value))
 	option.selected=maxi(0,values.find(current))
-	option.item_selected.connect(func(index):callback.call(str(values[index]));sfx.selection())
-	sfx.watch_option(option)
+	option.item_selected.connect(func(index):callback.call(str(values[index])))
 	parent.add_child(option)
 	return option
 

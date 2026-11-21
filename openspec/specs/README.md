@@ -12,7 +12,7 @@
 | [display-language](display-language/spec.md) | 説明だけの英日切り替え、自動判定、独立設定 |
 | [battle-movement](battle-movement/spec.md) | 確定経路の移動表示、着地、中断 |
 | [enemy-cpu](enemy-cpu/spec.md) | 敵CPUの判断、モード、操作過程と中断 |
-| [sound-feedback](sound-feedback/spec.md) | 手動選択、確定移動と実HP変化の4音 |
+| [sound-feedback](sound-feedback/spec.md) | 確定移動と実HP変化の3音、選択の無音 |
 
 ## 関係
 
