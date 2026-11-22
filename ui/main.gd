@@ -739,6 +739,10 @@ func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 	elif battle.mode=="MOVE":
 		if index>=0 and cell!=battle.units[battle.actor].pos:
 			selected=index
+		elif double_click and index==battle.actor and index>=0 and battle.units[index].camp==view_camp and battle.units[index].hp>0 and not build_open and window_focused and not is_instance_valid(auxiliary) and not is_instance_valid(overlay):
+			if planning.begin(battle,true):
+				selected=-1
+				_action_dialog()
 		elif double_click and not battle.path.is_empty() and cell==battle.path.back():
 			if planning.begin(battle):
 				selected=-1

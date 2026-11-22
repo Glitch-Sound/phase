@@ -14,6 +14,7 @@ func _run() -> void:
 	await _entry_points()
 	await _direct_selection()
 	await _stationary_wait()
+	await _actor_double_click()
 	_focus()
 	game._restart()
 	_check(game.build_open,"interface verification returns BUILD")
@@ -117,6 +118,55 @@ func _stationary_wait() -> void:
 		await _present()
 		_check(b.turn==original[2]+1 and ["pos","hp","core_angle","initial_core_angle","gear_angle","arms_angle"].all(func(k):return b.units[0][k]==original[0][0][k]) and not game.movement.active and sounds.filter(func(kind):return kind.begins_with("ring_rotate")).is_empty(),"stationary WAIT advances once without rings, panels, movement or movement sound")
 		game.sfx.played.disconnect(listener)
+## REQ-010-S06
+func _actor_double_click() -> void:
+	for blocked in [false,true]:
+		game._start_battle();game.set_process(false)
+		var b=game.battle;b.units[0].pos=Vector2i(4,4)
+		if blocked:
+			for i in range(4):b.units[i+1].pos=b.units[0].pos+b.DIRS[i]
+		else:b.path=[Vector2i(5,4)]
+		game._cell_input(b.units[0].pos)
+		_check(b.path.is_empty() and not game.planning.active() and not is_instance_valid(game.overlay),"single actor click only cancels the existing route")
+		var before=game.planning._state(b)
+		game._cell_input(b.units[0].pos,true)
+		var opened=is_instance_valid(game.overlay)
+		_check(opened and game.planning.phase=="CHOICE" and game.planning.route.is_empty() and game.planning._state(b)==before,"double-click actor opens an unchanged zero-step plan with or without free cells")
+		if not opened:continue
+		var original_overlay=game.overlay
+		var buttons=game.overlay.find_children("*","Button",true,false)
+		var labels=buttons.map(func(button):return button.text);labels.sort()
+		_check(labels==["BACK","WAIT"] and buttons.all(func(button):return button.disabled),"stationary ACTION has exactly WAIT and BACK with initial protection")
+		game._cell_input(b.units[0].pos,true)
+		_check(game.overlay==original_overlay and not game.plan_pending and game.planning._state(b)==before,"repeated double-click cannot confirm WAIT or replace ACTION")
+		game._advance_action_gate(game.T.ACTION_INPUT_GUARD_SECONDS*2)
+		if blocked:
+			var escape=InputEventKey.new();escape.keycode=KEY_ESCAPE;escape.pressed=true;game._unhandled_input(escape)
+		else:buttons.filter(func(button):return button.text=="BACK")[0].pressed.emit()
+		await process_frame
+		_check(not game.planning.active() and not is_instance_valid(game.overlay) and game.planning._state(b)==before,"BACK and Esc cancel the stationary plan without combat changes")
+		game._cell_input(b.units[0].pos,true);game._advance_action_gate(game.T.ACTION_INPUT_GUARD_SECONDS*2)
+		game.overlay.find_children("*","Button",true,false).filter(func(button):return button.text=="WAIT")[0].pressed.emit()
+		_check(game.plan_pending and not game.movement.active and b.turn==before[2],"explicit WAIT alone enters the existing frame-gated execution")
+		await _present()
+		_check(b.turn==before[2]+1 and not game.movement.active,"zero-step WAIT advances through the existing stationary flow")
+	game._start_battle();game.set_process(false)
+	for index in [1,3]:
+		game._cell_input(game.battle.units[index].pos,true)
+		_check(not game.planning.active() and not is_instance_valid(game.overlay),"other ally and enemy cannot open a stationary ACTION")
+	game.cpu_enabled=true;game.battle.actor=3
+	game._cell_input(game.battle.units[3].pos,true)
+	_check(not game.planning.active() and not is_instance_valid(game.overlay),"CPU actor cannot open the human dialog")
+	game.cpu_enabled=false
+	game._cell_input(game.battle.units[3].pos,true)
+	_check(not game.planning.active() and not is_instance_valid(game.overlay),"enemy actor remains outside the ownership viewpoint")
+	game.battle.actor=0;game._help()
+	var before=game.planning._state(game.battle)
+	var event=InputEventMouseButton.new();event.position=game.BOARD+(Vector2(game.battle.units[0].pos)+Vector2.ONE*0.5)*game.CELL;event.button_index=MOUSE_BUTTON_LEFT;event.pressed=true;event.double_click=true
+	game._unhandled_input(event)
+	_check(is_instance_valid(game.auxiliary) and not game.planning.active() and game.planning._state(game.battle)==before,"existing modal prevents the board double-click")
+	game._close_aux()
+
 ## REQ-018-S02、REQ-018-S04、REQ-018-S05
 func _focus() -> void:
 	_check(not game.has_method("_acting_marker"),"obsolete triangle drawing is removed")
