@@ -40,9 +40,12 @@ func _test_storage() -> void:
 ## REQ-053-S04
 func _test_copy() -> void:
 	var copy=model.new();copy.selection="ja";copy.preferred_locale="en_US"
-	_check(copy.text("Damage one adjacent enemy.")=="隣接する敵1体にダメージ。","Japanese damage explanation is exact")
-	_check(copy.text("Move up to 4 cells per turn.")=="1手で最大4マス移動。","formatted explanation preserves its actual value")
-	_check(copy.text("CORE order: VIT > INF\nOnly CORE changes. Always available.")=="COREの並び: VIT > INF\nCOREだけに適用。常に選択できる。","layout explanations keep mechanical order labels")
+	_check(copy.text("Damage one adjacent enemy.")=="隣接する敵1体にダメージ","Japanese damage explanation is exact")
+	_check(copy.text("Move up to 4 cells per turn.")=="1手で最大4マス移動","formatted explanation preserves its actual value")
+	_check(copy.text("CORE order: VIT > INF\nOnly CORE changes. Always available.")=="COREの並び: VIT > INF\nCOREだけに適用\n常に選択できる","layout explanations keep mechanical order labels")
+	_check(copy.text("Push one enemy 1 cell outward. No damage.")=="隣接する敵1体を1マス押す\nダメージなし","Japanese sentence boundaries become newlines without a trailing blank")
+	_check(copy.COPY.keys().all(func(source):return not copy.text(source).contains("。") and not copy.text(source).ends_with("\n")),"all registered Japanese prose and templates omit punctuation and trailing blank lines")
+	_check(copy.text("Inspected unit: 名。前")=="確認中のユニット: 名。前" and copy.text("名。前")=="名。前","format values and unknown user text retain literal punctuation")
 	var data=COLLECTION.new();var untranslated=[]
 	for kind in ["class_name","arms_mutation","gear_mutation","skill","operation"]:
 		for row in BC.candidates(data,0,kind):

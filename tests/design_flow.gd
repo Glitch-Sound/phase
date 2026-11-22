@@ -20,6 +20,7 @@ func _run() -> void:
 	await _test_help_terms(game)
 	await _test_action_context(game,palette)
 	await _test_focus_scope(game)
+	await _test_settings_state()
 	game.queue_free()
 	await process_frame
 	_finish()
@@ -257,3 +258,25 @@ func _tab_cycle(_game,layer: Control,title: String) -> void:
 			await process_frame
 			var focus=root.gui_get_focus_owner()
 			_check(is_instance_valid(focus) and layer.is_ancestor_of(focus) and not (focus is BaseButton and focus.disabled),title+" keeps focus on enabled modal controls")
+
+## REQ-020-S01、REQ-033-S06
+func _test_settings_state() -> void:
+	var folder="res://artifacts/runtime/settings-state-"+str(Time.get_ticks_usec())
+	DirAccess.make_dir_recursive_absolute(folder)
+	for value in [null,false,true]:
+		var path=folder+"/"+str(value)+".json"
+		var old={"language":"ja"}
+		if value!=null:old["reduced_motion"]=value;old["motion"]=value
+		var f=FileAccess.open(path+".language.json",FileAccess.WRITE);f.store_string(JSON.stringify(old));f.close()
+		var bytes=FileAccess.get_file_as_bytes(path+".language.json")
+		var ui=load("res://tests/fixture_main.gd").new();ui.settings_path=path;root.add_child(ui);await process_frame
+		var start=ui.clock;ui._process(0.1)
+		_check(ui.clock>start and ui.get_property_list().all(func(row):return row.name!="reduced_motion"),"legacy motion flag never controls normal animation: "+str(value))
+		ui._settings();await process_frame
+		var buttons=ui.auxiliary.find_children("*","Button",true,false).filter(func(b):return b.text in ["WINDOWED","FULLSCREEN"])
+		ui.get_viewport().gui_release_focus()
+		var active=buttons.filter(func(b):return b.get_theme_stylebox("normal").get_border_width(SIDE_BOTTOM)>0)
+		_check(active.size()==1 and active[0].text==("FULLSCREEN" if DisplayServer.window_get_mode() in [DisplayServer.WINDOW_MODE_FULLSCREEN,DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN] else "WINDOWED"),"DISPLAY retains only its actual selection without focus")
+		_check(not ui.auxiliary.find_children("*","BaseButton",true,false).any(func(b):return b.text=="REDUCED MOTION"),"removed motion setting has no English or Japanese control")
+		_check(FileAccess.get_file_as_bytes(path+".language.json")==bytes and not FileAccess.file_exists(path),"legacy and unrelated settings remain unchanged")
+		ui.queue_free();await process_frame

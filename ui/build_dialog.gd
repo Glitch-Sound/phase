@@ -42,7 +42,7 @@ func configure(owner_ui: Control,data: RefCounted,index: int,selection_kind: Str
 	if kind=="class_name":title="CLASS"
 	if kind=="skill":title="SKILL / SLOT %d" % (slot+1)
 	host._label(self,title,Rect2(36,24,1000,42),28,host.WHITE)
-	if kind not in ["class_name","skill","operation"]:host._prose_label(self,"Select a candidate. Apply to confirm. Esc to cancel.",Rect2(36,70,1180,28),16,host.MUTED)
+	if kind not in ["class_name","arms_mutation","gear_mutation","skill","operation"]:host._prose_label(self,"Select a candidate. Apply to confirm. Esc to cancel.",Rect2(36,70,1180,28),16,host.MUTED)
 	var equipment=kind in ["arms","gear"]
 	if equipment:
 		for i in range(6):
@@ -58,7 +58,7 @@ func configure(owner_ui: Control,data: RefCounted,index: int,selection_kind: Str
 		add_child(minimum)
 		minimum.value_changed.connect(func(_value):_refresh_rows())
 	scroll=ScrollContainer.new()
-	var top=T.CHOICE_COMPACT_TOP if kind in ["class_name","skill","operation"] else 112
+	var top=T.CHOICE_COMPACT_TOP if kind in ["class_name","arms_mutation","gear_mutation","skill","operation"] else 112
 	scroll.position=Vector2(36,166 if equipment else top)
 	scroll.size=Vector2(600,534 if equipment else 700-top)
 	scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED
@@ -156,8 +156,7 @@ func _refresh_rows(reveal_current: bool=false) -> void:
 		var button=Button.new()
 		button.text=row.title+("  / EQUIPPED" if row.current else "")+("  / "+row.reason if not row.reason.is_empty() else "")
 		if row.has("stats"):button.text+="\n"+MODEL._stats_text(row.stats)
-		elif kind=="class_name":button.text+="\n"
-		elif kind in ["arms_mutation","gear_mutation"]:button.text+="\n"+("" if row.get("subtitle","")=="STANDARD" else row.description.get_slice("\n",0))
+		elif kind in ["class_name","arms_mutation","gear_mutation"]:button.text+="\n"
 		host._set_prose(button,button.text)
 		button.alignment=HORIZONTAL_ALIGNMENT_LEFT
 		button.custom_minimum_size=Vector2(574,68 if row.has("stats") or kind!="skill" else 46)
@@ -167,7 +166,7 @@ func _refresh_rows(reveal_current: bool=false) -> void:
 		button.disabled=not row.selectable
 		# Tabはフィルター、取消と確定を循環し、長い候補一覧は上下とHome/Endで操作する。
 		button.focus_mode=Control.FOCUS_CLICK
-		host._set_prose(button,(row.reason if kind=="class_name" else "") if kind in ["operation","class_name"] else row.description+("\n"+row.reason if not row.reason.is_empty() else ""),"tooltip_text")
+		host._set_prose(button,(row.reason if kind!="operation" else "") if kind in ["operation","class_name","arms_mutation","gear_mutation"] else row.description+("\n"+row.reason if not row.reason.is_empty() else ""),"tooltip_text")
 		button.pressed.connect(func():select_candidate(row.id))
 		button.gui_input.connect(func(event):
 			if event is InputEventKey and navigate(event):button.accept_event())
@@ -178,12 +177,13 @@ func _refresh_rows(reveal_current: bool=false) -> void:
 			host._objective_label(button,row.description.get_slice("\n",0),Rect2(12,36,550,28),14,host.MUTED)
 		if row.get("subtitle","")=="STANDARD":
 			host._label(button,"STANDARD",Rect2(12,38,200,20),T.LAYOUT_STANDARD_FONT,host.MUTED)
-		if kind=="class_name":
+		if kind in ["class_name","arms_mutation","gear_mutation"]:
 			var unit=C.unit("01","PLAYER",Vector2i.ZERO,MODEL.preview(current_build,kind,row.id))
-			var order=host.M.order(unit,0)
+			var part=0 if kind=="class_name" else (1 if kind=="gear_mutation" else 2)
+			var order=host.M.order(unit,part)
 			for i in range(5):
 				var square=ColorRect.new();square.position=T.CLASS_SWATCH_ORIGIN+Vector2(i*T.CLASS_SWATCH_STEP,0);square.size=Vector2.ONE*T.CLASS_SWATCH_SIZE;square.color=host.status_colors[order[i]];square.mouse_filter=Control.MOUSE_FILTER_IGNORE;button.add_child(square)
-			button.accessibility_name=row.title+" / CORE / "+" > ".join(order.map(func(index):return MODEL.STATUS[index]))
+			button.accessibility_name=row.title+" / "+["CORE","GEAR","ARMS"][part]+" / "+" > ".join(order.map(func(index):return MODEL.STATUS[index]))
 		row_buttons[row.id]=button
 	var available=visible_rows.filter(func(row):return row.selectable).size()
 	host._set_prose(counter,"%d shown / %d available   |   Up / Down, Home / End" % [visible_rows.size(),available])
@@ -204,14 +204,14 @@ func _refresh_preview() -> void:
 	var row=matching[0]
 	candidate_name.text=row.title
 	candidate_caption.text=row.get("subtitle","")
-	host._set_prose(description,"" if kind in ["arms","gear","class_name"] else row.description)
+	host._set_prose(description,"" if kind in ["arms","gear","class_name","arms_mutation","gear_mutation"] else row.description)
 	if is_instance_valid(objective_description):remove_child(objective_description);objective_description.queue_free()
 	if kind=="operation":
 		host._set_prose(description,"")
 		objective_description=host._objective_label(self,row.description,Rect2(684,T.CHOICE_COMPACT_TOP+330,548,102),17,host.MUTED)
 	apply_button.disabled=not row.selectable
 	# 省いた領域を再描画した時も、スクロール後の確定と取消を確実に更新する。
-	if kind in ["class_name","skill","operation"]:
+	if kind in ["class_name","arms_mutation","gear_mutation","skill","operation"]:
 		for child in get_children():
 			if child is Button:child.queue_redraw()
 	preview_area.queue_redraw()
@@ -236,10 +236,6 @@ func _draw_preview() -> void:
 			preview_area.draw_string(host.mono,pos,MODEL.STATUS[i],HORIZONTAL_ALIGNMENT_LEFT,-1,14,host.status_colors[i])
 			preview_area.draw_string(host.mono,pos+Vector2(116,0),str(int(current_build[kind][i])),HORIZONTAL_ALIGNMENT_LEFT,-1,18,host.MUTED)
 			preview_area.draw_string(host.mono,pos+Vector2(400,0),str(int(candidate_build[kind][i])),HORIZONTAL_ALIGNMENT_LEFT,-1,20,host.WHITE)
-	elif kind!="class_name":
-		var part=0 if kind=="class_name" else (1 if kind=="gear_mutation" else 2)
-		var order=host.M.order(candidate,part).map(func(value):return MODEL.STATUS[value])
-		preview_area.draw_string(host.mono,Vector2(12,486)," > ".join(order),HORIZONTAL_ALIGNMENT_LEFT,-1,16,host.WHITE)
 
 func _draw_skill_area() -> void:
 	if not C.SKILLS.has(selected_id):return

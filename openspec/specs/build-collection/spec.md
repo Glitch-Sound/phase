@@ -162,7 +162,7 @@ WHEN BUILDでCLASS、ARMS、GEAR、各MUTATION、スキルまたはOPERATIONを�
 
 - **GIVEN** 同じ配置コードのCLASS、GEARまたはARMSの変異
 - **WHEN** 各候補を比較する
-- **THEN** CLASSは実際のCORE順と対応する5色の四角を候補ごとに示して右側の重複テキストを省き、変異は選んだ装備リングだけの順を示し、配分と他リングを変更しない
+- **THEN** CLASSは実際のCORE順と対応する5色の四角を候補ごとに示して右側の重複テキストを省き、変異も対象装備の実際の順と対応する5色の四角を候補ごとに示して冗長な順序と適用、操作の説明を省き、配分と他リングを変更しない
 
 #### Scenario: REQ-042-S04 - スキルと作戦の内容
 
@@ -181,7 +181,7 @@ WHEN BUILDでCLASS、ARMS、GEAR、各MUTATION、スキルまたはOPERATIONを�
 - **GIVEN** 英語と日本語のBUILD、CLASS、SKILL、OPERATIONとASSEMBLY
 - **WHEN** 各画面を表示する
 - **THEN** BUILDの再配分と装備比較、両陣営操作の補助文、CLASSとSKILLとOPERATIONの候補確定案内、ASSEMBLYの共有と同名の補助文を表示せず、空いた領域を詰めて必要な効果と操作を維持する
-- **AND** ARMSとGEARのピッカー本体と変異画面は変更しない
+- **AND** ARMSとGEARの装備本体のピッカーは変更しない
 
 ### Requirement: REQ-045 - COREの配置選択
 

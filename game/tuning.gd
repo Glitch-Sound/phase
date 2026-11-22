@@ -279,9 +279,12 @@ const ASSEMBLY_ACTION_Y := 388.0
 const OWNER_MARK_RADIUS := 6.0
 
 # 同じ操作行を分け、文字とスイッチの余白を確保して言語と配色の配置を維持する。
-const SETTINGS_MOTION_CHOICE := Rect2(36,205,280,46)
-const SETTINGS_SE_CHOICE := Rect2(344,205,162,46)
-# Languageは表示操作の行へ収め、配色の既存配置を維持する。
+const SETTINGS_SE_CHOICE := Rect2(36,205,162,46)
+# 配色は説明行と分離し、DISPLAYと同じ見出しの階層に揃える。
+const SETTINGS_COLOR_SHIFT := 30.0
+const SETTINGS_COLOR_HEADER_Y := 286.0+SETTINGS_COLOR_SHIFT
+const SETTINGS_HEADING_FONT := 14
+# Languageは表示操作の行へ収める。
 const SETTINGS_LANGUAGE_LABEL := Rect2(524,214,120,26)
 const SETTINGS_LANGUAGE_CHOICE := Rect2(652,205,372,44)
 const SETTINGS_LANGUAGE_NOTE := Rect2(36,254,988,26)

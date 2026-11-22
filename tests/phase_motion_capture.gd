@@ -54,15 +54,7 @@ func _capture(suffix: String) -> void:
 	game.palette_colors=game.P.PRESETS.AMBER.duplicate()
 	game._set_theme()
 	await _sample_motion("AMBER")
-	game.reduced_motion=true
-	await _snapshot("reduced-motion")
-	var stopped=game.preview_points.duplicate(true)
-	var stopped_time=game.clock
-	await create_timer(0.25).timeout
-	_check(game.clock==stopped_time and game.preview_points==stopped,"actual GPU frames freeze under reduced motion")
-	game.reduced_motion=false
-	await create_timer(0.25).timeout
-	_check(game.clock>stopped_time and game.preview_points!=stopped,"actual GPU frames resume")
+
 	game.battle.units=original
 	game.battle.path=route
 	game.palette_colors=palette

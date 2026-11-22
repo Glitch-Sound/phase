@@ -23,8 +23,8 @@ var result=""
 var samples: Array=[]
 var deltas: Array=[]
 
-## 表示を始める。battleは所有戦闘、beforeは確定前の行動者、pathは確定経路、via_cpuはCPUか、reducedは動きを抑える設定、attackは攻撃前の一拍を使うか。戻り値は開始可否。モデルは変更しない。
-func begin(battle: RefCounted, before: Dictionary, path: Array, via_cpu: bool=false, reduced: bool=false, attack: bool=false) -> bool:
+## 表示を始める。battleは所有戦闘、beforeは確定前の行動者、pathは確定経路、via_cpuはCPUか、attackは攻撃前の一拍を使うか。戻り値は開始可否。モデルは変更しない。
+func begin(battle: RefCounted, before: Dictionary, path: Array, via_cpu: bool=false, attack: bool=false) -> bool:
 	if active:return false
 	reset()
 	if path.is_empty() or battle.actor<0:return false
@@ -44,9 +44,9 @@ func begin(battle: RefCounted, before: Dictionary, path: Array, via_cpu: bool=fa
 			elif panel=="RESET":core_delta=fposmod(u.core_angle-samples.back().core_angle+180,360)-180
 		deltas.append([core_delta,-source.gear[3]*1.5*scale,source.arms[3]*1.5*scale])
 		samples.append(u)
-	duration=0.0 if reduced else minf(route.size()*T.MOVEMENT_CELL_SECONDS,T.MOVEMENT_MAX_SECONDS)
-	beat_duration=T.MOVEMENT_ATTACK_BEAT_SECONDS if attack and not reduced else 0.0
-	departure_duration=T.MOVEMENT_CLOUD_OUT_SECONDS if not reduced and not F.types(source).is_empty() else 0.0
+	duration=minf(route.size()*T.MOVEMENT_CELL_SECONDS,T.MOVEMENT_MAX_SECONDS)
+	beat_duration=T.MOVEMENT_ATTACK_BEAT_SECONDS if attack else 0.0
+	departure_duration=T.MOVEMENT_CLOUD_OUT_SECONDS if not F.types(source).is_empty() else 0.0
 	active=true
 	return true
 

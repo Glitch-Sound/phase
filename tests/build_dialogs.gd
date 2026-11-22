@@ -22,6 +22,7 @@ func _run() -> void:
 		await _dialogs()
 		await _keyboard()
 		await _class_selection()
+		await _mutation_selection()
 		await _presentation()
 		await _layout_alignment()
 	game.queue_free()
@@ -173,15 +174,15 @@ func _slot_switch() -> void:
 ## REQ-042-S03、REQ-042-S04、REQ-042-S06
 func _compact_content() -> void:
 	var guide="Select a candidate. Apply to confirm. Esc to cancel."
-	for kind in ["class_name","skill","operation","arms","gear"]:
+	for kind in ["class_name","arms_mutation","gear_mutation","skill","operation","arms","gear"]:
 		game._open_build_choice(kind);await process_frame;await process_frame
 		var d=game.build_dialog
 		var labels=d.find_children("*","Label",true,false).map(func(node):return node.text)
 		_check(labels.has(guide)==(kind in ["arms","gear"]),"only the specified selection guides are removed: "+kind)
-		if kind=="class_name":
+		if kind in ["class_name","arms_mutation","gear_mutation"]:
 			for row in [["VIRSL",[0,1,2,3,4]],["VLSRI",[0,4,3,2,1]]]:
-				var squares=d.row_buttons[row[0]].get_children().filter(func(node):return node is ColorRect)
-				_check(squares.map(func(node):return node.color)==row[1].map(func(i):return game.status_colors[i]),"five squares follow real CORE order and status colors: "+row[0])
+				var squares=d.row_buttons["NORMAL" if kind!="class_name" and row[0]=="VIRSL" else row[0]].get_children().filter(func(node):return node is ColorRect)
+				_check(squares.map(func(node):return node.color)==row[1].map(func(i):return game.status_colors[i]),"five squares follow the actual selected ring and status colors: "+kind+row[0])
 			_check(d.description.text.is_empty() and not d.row_buttons.values().any(func(b):return b.text.contains("CORE order") or b.text.contains(" > ")),"CLASS has no redundant order paragraphs")
 		elif kind=="skill":
 			game.dialog_rings=[];d.preview_area.queue_redraw();await process_frame;await process_frame
@@ -191,6 +192,23 @@ func _compact_content() -> void:
 	var text=game.assembly_dialog.find_children("*","Label",true,false).map(func(node):return node.text)
 	_check(not text.has("A shared crest and color for your units.") and not text.has("Names may repeat. Your ownership mark stays separate."),"ASSEMBLY omits the two specified paragraphs")
 	game._close_aux();await process_frame
+## REQ-042-S01、REQ-042-S03、REQ-042-S06
+func _mutation_selection() -> void:
+	var original=game.collection.snapshot()
+	if not game.collection.mutations.has("LSRIV"):game.collection.mutations.append("LSRIV")
+	for kind in ["arms_mutation","gear_mutation"]:
+		var before=game.collection.snapshot()
+		game._open_build_choice(kind);await process_frame
+		var d=game.build_dialog
+		_check(d.select_candidate("LSRIV") and game.collection.snapshot()==before and d.candidate_build[kind]=="LSRIV","mutation previews without applying: "+kind)
+		var squares=d.row_buttons["LSRIV"].get_children().filter(func(node):return node is ColorRect)
+		_check(squares.map(func(node):return node.color)==[4,3,2,1,0].map(func(i):return game.status_colors[i]),"mutation swatches follow the actual nonstandard order: "+kind)
+		d.cancel();await process_frame
+		_check(game.collection.snapshot()==before,"mutation cancel leaves all data unchanged: "+kind)
+		game._open_build_choice(kind);await process_frame;game.build_dialog.select_candidate("LSRIV");game.build_dialog.confirm();await process_frame
+		var expected=before.builds.duplicate(true);expected[game.edit_unit][kind]="LSRIV"
+		_check(game.collection.builds==expected,"mutation APPLY changes only its intended ring: "+kind)
+	game.collection.builds=original.builds.duplicate(true);game.collection.mutations=original.mutations.duplicate();game._build();await process_frame
 func _check(ok: bool,message: String) -> void:
 	checks+=1
 	if not ok:failures+=1;printerr("FAIL: ",message)

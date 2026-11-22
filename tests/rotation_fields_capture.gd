@@ -157,11 +157,7 @@ func _motion_observation() -> void:
 	await create_timer(1.5).timeout
 	await _shot("drift-2")
 	_check(game.clock>start and game.battle.units==before,"cloud moves over real time without changing game values")
-	game.reduced_motion=true
-	var frozen=game.clock
-	await create_timer(0.15).timeout
-	_check(game.clock==frozen and game.battle.units==before,"reduced motion freezes clouds without game changes")
-	game.reduced_motion=false
+
 	game.cpu_paused=false
 	var times=game.field_draw_times.duplicate()
 	times.sort()

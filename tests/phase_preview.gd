@@ -346,7 +346,7 @@ func _test_motion(visual) -> void:
 		energies.append(energy)
 	_check(energies[0]<energies[1] and energies[1]<energies[2],"actual low pair and full overlap increase multi-period result energy "+str(energies))
 	_check(before==C.unit("01","PLAYER",Vector2i.ZERO,C.default_build()),"motion never changes source data")
-## REQ-033-S02、REQ-033-S05、REQ-033-S06
+## REQ-033-S02、REQ-033-S05
 func _test_motion_ui() -> void:
 	var game=load("res://tests/phase_preview_audit.gd").new()
 	game.settings_path="res://artifacts/runtime/motion-no-settings-"+str(Time.get_ticks_usec())+".json"
@@ -363,15 +363,7 @@ func _test_motion_ui() -> void:
 		var generation=game.preview_generation
 		await create_timer(0.16).timeout
 		_check(game.preview_points!=points and game.preview_generation==generation,"time changes actual drawn points without rebuilding phase data")
-		game.reduced_motion=true
-		await create_timer(0.08).timeout
-		var stopped=game.preview_points.duplicate(true)
-		var stopped_time=game.clock
-		await create_timer(0.16).timeout
-		_check(game.clock==stopped_time and game.preview_points==stopped,"reduced motion freezes the current display frame")
-		game.reduced_motion=false
-		await create_timer(0.16).timeout
-		_check(game.clock>stopped_time and game.preview_points!=stopped,"motion resumes from the stopped time")
+
 		_check(game.battle.units==units and game.battle.path==route and game.battle.turn==turn,"thinking time never changes actual phase turn or route")
 	game.queue_free()
 	await process_frame

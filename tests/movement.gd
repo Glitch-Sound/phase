@@ -71,8 +71,6 @@ func _boundaries() -> void:
 	p.advance(b,NAN,false)
 	_check(p.position()==initial and p.elapsed==0,"pause and invalid delta accumulate no time")
 	_check(p.advance(b,p.duration/4+0.000001,false,4)=="arrived","CPU fast speed only shortens display time")
-	p.begin(b,source,[Vector2i(4,4)],false,true)
-	_check(p.advance(b,0,false)=="arrived" and not p.active,"reduced motion completes without a hold")
 	p.begin(b,source,[Vector2i(4,4)])
 	b.turn+=1
 	_check(p.advance(b,100,false)=="cancel" and not p.active,"stale turn cancels old work")
@@ -113,7 +111,7 @@ func _attack_beat() -> void:
 	_check(p.get("beat_duration")!=null,"movement owns a bounded attack preparation beat")
 	if p.get("beat_duration")==null:return
 	var beat=tuning.get_script_constant_map().get("MOVEMENT_ATTACK_BEAT_SECONDS",0)
-	p.begin(b,before,route,false,false,true)
+	p.begin(b,before,route,false,true)
 	_check(p.beat_duration==beat and beat>0,"requested attack uses the configured preparation time")
 	var state=[b.units.duplicate(true),b.history.duplicate(),b.turn]
 	_check(p.advance(b,p.duration,false)=="landed" and p.active and p.landed and p.position()==Vector2(4,4) and p.unit()==b.units[0],"landing holds the exact final state before completion")
@@ -122,20 +120,18 @@ func _attack_beat() -> void:
 	p.advance(b,beat/8,false,4)
 	_check(p.active and is_equal_approx(p.beat_elapsed,beat/2),"fast playback also accelerates the beat")
 	_check(p.advance(b,beat/8+0.000001,false,4)=="arrived" and not p.active and p.advance(b,100,false)=="","attack preparation completes exactly once")
-	p.begin(b,before,route,false,false,true);p.advance(b,p.duration+beat/2,false)
+	p.begin(b,before,route,false,true);p.advance(b,p.duration+beat/2,false)
 	_check(p.landed and is_equal_approx(p.beat_elapsed,beat/2),"time crossing the landing boundary carries into the beat")
 	b.turn+=1
 	_check(p.advance(b,100,false)=="cancel" and not p.active,"changed turn cancels a landed pending action")
-	p.begin(b,before,route,false,true,true)
-	_check(p.beat_duration==0 and p.advance(b,0,false)=="arrived","reduced motion adds no preparation hold")
-	_check(not p.begin(b,before,[],false,false,true),"zero-step movement adds no preparation hold")
+	_check(not p.begin(b,before,[],false,true),"zero-step movement adds no preparation hold")
 ## REQ-018-S08、REQ-046-S01、REQ-046-S02、REQ-046-S03
 func _cloud_fade() -> void:
 	var b=_battle();var source=b.units[0].duplicate(true);source.skills=[C.FIELD_SLOW]
 	var p=factory.new()
 	_check(p.has_method("cloud_alpha"),"movement exposes only its own cloud visibility")
 	if not p.has_method("cloud_alpha"):return
-	p.begin(b,source,[Vector2i(4,4)],false,false,true)
+	p.begin(b,source,[Vector2i(4,4)],false,true)
 	var fade=tuning.MOVEMENT_CLOUD_OUT_SECONDS
 	_check(p.cloud_alpha(source)==1 and p.position()==Vector2(source.pos),"cloud starts visible at the original position")
 	p.advance(b,fade/2,false)
@@ -154,8 +150,6 @@ func _cloud_fade() -> void:
 	_check(p.cloud_alpha(source)==1,"nonblocking reveal completes after nonattack")
 	p.reset();p.begin(b,source,[])
 	_check(p.cloud_alpha(source)==1,"zero steps and reset never leave a hidden cloud")
-	p.begin(b,source,[Vector2i(4,4)],false,true,true);p.advance(b,0,false)
-	_check(not p.active and p.cloud_alpha(source)==1,"reduced motion skips all cloud fading")
 func _check(ok: bool,note: String) -> void:
 	checks+=1
 	if not ok:failures+=1;printerr("FAIL: ",note)

@@ -38,11 +38,11 @@ func locale() -> String:
 ## 説明の対訳を返す。sourceは明示された説明の英語原文。戻り値は選択言語の文、未知の文は原文。名称や状態を変更しない。
 func text(source: String) -> String:
 	if locale()=="en" or source.is_empty():return source
-	if COPY.has(source):return COPY[source]
+	if COPY.has(source):return _japanese(COPY[source])
 	if _formats.is_empty():_prepare_formats()
 	var lines=[]
 	for line in source.split("\n"):
-		if COPY.has(line):lines.append(COPY[line]);continue
+		if COPY.has(line):lines.append(_japanese(COPY[line]));continue
 		var translated=line
 		for row in _formats:
 			var matched=row.regex.search(line)
@@ -51,9 +51,13 @@ func text(source: String) -> String:
 			for i in range(row.types.size()):
 				var captured=matched.get_string(i+1)
 				values.append(int(captured) if row.types[i]=="d" else (float(captured) if row.types[i]=="f" else captured))
-			translated=row.target % values;break
+			translated=_japanese(row.target) % values;break
 		lines.append(translated)
 	return "\n".join(lines)
+
+static func _japanese(template: String) -> String:
+	# 入力値を代入する前の対訳だけを整える。名前や原文へ置換を広げない。
+	return "\n".join(template.replace("。","\n").split("\n",false))
 
 func _prepare_formats() -> void:
 	# 登録したprintfの書式だけを認識する。任意の部分置換や入力名の翻訳は行わない。

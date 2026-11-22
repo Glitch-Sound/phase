@@ -71,9 +71,6 @@ func _manual() -> void:
 	_check(game.battle.history.size()==2,"no queued final confirmation can replay the action")
 	game._start_battle();_commit();game._wait_action();game._confirm_plan();game._restart();game._movement_tick(100)
 	_check(game.build_open and not game.movement.active and game.playback_command.is_empty() and not game.planning.active(),"restart discards pending action and arrival")
-	game.reduced_motion=true;game._start_battle();_commit();game._wait_action();game._confirm_plan()
-	_check(not game.movement.active and not is_instance_valid(game.overlay) and game.battle.turn==2,"reduced motion commits and acts immediately once")
-	game.reduced_motion=false
 	game._start_battle();_commit();game._wait_action();game._confirm_plan();game._movement_tick(game.movement.duration)
 	_check(not game.movement.active and game.battle.turn==2,"normal WAIT gains no post-move beat")
 	game._start_battle();_commit();game._wait_action();game._confirm_plan()

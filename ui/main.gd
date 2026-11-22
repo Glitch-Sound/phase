@@ -97,7 +97,8 @@ var edit_unit := 0
 var build_open := true
 var clock := 0.0
 var redraw_elapsed := 0.0
-var reduced_motion := false
+var display_buttons: Dictionary={}
+var display_mode=-1
 var message := ""
 var message_time := 0.0
 var toasts: Array=[]
@@ -207,7 +208,8 @@ func _process(delta: float) -> void:
 	_follow_turn()
 	panel_probe.visible=not build_open
 	_update_panel_hint()
-	clock+=delta if not reduced_motion else 0.0
+	clock+=delta
+	_sync_display_mode()
 	message_time=maxf(0,message_time-delta)
 	notice.visible=message_time>0 and build_open
 	for t in toasts:
@@ -229,11 +231,12 @@ func _draw() -> void:
 	_draw_info()
 	_draw_preview()
 	if message_time>0 and not build_open:
-		_text(_explain(message),T.BATTLE_MESSAGE_POSITION,18,CYAN)
+		var shown=_explain(message)
+		_text(shown,T.BATTLE_MESSAGE_POSITION-Vector2(0,shown.count("\n")*font.get_height(18)),18,CYAN)
 	for t in toasts:
 		var color: Color=t.color
 		color.a=clampf((2.4-t.age)/0.7,0,1)
-		var p: Vector2=_board_point(t.cell,Vector2(35,3-(t.age*24 if not reduced_motion else 0)))
+		var p: Vector2=_board_point(t.cell,Vector2(35,3-t.age*24))
 		_center(t.text,p,24,color,mono)
 
 func _assembly_rows() -> Array:
@@ -733,7 +736,7 @@ func _begin_movement(before: Dictionary, route: Array, via_cpu: bool) -> void:
 	hover_cell=Vector2i(-1,-1)
 	_clear_overlay()
 	var attack=battle.result.is_empty() and C.SKILLS.get(playback_command.get("skill",""),{}).get("effect","")=="DAMAGE"
-	if movement.begin(battle,before,route,via_cpu,reduced_motion,attack):
+	if movement.begin(battle,before,route,via_cpu,attack):
 		_hud()
 		_movement_tick(0)
 	else:
@@ -828,7 +831,7 @@ func _feedback() -> void:
 	if e.kind in ["SWAP","PUSH"]:
 		toasts.append({"cell":u.pos,"text":e.kind,"color":CYAN,"age":0.0})
 		return
-	if e.kind in ["DAMAGE","HEAL"] and not reduced_motion:
+	if e.kind in ["DAMAGE","HEAL"]:
 		var gain_to=clampf(u.hp/maxf(1.0,u.max_hp),0,1)
 		var gain_from=clampf((u.hp-e.actual)/maxf(1.0,u.max_hp),0,1) if e.kind=="HEAL" else gain_to
 		convergences.append({"cell":u.pos,"age":0.0,"owner":battle,"kind":e.kind,"target":e.target,"gain_from":gain_from,"gain_to":gain_to})
@@ -838,7 +841,7 @@ func _feedback() -> void:
 		toasts.append({"cell":u.pos,"text":"DEFEATED","color":status_colors[1],"age":-0.65})
 
 func _advance_convergence(delta: float) -> void:
-	if build_open or reduced_motion or not window_focused or is_instance_valid(auxiliary):
+	if build_open or not window_focused or is_instance_valid(auxiliary):
 		convergences=[];return
 	if not is_finite(delta) or delta<0:return
 	for pulse in convergences:pulse.age+=delta
@@ -1154,14 +1157,13 @@ func _toggle_debug(enabled: bool) -> bool:
 		if not build_open:return false
 		var sandbox=debug_session.begin(collection)
 		if sandbox==null:return false
-		debug_ui_state={"palette":palette_colors.duplicate(),"motion":reduced_motion,"sound":sfx.enabled,"language":copy_language.selection,"unit":edit_unit,"cpu":cpu_enabled,"fast":cpu_fast,"loot":loot_rng.state,"panels":panel_rng.state,"last_seed":last_panel_seed}
+		debug_ui_state={"palette":palette_colors.duplicate(),"sound":sfx.enabled,"language":copy_language.selection,"unit":edit_unit,"cpu":cpu_enabled,"fast":cpu_fast,"loot":loot_rng.state,"panels":panel_rng.state,"last_seed":last_panel_seed}
 		collection=sandbox
 		edit_unit=0
 	else:
 		if not debug_session.active():return false
 		collection=debug_session.end()
 		palette_colors=debug_ui_state.palette
-		reduced_motion=debug_ui_state.motion
 		sfx.enabled=debug_ui_state.sound
 		copy_language.selection=debug_ui_state.language
 		notice.text=_explain(message)
@@ -1438,16 +1440,10 @@ func _settings() -> void:
 	_close_aux()
 	var panel=_modal(Rect2(430,135,1060,810),true)
 	_label(panel,"SETTINGS",Rect2(36,25,960,48),32,WHITE)
-	_label(panel,"DISPLAY",Rect2(36,98,400,28),14,MUTED)
-	_button(panel,"WINDOWED",Rect2(36,138,470,48),func():DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED))
-	_button(panel,"FULLSCREEN",Rect2(524,138,500,48),func():DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN))
-	var check=CheckButton.new()
-	check.text="REDUCED MOTION"
-	check.position=T.SETTINGS_MOTION_CHOICE.position
-	check.size=T.SETTINGS_MOTION_CHOICE.size
-	check.button_pressed=reduced_motion
-	check.toggled.connect(func(value):reduced_motion=value)
-	panel.add_child(check)
+	_label(panel,"DISPLAY",Rect2(36,98,400,28),T.SETTINGS_HEADING_FONT,MUTED)
+	display_buttons.clear();display_mode=-1
+	for mode in [DisplayServer.WINDOW_MODE_WINDOWED,DisplayServer.WINDOW_MODE_FULLSCREEN]:
+		display_buttons[mode]=_button(panel,"WINDOWED" if mode==DisplayServer.WINDOW_MODE_WINDOWED else "FULLSCREEN",Rect2(36 if mode==DisplayServer.WINDOW_MODE_WINDOWED else 524,138,470 if mode==DisplayServer.WINDOW_MODE_WINDOWED else 500,48),func():DisplayServer.window_set_mode(mode))
 	se_selector=CheckButton.new();se_selector.name="SE"
 	se_selector.position=T.SETTINGS_SE_CHOICE.position;se_selector.size=T.SETTINGS_SE_CHOICE.size
 	se_selector.text="SE ON" if sfx.enabled else "SE OFF";se_selector.button_pressed=sfx.enabled
@@ -1464,18 +1460,18 @@ func _settings() -> void:
 	language_selector.item_selected.connect(func(index):_change_language(LANGUAGE.CHOICES[index]))
 	panel.add_child(language_selector)
 	language_note=_prose_label(panel,"Descriptions only. Names and labels stay unchanged.",T.SETTINGS_LANGUAGE_NOTE,13,MUTED)
-	_label(panel,"COLOR / ACCENT + FIVE SIGNALS",Rect2(36,286,988,28),16,MUTED)
+	_label(panel,"COLOR / ACCENT + FIVE SIGNALS",Rect2(36,T.SETTINGS_COLOR_HEADER_Y,988,28),T.SETTINGS_HEADING_FONT,MUTED)
 	var presets=P.PRESETS.keys()
 	for i in range(presets.size()):
 		var preset: String=presets[i]
-		_button(panel,preset,Rect2(36+i*332,335,316,44),func():
+		_button(panel,preset,Rect2(36+i*332,335+T.SETTINGS_COLOR_SHIFT,316,44),func():
 			for k in range(6):
 				palette_pickers[k].color=P.PRESETS[preset][k])
 	palette_pickers=[]
 	for i in range(6):
-		_label(panel,["ACCENT","VIT","INF","RES","SPD","LUK"][i],Rect2(36+i*166,422,150,28),16,WHITE)
+		_label(panel,["ACCENT","VIT","INF","RES","SPD","LUK"][i],Rect2(36+i*166,422+T.SETTINGS_COLOR_SHIFT,150,28),16,WHITE)
 		var picker=ColorPickerButton.new()
-		picker.position=Vector2(36+i*166,464)
+		picker.position=Vector2(36+i*166,464+T.SETTINGS_COLOR_SHIFT)
 		picker.size=Vector2(150,64)
 		picker.color=palette_colors[i]
 		picker.edit_alpha=false
@@ -1487,8 +1483,8 @@ func _settings() -> void:
 		editor.sliders_visible=false
 		editor.presets_visible=false
 		palette_pickers.append(picker)
-	_prose_label(panel,"RINGS: VIVID PRESETS / CUSTOM COLORS AS CHOSEN",Rect2(36,558,988,30),15,MUTED)
-	palette_error=_label(panel,"",Rect2(36,600,988,52),17,status_colors[1])
+	_prose_label(panel,"RINGS: VIVID PRESETS / CUSTOM COLORS AS CHOSEN",Rect2(36,558+T.SETTINGS_COLOR_SHIFT,988,30),15,MUTED)
+	palette_error=_label(panel,"",Rect2(36,600+T.SETTINGS_COLOR_SHIFT,988,52),17,status_colors[1])
 	for item in [["APPLY COLORS",Rect2(36,676,988,48),_apply_colors,"check"],["CLOSE / ESC",Rect2(36,742,988,42),_close_aux,"close"]]:
 		var button=_button(panel,item[0],item[1],item[2],item[3])
 		button.alignment=HORIZONTAL_ALIGNMENT_CENTER
@@ -1500,6 +1496,30 @@ func _settings() -> void:
 			var style=button.get_theme_stylebox(state).duplicate()
 			style.content_margin_left=padding;style.content_margin_right=padding
 			button.add_theme_stylebox_override(state,style)
+	_sync_display_mode()
+
+func _sync_display_mode() -> void:
+	if not is_instance_valid(auxiliary) or display_buttons.is_empty():return
+	var actual=DisplayServer.window_get_mode()
+	var mode=DisplayServer.WINDOW_MODE_FULLSCREEN if actual in [DisplayServer.WINDOW_MODE_FULLSCREEN,DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN] else DisplayServer.WINDOW_MODE_WINDOWED
+	if display_mode==mode:return
+	display_mode=mode
+	for key in display_buttons:
+		var button=display_buttons[key]
+		if not is_instance_valid(button):continue
+		button.icon=ICONS.check if key==mode else null
+		button.expand_icon=true;button.add_theme_constant_override("icon_max_width",16);button.add_theme_constant_override("h_separation",9)
+		for state in ["normal","hover","pressed","focus","disabled"]:button.remove_theme_stylebox_override(state)
+		if key==mode:
+			var content_width=button.get_theme_font("font").get_string_size(button.text,HORIZONTAL_ALIGNMENT_LEFT,-1,button.get_theme_font_size("font_size")).x+button.get_theme_constant("icon_max_width")+button.get_theme_constant("h_separation")
+			var padding=maxf(0,(button.size.x-content_width)/2)
+			for state in ["normal","hover","pressed","focus","disabled"]:
+				var style=button.get_theme_stylebox(state).duplicate();style.content_margin_left=padding;style.content_margin_right=padding
+				if state=="normal":style.border_color=CYAN;style.border_width_bottom=T.UI_FOCUS_LINE
+				button.add_theme_stylebox_override(state,style)
+			button.add_theme_color_override("font_color",CYAN)
+		else:
+			button.remove_theme_stylebox_override("normal");button.remove_theme_color_override("font_color")
 
 func _apply_colors() -> void:
 	var colors=[]
@@ -1858,7 +1878,10 @@ func _panel(rect: Rect2) -> void:
 	draw_line(rect.position,Vector2(rect.end.x,rect.position.y),EDGE,1)
 
 func _text(text: String, position_px: Vector2, font_size: int, color: Color=WHITE, typeface: Font=null) -> void:
-	draw_string(font if typeface==null else typeface,position_px,text,HORIZONTAL_ALIGNMENT_LEFT,-1,font_size,color)
+	var face=font if typeface==null else typeface
+	var lines=text.split("\n")
+	for i in range(lines.size()):
+		draw_string(face,position_px+Vector2(0,i*face.get_height(font_size)),lines[i],HORIZONTAL_ALIGNMENT_LEFT,-1,font_size,color)
 
 func _center(text: String, position_px: Vector2, font_size: int, color: Color=WHITE, typeface: Font=null) -> void:
 	var f=font if typeface==null else typeface
