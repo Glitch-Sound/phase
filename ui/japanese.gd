@@ -1,6 +1,8 @@
 ## 人が読む説明だけの日本語対訳。名称と入力値は翻訳しない。
 extends RefCounted
 const TEXT = {
+	"New equipment unlocked.":"新しい装備を解放",
+	"SAVED / This page session only.":"SAVED / このページ内だけ保持",
 	"ENEMY CPU controls the enemy; OFF lets you play both sides.": "ENEMY CPUで敵を自動操作、OFFなら両陣営を操作。",
 	"Check OPERATION in BUILD for the win condition.": "勝利条件はBUILDのOPERATIONで確認。",
 	"Click empty cells up, down, left or right.": "空きマスを上下左右につなぐ。",

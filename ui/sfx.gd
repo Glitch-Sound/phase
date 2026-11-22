@@ -1,5 +1,6 @@
 ## 実ボタンの生成音と確定移動、実HP変化、撃破の余韻を扱う。
 extends Node
+const STORE=preload("res://game/storage.gd")
 const T=preload("res://game/tuning.gd")
 const SOURCES={
 	"ring_rotate1":preload("res://assets/sfx/ring_rotate1.ogg"),
@@ -27,21 +28,15 @@ var _button_root: WeakRef
 
 ## 保存した音の有効値を読む。pathは音専用の設定。戻り値はboolで、未指定と不明はON。ファイルを変更しない。
 static func read_enabled(path: String) -> bool:
-	if not FileAccess.file_exists(path):return true
+	if not STORE.exists(path):return true
 	var parser=JSON.new()
-	if parser.parse(FileAccess.get_file_as_string(path))!=OK or not parser.data is Dictionary:return true
+	if parser.parse(STORE.read_text(path).text)!=OK or not parser.data is Dictionary:return true
 	var value=parser.data.get("enabled",true)
 	return value if value is bool else true
 
 ## 音の明示選択を保存する。pathは音専用の保存先、valueは有効値。戻り値は正常時空文字、それ以外は説明。既存設定を退避して置換する。
 static func write_enabled(path: String,value: bool) -> String:
-	if DirAccess.make_dir_recursive_absolute(path.get_base_dir())!=OK:return "Could not create sound settings directory."
-	var file=FileAccess.open(path+".tmp",FileAccess.WRITE)
-	if file==null:return "Could not save sound settings."
-	file.store_string(JSON.stringify({"enabled":value}));file.close()
-	if FileAccess.file_exists(path) and DirAccess.copy_absolute(path,path+".backup-"+str(Time.get_ticks_usec()))!=OK:return "Could not back up sound settings."
-	if DirAccess.rename_absolute(path+".tmp",path)!=OK:return "Could not replace sound settings."
-	return ""
+	return STORE.write_text(path,JSON.stringify({"enabled":value})).error
 
 func _ready() -> void:
 	for key in SOURCES:

@@ -5,6 +5,7 @@ const A=preload("res://game/assembly_identity.gd")
 const C = preload("res://game/catalog.gd")
 const M = preload("res://game/phase_math.gd")
 const T = preload("res://game/tuning.gd")
+const S = preload("res://game/storage.gd")
 var items: Dictionary={"ARMS":{},"GEAR":{}}
 var mutations: Array=["NORMAL"]
 var skills: Array=[C.DAMAGE,C.HEAL]
@@ -23,6 +24,28 @@ func _init() -> void:
 		for stats in C.STARTER_STATS:
 			items[kind][C.serial(kind,stats)]=stats.duplicate()
 	builds=C.player_builds()
+
+## 初回の追加装備を開放する。rngは専用乱数、candidatesはカタログ配分。固定品を維持し各能力が単独最大の群から選び、足りない場合だけ残りで補う。戻り値は追加したkindとstatsの独立した配列。
+func unlock_starters(rng: RandomNumberGenerator,candidates: Array=C.equipment_catalog()) -> Array:
+	var result=[]
+	for kind in ["ARMS","GEAR"]:
+		var pool={}
+		for stats in candidates:
+			var key=C.serial(kind,stats)
+			if not items[kind].has(key):pool[key]=stats
+		var chosen=[]
+		for axis in range(5):
+			var group=pool.keys().filter(func(key):return pool[key].count(pool[key].max())==1 and pool[key][axis]==pool[key].max())
+			if group.is_empty():continue
+			var key=group[rng.randi_range(0,group.size()-1)]
+			chosen.append(pool[key]);pool.erase(key)
+		while chosen.size()<5 and not pool.is_empty():
+			var key=pool.keys()[rng.randi_range(0,pool.size()-1)]
+			chosen.append(pool[key]);pool.erase(key)
+		for stats in chosen:
+			items[kind][C.serial(kind,stats)]=stats.duplicate()
+			result.append({"kind":kind,"stats":stats.duplicate()})
+	return result
 
 ## ビルドを検証する。buildは候補、inventoryは検証用開放状態で空なら現状態。戻り値は適否。
 func valid_build(build: Variant, inventory: Dictionary={}) -> bool:
@@ -123,41 +146,17 @@ func save_to(path: String) -> String:
 	var error=_validate_snapshot(data)
 	if not error.is_empty():
 		return error
-	var absolute=ProjectSettings.globalize_path(path)
-	if DirAccess.make_dir_recursive_absolute(absolute.get_base_dir())!=OK:
-		return "Cannot create save directory."
-	var suffix=".%d-%d" % [int(Time.get_unix_time_from_system()),Time.get_ticks_usec()]
-	var temporary=absolute+suffix+".tmp"
-	var f=FileAccess.open(temporary,FileAccess.WRITE)
-	if f==null:
-		return "Cannot write save file."
-	f.store_string(JSON.stringify(data,"\t"))
-	f.flush()
-	var write_error=f.get_error()
-	f.close()
-	if write_error!=OK:
-		return "Save write failed. Original is preserved."
-	if FileAccess.file_exists(absolute):
-		last_backup=absolute+suffix+".backup.json"
-		if DirAccess.copy_absolute(absolute,last_backup)!=OK:
-			return "Backup failed. Original is preserved."
-	if DirAccess.rename_absolute(temporary,absolute)!=OK:
-		return "Cannot replace save. Original or backup is preserved."
-	return ""
+	var stored=S.write_text(path,JSON.stringify(data,"\t"))
+	if not stored.backup.is_empty():last_backup=stored.backup
+	return stored.error
 
 ## 状態を読み込む。pathは候補ファイル。戻り値は成功時空文字、失敗時説明。検証成功後にだけ現在データを更新する。
 func load_from(path: String) -> String:
 	if temporary:return "DEBUG / NOT SAVED"
-	if not FileAccess.file_exists(path):
-		return "No saved build. Use SAVE first."
-	var f=FileAccess.open(path,FileAccess.READ)
-	if f==null:
-		return "Cannot read save."
-	if f.get_length()>8*1024*1024:
-		return "Save is too large. Current build is preserved."
+	var stored=S.read_text(path,8*1024*1024)
+	if not stored.error.is_empty():return stored.error
 	var parser=JSON.new()
-	var status=parser.parse(f.get_as_text())
-	f.close()
+	var status=parser.parse(stored.text)
 	if status!=OK:
 		return "Invalid JSON. Current build is preserved."
 	var error=_validate_snapshot(parser.data)

@@ -1,5 +1,6 @@
 ## 黒い計測面の配色、判読性検証、独立した表示設定を扱う。
 extends RefCounted
+const STORE=preload("res://game/storage.gd")
 const T=preload("res://game/tuning.gd")
 const BG=Color("040506")
 const SURFACE=Color("090b0e")
@@ -49,10 +50,10 @@ static func validate(colors: Array) -> String:
 
 ## 設定を読む。pathは独立設定のパス。戻り値は有効な6色、不正時既定値。副作用なし。
 static func load_from(path: String) -> Array:
-	if not FileAccess.file_exists(path):
+	if not STORE.exists(path):
 		return PRESETS.DEFAULT.duplicate()
 	var parser=JSON.new()
-	if parser.parse(FileAccess.get_file_as_string(path))!=OK:
+	if parser.parse(STORE.read_text(path).text)!=OK:
 		return PRESETS.DEFAULT.duplicate()
 	var data=parser.data
 	if not data is Array or data.size()!=6:
@@ -69,22 +70,9 @@ static func save_to(path: String, colors: Array) -> String:
 	var error=validate(colors)
 	if not error.is_empty():
 		return error
-	var temp=path+".tmp"
-	var file=FileAccess.open(temp,FileAccess.WRITE)
-	if file==null:
-		return "Could not write color settings."
 	var data=[]
-	for color in colors:
-		data.append(color.to_html(false))
-	file.store_string(JSON.stringify(data))
-	file.close()
-	if FileAccess.file_exists(path):
-		var backup=path+".backup-"+str(Time.get_unix_time_from_system()).replace(".","-")
-		if DirAccess.copy_absolute(path,backup)!=OK:
-			return "Could not back up previous color settings."
-	if DirAccess.rename_absolute(temp,path)!=OK:
-		return "Could not replace color settings."
-	return ""
+	for color in colors:data.append(color.to_html(false))
+	return STORE.write_text(path,JSON.stringify(data)).error
 
 static func _contrast(a: Color,b: Color) -> float:
 	return (_luminance(a)+0.05)/(_luminance(b)+0.05)

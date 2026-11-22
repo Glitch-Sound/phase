@@ -1,5 +1,6 @@
 ## 説明文の言語と独立設定を扱い、ゲームの名称と状態を変更しない。
 extends RefCounted
+const STORE=preload("res://game/storage.gd")
 const COPY=preload("res://ui/japanese.gd").TEXT
 const CHOICES=["system","en","ja"]
 var selection="system"
@@ -13,9 +14,9 @@ static func resolve(value: Variant,preferred: String) -> String:
 
 ## 設定を読む。pathは言語専用のパス。戻り値はsystem、en、ja。不明と破損はsystemで、書込は行わない。
 static func read_from(path: String) -> String:
-	if not FileAccess.file_exists(path):return "system"
+	if not STORE.exists(path):return "system"
 	var parser=JSON.new()
-	if parser.parse(FileAccess.get_file_as_string(path))!=OK:return "system"
+	if parser.parse(STORE.read_text(path).text)!=OK:return "system"
 	var value=parser.data
 	if not value is Dictionary:return "system"
 	var choice=value.get("language","system")
@@ -23,13 +24,7 @@ static func read_from(path: String) -> String:
 
 ## 明示設定を保存する。pathは保存先、valueは選択値。戻り値はエラー、正常時空文字。一時書込と退避以外のファイルを変更しない。
 static func write_to(path: String,value: String) -> String:
-	if DirAccess.make_dir_recursive_absolute(path.get_base_dir())!=OK:return "Could not create language settings directory."
-	var file=FileAccess.open(path+".tmp",FileAccess.WRITE)
-	if file==null:return "Could not save language settings."
-	file.store_string(JSON.stringify({"language":value if CHOICES.has(value) else "system"}));file.close()
-	if FileAccess.file_exists(path) and DirAccess.copy_absolute(path,path+".backup-"+str(Time.get_ticks_usec()))!=OK:return "Could not back up language settings."
-	if DirAccess.rename_absolute(path+".tmp",path)!=OK:return "Could not replace language settings."
-	return ""
+	return STORE.write_text(path,JSON.stringify({"language":value if CHOICES.has(value) else "system"})).error
 
 ## 現在の表示言語を返す。戻り値はenかja。副作用なし。
 func locale() -> String:

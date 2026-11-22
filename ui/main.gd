@@ -9,6 +9,8 @@ const B = preload("res://game/battle.gd")
 const F = preload("res://game/rotation_field.gd")
 const TL = preload("res://ui/timeline.gd")
 const L = preload("res://game/collection.gd")
+const PROFILE=preload("res://game/profile.gd")
+const STORE=preload("res://game/storage.gd")
 const DEBUG_SESSION = preload("res://game/debug_session.gd")
 const BUILD_CHOICES = preload("res://game/build_choices.gd")
 const BUILD_DIALOG = preload("res://ui/build_dialog.gd")
@@ -76,6 +78,8 @@ const BOARD_SCALE = CELL/70.0
 const SAVE_PATH = "res://artifacts/runtime/phase-save.json"
 # 検証では実ユーザー保存へ触れず、専用の保存先を注入する。
 var save_path=SAVE_PATH
+# アプリ起動だけで初回保存を開く。埋め込むUI検査は明示的に起動を注入できる。
+var profile_startup: Variant=null
 var battle=B.new()
 var collection=L.new()
 var debug_session=DEBUG_SESSION.new()
@@ -147,6 +151,12 @@ var cpu_memory: Array=[]
 var followed_turn: Array=[]
 
 func _ready() -> void:
+	var profile_error=""
+	var use_profile=get_tree().current_scene==self if profile_startup==null else bool(profile_startup)
+	if use_profile:
+		var rng=RandomNumberGenerator.new();rng.randomize()
+		var opened=PROFILE.open_profile(save_path,rng)
+		collection=opened.collection;profile_error=opened.error
 	RenderingServer.frame_post_draw.connect(_after_plan_draw)
 	sfx=SFX.new();sfx.enabled=SFX.read_enabled(settings_path+".audio.json");add_child(sfx);sfx.bind_buttons(self)
 	get_window().focus_exited.connect(_window_focus_exited)
@@ -161,7 +171,7 @@ func _ready() -> void:
 	copy_language.preferred_locale=TranslationServer.get_locale() if preferred_locale_override==null else str(preferred_locale_override)
 	copy_language.selection=LANGUAGE.read_from(settings_path+".language.json")
 	palette_colors=P.load_from(settings_path)
-	if not _display_embedded() and DisplayServer.get_name()!="headless" and FileAccess.file_exists(settings_path+".display.json"):
+	if not _display_embedded() and DisplayServer.get_name()!="headless" and STORE.exists(settings_path+".display.json"):
 		var restored=DISPLAY_SETTINGS.read_from(settings_path+".display.json")
 		display_settings.restore(restored);get_window().mode=restored
 	_set_theme()
@@ -209,6 +219,10 @@ func _ready() -> void:
 	battle.start(collection.stage_index,collection.builds,0,collection.unit_names)
 	_hud()
 	_build()
+	if use_profile:
+		var unlocks=PROFILE.take_unlocks(save_path)
+		if not unlocks.is_empty():_starter_unlocks(unlocks)
+	if not profile_error.is_empty():_notify(profile_error)
 
 func _process(delta: float) -> void:
 	if debug_session.active() and not debug_session.available():_toggle_debug(false)
@@ -1410,6 +1424,29 @@ func _result() -> void:
 		y+=91
 	_button(panel,"RETURN TO BUILD",Rect2(40,440,780,54),_build)
 
+func _starter_unlocks(unlocks: Array) -> void:
+	_close_aux()
+	var panel=_modal(T.STARTER_UNLOCK_RECT,true)
+	auxiliary.set_meta("starter_unlocks",unlocks.duplicate(true))
+	_icon(panel,"check",Rect2(40,42,40,40),CYAN)
+	_label(panel,"ARCHIVE / NEW SIGNALS",Rect2(100,35,980,58),32,WHITE)
+	_prose_label(panel,"New equipment unlocked.",Rect2(40,108,1040,30),18,MUTED)
+	for category in range(2):
+		var kind="ARMS" if category==0 else "GEAR"
+		var x=40+category*540
+		_icon(panel,kind.to_lower(),Rect2(x,153,22,22),MUTED)
+		_label(panel,kind,Rect2(x+34,148,460,30),18,MUTED)
+		var row=0
+		for drop in unlocks:
+			if drop.kind!=kind:continue
+			var y=196+row*T.STARTER_UNLOCK_ROW_HEIGHT
+			_label(panel,C.serial(kind,drop.stats),Rect2(x,y,500,30),20,CYAN)
+			var values=[]
+			for i in range(5):values.append("%s %d" % [["VIT","INF","RES","SPD","LUK"][i],drop.stats[i]])
+			_label(panel," / ".join(values),Rect2(x,y+32,500,28),15,MUTED)
+			row+=1
+	_button(panel,"CLOSE / ESC",Rect2(40,686,1040,54),_close_aux)
+
 func _help() -> void:
 	_close_aux()
 	var panel=_modal(Rect2(400,135,1120,810),true)
@@ -1790,7 +1827,8 @@ func _cpu_tick(delta: float) -> void:
 
 func _save() -> void:
 	var error=collection.save_to(save_path)
-	_notify("SAVED / Previous save is backed up." if error.is_empty() else error)
+	var success="SAVED / This page session only." if STORE.in_memory() else "SAVED / Previous save is backed up."
+	_notify(success if error.is_empty() else error)
 
 func _load() -> void:
 	var error=collection.load_from(save_path)

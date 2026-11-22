@@ -24,7 +24,10 @@
 モデルから画面へ依存しない。
 game/spawn_layout.gdが開始位置と可能な範囲を生成し、battleが実位置を確定してからgame/panel_layout.gdで開始セルを除外する。\
 OPERATIONの概要図は固定位置の代わりに同じ開始可能領域を使う。
-ビルドと収集の保存をgame/collection.gdに集約する。\
+ビルドと収集の検証付き保存をgame/collection.gdに集約する。\
+アプリ起動の既存復元と初回抽選をgame/profile.gd、通常ファイルとWebメモリの共通入出力をgame/storage.gdへ分離する。\
+初回の解放通知はセッションで一度消費し、ui/main.gdのBUILD上へカテゴリ別に表示する。\
+Web Sessionのexport_presets.cfgはweb/session.htmlを使い、エンジン初期化前に永続パスとservice workerを無効にする。\
 構成候補と可否、原本から独立したプレビューはgame/build_choices.gd、共通の選択画面はui/build_dialog.gdへ置く。
 game/unit_identity.gdが表示名の規約と固定の幾何を生成し、戦闘の不変IDと構成には名前を混ぜない。\
 game/assembly_identity.gdが独立した所属紋章と安定色キーと共通RGB、視点の所有規則を持ち、ui/assembly_dialog.gdが候補だけを編集する。\
