@@ -154,7 +154,10 @@ RESTARTは全解放を続け、BUILDのUNLOCK ALLをOFFにして元の所持品�
 ### 表示設定
 
 HELPに日本語の操作説明がある。
-SETTINGSでウィンドウ、フルスクリーン、波形の動きを抑えるREDUCED MOTIONを選べる。
+SETTINGSでウィンドウ、フルスクリーン、波形の動きを抑えるREDUCED MOTIONを選べる。\
+SE ONとSE OFFは全効果音へ即時に反映し、次回起動でも維持する。\
+未指定はONで、音だけの設定をartifacts/runtime/ui-settings.json.audio.jsonへ保存する。\
+全解放中は保存せず、終了すると元の選択へ戻る。
 1920x1080の内容全体を16:9のまま画面へ合わせ、異なる縦横比では上下または左右に余白を置く。
 RetinaでもOSの倍率を重ねず、文字と盤面とリングとオーバーレイを同じ比率で拡縮する。
 

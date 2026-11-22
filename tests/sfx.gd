@@ -22,9 +22,12 @@ func _run() -> void:
 		_rotation()
 		_effects()
 		_defeats()
+		await _mute()
+		_storage()
 		_resources()
 		sound.queue_free();await process_frame
 	await _connections()
+	await _settings_toggle()
 	await create_timer(0.08).timeout
 	print("SFX: %d checks / %d failures" % [checks,failures]);quit(0 if failures==0 else 1)
 func _key(code: Key=KEY_ENTER) -> InputEventKey:
@@ -147,6 +150,33 @@ func _defeats() -> void:
 	sound.effect(owner,6,"DAMAGE",1,true);sound.reset_battle();sound.advance_defeats(delay+hold+fade)
 	_check(events.count("defeated")==0 and sound.defeat_voices.all(func(p):return p.stream==null),"stop and battle reset clear pending or sounding deaths")
 	sound.set_process(true)
+## REQ-059-S02
+func _mute() -> void:
+	sound.set_process(false);sound.enabled=true;sound.reset_battle();events.clear()
+	var owner=RefCounted.new();sound._play("button");sound._play("ring_rotate1");sound.effect(owner,1,"DAMAGE",1,true);sound.advance_defeats(sound.T.SFX_DEFEAT_DELAY_SECONDS);sound.effect(owner,2,"DAMAGE",1,true)
+	sound.enabled=false
+	_check(sound._defeats.is_empty() and sound.players.values().all(func(p):return not p.playing) and sound.defeat_voices.all(func(p):return not p.playing and p.stream==null),"OFF synchronously stops every lane and both pending and started deaths")
+	events.clear();var motion=Motion.new();motion.elapsed=0.7
+	for kind in ["button","ring_rotate1","ring_rotate2","attack","heal","defeated"]:sound._play(kind)
+	sound.movement_tick(motion);sound.effect(owner,3,"DAMAGE",1,true);sound.advance_defeats(10.0)
+	_check(events.is_empty() and sound._defeats.is_empty(),"all requests and death scheduling stay silent while OFF")
+	sound.enabled=true;sound.advance_defeats(10.0);sound.movement_tick(motion);sound.effect(owner,3,"DAMAGE",1,true)
+	_check(events.is_empty(),"ON does not replay a past movement cue, effect or delayed death")
+	motion.elapsed=0.9;sound.movement_tick(motion);sound.effect(owner,4,"HEAL",1)
+	_check(events==["ring_rotate2","heal"],"ON accepts only new movement and effect requests")
+	sound.set_process(true)
+## REQ-059-S01
+func _storage() -> void:
+	_check(sound.has_method("read_enabled") and sound.has_method("write_enabled"),"sound preference has independent validated storage")
+	if not sound.has_method("read_enabled"):return
+	var folder="res://artifacts/runtime/sound-preference-"+str(Time.get_ticks_usec());DirAccess.make_dir_recursive_absolute(folder);var path=folder+"/settings.audio.json"
+	_check(sound.read_enabled(path) and not FileAccess.file_exists(path),"missing audio preference is ON without creating a file")
+	for value in [false,true]:_check(sound.write_enabled(path,value).is_empty() and sound.read_enabled(path)==value,"explicit audio choice survives a fresh read: "+str(value))
+	for source in ['{}','{"enabled":"false"}','[]','invalid']:
+		var f=FileAccess.open(path,FileAccess.WRITE);f.store_string(source);f.close()
+		_check(sound.read_enabled(path) and FileAccess.get_file_as_string(path)==source,"unknown audio preference is ON and original bytes are preserved")
+	var blocker=folder+"/blocker";var f=FileAccess.open(blocker,FileAccess.WRITE);f.store_string("keep");f.close()
+	_check(not sound.write_enabled(blocker+"/settings.json",false).is_empty() and FileAccess.get_file_as_string(blocker)=="keep","unwritable preference reports failure without replacing the original")
 ## REQ-057-S01
 func _resources() -> void:
 	_check(sound.streams.keys()==["ring_rotate1","ring_rotate2","attack","heal","defeated","button"] and FileAccess.file_exists("res://assets/sfx/select.ogg"),"only the original combat sources and generated button stream play; select original remains")
@@ -192,6 +222,32 @@ func _connections() -> void:
 	var locked=dialog.rows.filter(func(row):return not row.selectable)[0];_check(not dialog.select_candidate(locked.id) and actual==[],"locked preview selection remains silent")
 	game._close_aux();game._build();await process_frame;_check(game.build_open and not FileAccess.file_exists(game.save_path) and not FileAccess.file_exists(game.settings_path),"returns normal BUILD without game or settings writes")
 	game.queue_free();await process_frame
+## REQ-059-S01、REQ-059-S03
+func _settings_toggle() -> void:
+	var folder="res://artifacts/runtime/sound-settings-"+str(Time.get_ticks_usec());DirAccess.make_dir_recursive_absolute(folder)
+	var game=load("res://main.tscn").instantiate();game.settings_path=folder+"/colors.json";game.save_path=folder+"/unused-save.json";root.add_child(game);await process_frame;game.set_process(false)
+	_check(game.has_method("_change_sfx"),"SETTINGS has an explicit SE operation")
+	if not game.has_method("_change_sfx"):game.queue_free();await process_frame;return
+	var colors=game.palette_colors.duplicate();var language=game.copy_language.selection;var units=game.battle.units.duplicate(true)
+	game._settings();await process_frame
+	var actual=[];game.sfx.played.connect(func(kind):actual.append(kind))
+	_check(game.sfx.enabled and game.se_selector.text=="SE ON" and game.se_selector.button_pressed,"default SETTINGS shows SE ON")
+	await _click(game.se_selector.get_global_rect().get_center())
+	_check(not game.sfx.enabled and game.se_selector.text=="SE OFF" and not game.se_selector.button_pressed and actual.is_empty(),"actual mouse OFF is immediate and the toggle has no early pip")
+	game.se_selector.grab_focus();await _press_key(KEY_ENTER)
+	_check(game.sfx.enabled and game.se_selector.text=="SE ON" and actual.is_empty(),"actual key ON is also silent and updates the control")
+	game._change_sfx(false)
+	var second=load("res://main.tscn").instantiate();second.settings_path=game.settings_path;second.save_path=folder+"/second-unused.json";root.add_child(second);await process_frame;second.set_process(false)
+	_check(not second.sfx.enabled,"new UI instance restores the saved OFF state")
+	second.queue_free();await process_frame
+	var stored=FileAccess.get_file_as_string(game.settings_path+".audio.json")
+	game._close_aux();game._toggle_debug(true);game._settings();game._change_sfx(true)
+	_check(game.sfx.enabled and FileAccess.get_file_as_string(game.settings_path+".audio.json")==stored,"debug SE choice applies without saving")
+	game._close_aux();game._toggle_debug(false)
+	_check(not game.sfx.enabled and game.palette_colors==colors and game.copy_language.selection==language and game.battle.units==units and not FileAccess.file_exists(game.settings_path) and not FileAccess.file_exists(game.settings_path+".language.json") and not FileAccess.file_exists(game.save_path),"debug exit restores sound and never changes color, language, combat or game save")
+	var blocker=folder+"/blocker";var f=FileAccess.open(blocker,FileAccess.WRITE);f.store_string("keep");f.close();game.settings_path=blocker+"/colors.json";game._settings()
+	_check(not game._change_sfx(true) and not game.sfx.enabled and not game.se_selector.button_pressed and game.se_selector.text=="SE OFF" and not game.palette_error.text.is_empty(),"failed save keeps the previous preference and control with a visible explanation")
+	game._close_aux();game._restart();game.queue_free();await process_frame
 func _check(ok: bool,note: String) -> void:
 	checks+=1
 	if not ok:failures+=1;printerr("FAIL: ",note)

@@ -9,7 +9,12 @@ const SOURCES={
 	"defeated":preload("res://assets/sfx/defeated.ogg")
 }
 signal played(kind: String)
-var enabled=true
+var enabled=true:
+	set(value):
+		enabled=value
+		if not enabled:
+			if players.has("button"):players.button.stop()
+			suspend()
 var streams: Dictionary={}
 var players: Dictionary={}
 var _movement_context: Array=[]
@@ -19,6 +24,24 @@ var defeat_voices: Array[AudioStreamPlayer]=[]
 var _defeats: Array=[]
 var _defeat_contexts: Array=[]
 var _button_root: WeakRef
+
+## 保存した音の有効値を読む。pathは音専用の設定。戻り値はboolで、未指定と不明はON。ファイルを変更しない。
+static func read_enabled(path: String) -> bool:
+	if not FileAccess.file_exists(path):return true
+	var parser=JSON.new()
+	if parser.parse(FileAccess.get_file_as_string(path))!=OK or not parser.data is Dictionary:return true
+	var value=parser.data.get("enabled",true)
+	return value if value is bool else true
+
+## 音の明示選択を保存する。pathは音専用の保存先、valueは有効値。戻り値は正常時空文字、それ以外は説明。既存設定を退避して置換する。
+static func write_enabled(path: String,value: bool) -> String:
+	if DirAccess.make_dir_recursive_absolute(path.get_base_dir())!=OK:return "Could not create sound settings directory."
+	var file=FileAccess.open(path+".tmp",FileAccess.WRITE)
+	if file==null:return "Could not save sound settings."
+	file.store_string(JSON.stringify({"enabled":value}));file.close()
+	if FileAccess.file_exists(path) and DirAccess.copy_absolute(path,path+".backup-"+str(Time.get_ticks_usec()))!=OK:return "Could not back up sound settings."
+	if DirAccess.rename_absolute(path+".tmp",path)!=OK:return "Could not replace sound settings."
+	return ""
 
 func _ready() -> void:
 	for key in SOURCES:
@@ -95,7 +118,7 @@ func _button_pip(node: Node) -> void:
 	if not is_instance_valid(node) or not _owns_button(node):return
 	if node.get_meta("phase_sfx_input_frame",-1)!=Engine.get_process_frames():return
 	node.set_meta("phase_sfx_input_frame",-1)
-	_play("button")
+	if not node.get_meta("phase_sfx_silent",false):_play("button")
 
 func _button_tone() -> AudioStreamWAV:
 	var stream=AudioStreamWAV.new();stream.format=AudioStreamWAV.FORMAT_16_BITS;stream.mix_rate=T.SFX_BUTTON_SAMPLE_RATE;stream.stereo=false

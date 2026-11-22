@@ -65,6 +65,7 @@ var palette_error: Label
 var copy_language=LANGUAGE.new()
 var sfx: Node
 var preferred_locale_override: Variant=null
+var se_selector: CheckButton
 var language_selector: OptionButton
 var language_note: Label
 var settings_path="res://artifacts/runtime/ui-settings.json"
@@ -138,7 +139,7 @@ var cpu_memory: Array=[]
 var followed_turn: Array=[]
 
 func _ready() -> void:
-	sfx=SFX.new();add_child(sfx);sfx.bind_buttons(self)
+	sfx=SFX.new();sfx.enabled=SFX.read_enabled(settings_path+".audio.json");add_child(sfx);sfx.bind_buttons(self)
 	get_window().focus_exited.connect(_window_focus_exited)
 	get_window().focus_entered.connect(_window_focus_entered)
 	get_window().mouse_exited.connect(_timeline_mouse_exited)
@@ -1156,7 +1157,7 @@ func _toggle_debug(enabled: bool) -> bool:
 		if not build_open:return false
 		var sandbox=debug_session.begin(collection)
 		if sandbox==null:return false
-		debug_ui_state={"palette":palette_colors.duplicate(),"motion":reduced_motion,"language":copy_language.selection,"unit":edit_unit,"cpu":cpu_enabled,"fast":cpu_fast,"loot":loot_rng.state,"panels":panel_rng.state,"last_seed":last_panel_seed}
+		debug_ui_state={"palette":palette_colors.duplicate(),"motion":reduced_motion,"sound":sfx.enabled,"language":copy_language.selection,"unit":edit_unit,"cpu":cpu_enabled,"fast":cpu_fast,"loot":loot_rng.state,"panels":panel_rng.state,"last_seed":last_panel_seed}
 		collection=sandbox
 		edit_unit=0
 	else:
@@ -1164,6 +1165,7 @@ func _toggle_debug(enabled: bool) -> bool:
 		collection=debug_session.end()
 		palette_colors=debug_ui_state.palette
 		reduced_motion=debug_ui_state.motion
+		sfx.enabled=debug_ui_state.sound
 		copy_language.selection=debug_ui_state.language
 		notice.text=_explain(message)
 		edit_unit=debug_ui_state.unit
@@ -1444,11 +1446,19 @@ func _settings() -> void:
 	_button(panel,"FULLSCREEN",Rect2(524,138,500,48),func():DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN))
 	var check=CheckButton.new()
 	check.text="REDUCED MOTION"
-	check.position=Vector2(36,205)
-	check.size=Vector2(470,46)
+	check.position=T.SETTINGS_MOTION_CHOICE.position
+	check.size=T.SETTINGS_MOTION_CHOICE.size
 	check.button_pressed=reduced_motion
 	check.toggled.connect(func(value):reduced_motion=value)
 	panel.add_child(check)
+	se_selector=CheckButton.new();se_selector.name="SE"
+	se_selector.position=T.SETTINGS_SE_CHOICE.position;se_selector.size=T.SETTINGS_SE_CHOICE.size
+	se_selector.text="SE ON" if sfx.enabled else "SE OFF";se_selector.button_pressed=sfx.enabled
+	# この押下だけはOFFより前に短い音を出さず、ONへの復帰も無音にする。
+	se_selector.set_meta("phase_sfx_silent",true)
+	se_selector.toggled.connect(_change_sfx)
+	_set_prose(se_selector,"All sound effects. Applies immediately.","tooltip_text")
+	panel.add_child(se_selector)
 	_label(panel,"Language",T.SETTINGS_LANGUAGE_LABEL,16,MUTED)
 	language_selector=OptionButton.new();language_selector.name="Language"
 	language_selector.position=T.SETTINGS_LANGUAGE_CHOICE.position;language_selector.size=T.SETTINGS_LANGUAGE_CHOICE.size
@@ -1552,6 +1562,15 @@ func _refresh_explanations(node: Node) -> void:
 		for property in node.get_meta("prose_fields"):_set_prose(node,node.get_meta("prose_fields")[property],property)
 	if node.has_method("refresh_language"):node.refresh_language()
 	for child in node.get_children():_refresh_explanations(child)
+
+func _change_sfx(value: bool) -> bool:
+	var error="" if collection.temporary else SFX.write_enabled(settings_path+".audio.json",value)
+	if error.is_empty():sfx.enabled=value
+	elif is_instance_valid(palette_error):_set_prose(palette_error,error)
+	if is_instance_valid(se_selector):
+		se_selector.set_pressed_no_signal(sfx.enabled)
+		se_selector.text="SE ON" if sfx.enabled else "SE OFF"
+	return error.is_empty()
 
 func _change_language(choice: String) -> bool:
 	var value=choice if LANGUAGE.CHOICES.has(choice) else "system"
