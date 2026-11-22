@@ -63,13 +63,6 @@ func _boundaries() -> void:
 	b.act(2)
 	state=[b.units.duplicate(true),b.history.duplicate(),b.turn,b.actor]
 	_check(not b.reselect_path() and state==[b.units,b.history,b.turn,b.actor],"applied damage and next turn are irreversible")
-	b.start(2,C.player_builds().slice(0,2),1)
-	b.units[0].pos=Vector2i(8,0)
-	b.units[2].hp=0
-	b.path_click(Vector2i(9,0))
-	b.commit_path()
-	state=[b.units.duplicate(true),b.history.duplicate(),b.result,b.turn]
-	_check(b.result=="VICTORY" and not b.reselect_path() and state==[b.units,b.history,b.result,b.turn],"movement victory cannot be rolled back")
 	b.start(0,C.player_builds().slice(0,2),1)
 	b.path_click(Vector2i(4,4))
 	b.commit_path()

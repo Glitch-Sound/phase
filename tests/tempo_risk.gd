@@ -24,15 +24,5 @@ func _run()->void:
 	if constants.has("CPU_CRITICAL_RISK_WEIGHT"):
 		_check(risk==t.CPU_KILL_BONUS*constants.CPU_CRITICAL_RISK_WEIGHT,"last-unit forecast uses the configured loss floor")
 	_check(before==_state(b),"risk evaluation never mutates actual units")
-	b.start(2,C.player_builds().slice(0,2),1)
-	b.actor=2
-	b.units[2].pos=Vector2i(8,1)
-	b.units[0].pos=Vector2i(8,0)
-	b.units[0].next_time=0
-	b.units[2].next_time=200
-	projected=b.units[0].duplicate(true)
-	projected.pos=Vector2i(9,0)
-	threat=[{"index":0,"path":[Vector2i(9,0)],"unit":projected}]
-	_check(policy._danger(b,2,threat)>=t.CPU_TERMINAL_SCORE*0.5,"actual reachable objective still has terminal priority")
 	print("TEMPO RISK: %d checks / %d failures" % [checks,failures])
 	quit(0 if failures==0 else 1)

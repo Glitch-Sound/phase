@@ -6,68 +6,22 @@ const M=preload("res://game/phase_math.gd")
 var failures=0
 
 func _initialize() -> void:
-	var report={"unopposed":[],"mutual":[],"contested_wins":[]}
-	for stage in [2,3]:
-		var run=_unopposed(stage)
-		report.unopposed.append(run)
+	var report={"mutual":[]}
 	var first=_mutual(1.8,160)
 	var second=_mutual(1.8,160)
 	report.mutual.append(first)
 	_check(first==second,"mutual play deterministic")
 	report.mutual.append(_mutual(0.88,160))
 	report.mutual.append(_mutual(10.0,160))
-	for stage in [2,3]:
-		var prepared=C.player_builds()
-		for build in prepared:
-			build.skills.append(C.MOVE)
-		var win=_contested_win(stage,null,prepared,Vector2i(6,5))
-		report.contested_wins.append(win)
 	report.native_replay=_mutual(1.4,160,true)
 	print("NATIVE REPLAY: ",JSON.stringify(report.native_replay.actions)," / ",report.native_replay.result," / ",report.native_replay.turns)
 	var file=FileAccess.open("res://artifacts/contested-play.json",FileAccess.WRITE)
 	file.store_string(JSON.stringify(report,"\t"))
 	file.close()
-	for row in report.unopposed:
-		print("COUNTER OBJECTIVE: stage %d / %s / %d turns" % [row.stage,row.result,row.turns])
 	for row in report.mutual:
 		print("MUTUAL PLAY: heal weight %.2f / %s / %d turns / %s" % [row.heal_weight,row.result if not row.result.is_empty() else "UNFINISHED",row.turns,JSON.stringify(row.actions)])
-	for row in report.contested_wins:
-		print("CONTESTED WIN: stage %d / %s / %d turns" % [row.stage,row.result,row.turns])
 	print("CONTESTED PLAY: ","PASS" if failures==0 else "FAIL")
 	quit(0 if failures==0 else 1)
-
-## REQ-023-S02
-func _unopposed(stage: int, layout_seed: Variant=null) -> Dictionary:
-	var b=B.new() if layout_seed==null else RUNTIME_B.new()
-	b.start(stage,[C.starter_build(),C.starter_build()],0 if layout_seed==null else int(layout_seed))
-	var actors=[]
-	for hand in range(40):
-		if not b.result.is_empty(): break
-		var before=[b.turn,b.actor,b.units[b.actor].next_time]
-		var source=b.actor
-		var path=[]
-		if source==3:
-			path=_toward(b,b.stage.enemy_goal)
-		else:
-			for d in B.DIRS:
-				var cell: Vector2i=b.units[source].pos+d
-				if _inside(cell) and b.at(cell)<0 and cell!=b.stage.goal:
-					path=[cell]
-					break
-		_check(not path.is_empty(),"a legal step exists")
-		for cell in path:
-			_check(b.path_click(cell),"counter path legal")
-		b.commit_path()
-		# 目標へ実際に到達した時の条件判定だけを検査し、何手で到達するかは固定しない。
-		if source==3 and b.units[source].pos==b.stage.enemy_goal and stage==2:
-			_check(b.result=="DEFEAT","enemy REACH triggers on movement")
-		actors.append(b.units[source].id)
-		if b.result.is_empty():
-			b.wait_turn()
-		if source==3 and b.units[source].pos==b.stage.enemy_goal and stage==3:
-			_check(b.result=="DEFEAT","enemy OCCUPY triggers on turn end")
-		_check(_step_contract(b,before),"counter-goal preserves HP and turn rules")
-	return {"stage":stage,"result":b.result,"turns":b.turn,"actors":actors,"history":b.history}
 
 ## REQ-023-S03
 func _mutual(heal_weight: float, limit: int, roles: bool=false, layout_seed: Variant=null) -> Dictionary:
@@ -146,101 +100,6 @@ func _mutual(heal_weight: float, limit: int, roles: bool=false, layout_seed: Var
 		if state_counts[key]>1:
 			repeated_states+=1
 	return {"roles":roles,"heal_weight":heal_weight,"result":b.result,"turns":b.turn,"actions":actions,"repeated_states":repeated_states,"history":b.history,"commands":commands}
-
-func _contested_win(stage_index: int, layout_seed: Variant=null, builds_override: Array=[], first_intercept: Vector2i=Vector2i(-1,-1)) -> Dictionary:
-	var b=B.new() if layout_seed==null else RUNTIME_B.new()
-	b.start(stage_index,C.player_builds() if builds_override.is_empty() else builds_override,0 if layout_seed==null else int(layout_seed))
-	var commands=[]
-	for hand in range(100):
-		if not b.result.is_empty(): break
-		var before=[b.turn,b.actor,b.units[b.actor].next_time]
-		var routes=[]
-		_paths(b,b.units[b.actor].pos,[],routes)
-		var source: Dictionary=b.units[b.actor]
-		var best={"score":-INF,"path":[],"target":-1,"skill":""}
-		var rush_distance=100
-		if b.actor==3:
-			for route in routes:
-				rush_distance=mini(rush_distance,_distance(route.back(),b.stage.enemy_goal))
-		for route in routes:
-			var unit=source.duplicate(true)
-			for cell in route:
-				M.enter_panel(unit,b.panels.get(cell,"NORMAL"))
-				unit.pos=cell
-			var goal_distance=_distance(unit.pos,b.stage.goal)
-			if b.actor==2 and goal_distance>1:
-				continue
-			if b.actor==3 and _distance(unit.pos,b.stage.enemy_goal)!=rush_distance:
-				continue
-			var focus=b.units[3].pos if b.units[3].hp>0 else b.units[2].pos
-			if b.units[2].hp<=0 and b.units[3].hp<=0:
-				focus=b.stage.goal
-			var score=-100.0-_distance(unit.pos,focus)*10.0
-			var target=-1
-			var skill=""
-			for i in range(b.units.size()):
-				var other: Dictionary=b.units[i]
-				if i==b.actor or other.hp<=0 or _distance(unit.pos,other.pos)!=1:
-					continue
-				var kind="DAMAGE" if other.camp!=unit.camp else "HEAL"
-				var amount=M.effect(unit,other,kind)
-				var actual=minf(amount,other.hp) if kind=="DAMAGE" else minf(amount,other.max_hp-other.hp)
-				if actual<=0:
-					continue
-				var value=actual*(0.88 if kind=="HEAL" else 1.0)
-				if unit.camp=="PLAYER" and i==3:
-					value+=60
-				if kind=="DAMAGE" and amount>=other.hp:
-					value+=100
-				if value>score:
-					score=value
-					target=i
-					skill=C.DAMAGE if kind=="DAMAGE" else C.HEAL
-			if b.actor==2:
-				score-=goal_distance*150
-			if unit.camp=="PLAYER" and unit.pos==b.stage.goal and (stage_index==3 or b.actor==0):
-				score=10000
-				target=-1
-				skill=""
-			# 初動で02の最短攻撃経路(4,6)を塞がず、迎撃を連携する。
-			var intercept=first_intercept if first_intercept.x>=0 else (Vector2i(5,6) if source.skills.has(C.MOVE) else Vector2i(5,5))
-			if b.turn==1 and b.actor==0 and unit.pos==intercept:
-				score+=1000
-			score+=M.sync(unit,2).factor*0.05-route.size()*0.001
-			if score>best.score:
-				best={"score":score,"path":route,"target":target,"skill":skill}
-		# 守備用の絞り込みで候補がなくても、合法経路がある時は移動して待つ。
-		# 調整値によって変わる脚本の選好を、モデルの閉塞と混同しない。
-		if best.path.is_empty() and not routes.is_empty():
-			best={"score":-INF,"path":routes[0],"target":-1,"skill":""}
-		var command={"unit":source.id,"path":str(best.path),"skill":best.skill,"target":best.target}
-		if best.path.is_empty():
-			_check(b.trapped(),"contested fallback trapped")
-			b.wait_turn()
-		else:
-			for cell in best.path:
-				_check(b.path_click(cell),"contested legal path")
-			b.commit_path()
-			if b.result.is_empty():
-				if best.target>=0:
-					_check(b.choose_skill(best.skill) and b.act(best.target),"contested valid action")
-				else:
-					b.wait_turn()
-		commands.append(command)
-		_check(_step_contract(b,before),"contested action preserves HP bounds and advances exactly one hand or ends")
-	return {"stage":stage_index,"result":b.result,"turns":b.turn,"history":b.history,"commands":commands}
-
-func _toward(b: RefCounted, goal: Vector2i) -> Array:
-	var routes=[]
-	_paths(b,b.units[b.actor].pos,[],routes)
-	var best=[]
-	var distance=100
-	for path in routes:
-		var d=_distance(path.back(),goal)
-		if d<distance or (d==distance and path.size()<best.size()):
-			distance=d
-			best=path
-	return best
 
 func _paths(b: RefCounted, cell: Vector2i, path: Array, result: Array) -> void:
 	if not path.is_empty():

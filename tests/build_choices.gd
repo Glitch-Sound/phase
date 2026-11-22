@@ -115,8 +115,13 @@ func _skill_and_operation(model,collection) -> void:
 	var rows=model.candidates(collection,0,"skill",2)
 	_check(rows.filter(func(r):return r.id==C.DAMAGE_DIAGONAL_TWO)[0].group=="DAMAGE" and rows.all(func(r):return not r.description.is_empty()),"skill family grouping and short effects cover every candidate")
 	var operations=model.candidates(collection,0,"operation")
-	_check(operations.size()==4 and operations.all(func(r):return not r.description.is_empty() and r.selectable),"all operations explain objectives")
-	_check(model.commit(collection,0,"operation","2") and collection.stage_index==2,"operation changes only after explicit commit")
+	_check(operations.map(func(r):return r.id)==["0","1"] and operations.all(func(r):return not r.description.is_empty() and r.selectable),"only 01 and 02 explain objectives")
+	_check(model.commit(collection,0,"operation","1") and collection.stage_index==1,"operation changes only after explicit commit")
+	var before=collection.snapshot()
+	_check(not model.commit(collection,0,"operation","2") and not model.commit(collection,0,"operation","3") and collection.snapshot()==before,"unknown operation candidates cannot commit")
+	var expected=before.duplicate(true);expected.stage_index=0
+	collection.stage_index=operations.size()
+	_check(collection.snapshot()==expected,"unknown in-memory operation falls back to the first without changing builds or inventory")
 func _check(ok: bool,message: String) -> void:
 	checks+=1
 	if not ok:failures+=1;printerr("FAIL: ",message)

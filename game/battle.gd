@@ -22,7 +22,7 @@ var last_effect: Dictionary={}
 var history: Array=[]
 var _movement_undo: Dictionary={}
 
-## 戦闘を初期化する。stage_indexは0から3、buildsはPLAYERの構成で通常は3体、layout_seedは配置の再現用整数、unit_namesはPLAYER枠の表示名。既存戦闘を置換する。
+## 戦闘を初期化する。stage_indexは0か1、buildsはPLAYERの構成で通常は3体、layout_seedは配置の再現用整数、unit_namesはPLAYER枠の表示名。既存戦闘を置換する。
 func start(stage_index: int, builds: Array, layout_seed: int=0,unit_names: Array=[]) -> void:
 	stage=C.stages()[stage_index].duplicate(true)
 	panel_seed=layout_seed
@@ -41,7 +41,7 @@ func start(stage_index: int, builds: Array, layout_seed: int=0,unit_names: Array
 	next_actor()
 
 func _spawn_positions(layout_seed: int) -> Array:
-	return SPAWN_LAYOUT.generate(stage,layout_seed)
+	return SPAWN_LAYOUT.generate(layout_seed)
 
 ## 生存占有者を返す。cellは座標。戻り値はユニット番号、空きなら-1。
 func at(cell: Vector2i) -> int:
@@ -109,7 +109,7 @@ func preview() -> Dictionary:
 			enter_cell(u,cell,panels.get(cell,"NORMAL"),units)
 	return u
 
-## 経路を確定する。戻り値は成功可否。確定した位置と位相を保持し、移動目標を判定する。
+## 経路を確定する。戻り値は成功可否。確定した位置と位相を保持する。
 func commit_path() -> bool:
 	if mode!="MOVE" or path.is_empty():
 		return false
@@ -120,9 +120,6 @@ func commit_path() -> bool:
 	history.append("%s MOVE %s C%.1f G%.1f A%.1f" % [u.id,u.pos,u.core_angle,u.gear_angle,u.arms_angle])
 	path=[]
 	mode="CHOICE"
-	check_result("MOVE")
-	if not result.is_empty():
-		_movement_undo={}
 	return true
 
 ## 確定移動を選び直す。戻り値は同じ手番の行動選択から復元できたか。位置、角度と移動履歴を戻し、経路を予測用に保持する。実行済みの行動と終局は変更しない。
@@ -225,11 +222,9 @@ func act(target: int) -> bool:
 		return false
 	var kind: String=C.SKILLS[selected_skill].effect
 	if kind in ["SWAP","PUSH","GUARD"]:
-		var moved=_apply_utility(units,actor,target,kind)
+		_apply_utility(units,actor,target,kind)
 		last_effect={"target":target,"kind":kind,"amount":0,"actual":0.0,"dead":false,"singularity":false}
 		history.append("%s %s %s %s" % [units[actor].id,kind,units[target].id,units[target].pos])
-		if not moved.is_empty():
-			check_result("MOVE",moved)
 	else:
 		var amount=M.effect(units[actor],units[target],kind)
 		var old_hp: float=units[target].hp
@@ -245,23 +240,21 @@ func act(target: int) -> bool:
 		_end_turn()
 	return true
 
-## 目標を判定する。eventはDEATH、MOVE、END、moved_indicesはMOVEで動いた番号の配列で空なら行動者。成立するとRESULTへ移る。
-func check_result(event: String, moved_indices: Array=[]) -> void:
-	if not result.is_empty():
+## 目標を判定する。eventは判定契機。DEATH以外は判定しない。成立するとRESULTへ移る。
+func check_result(event: String) -> void:
+	if event!="DEATH" or not result.is_empty():
 		return
 	for entry in [["defeat","DEFEAT"],["victory","VICTORY"]]:
 		for condition in stage[entry[0]]:
-			if _condition_met(condition,event,moved_indices):
+			if _condition_met(condition):
 				result=entry[1]
 				mode="RESULT"
 				return
 	if not result.is_empty():
 		mode="RESULT"
 
-func _condition_met(condition: Dictionary, event: String, moved_indices: Array=[]) -> bool:
+func _condition_met(condition: Dictionary) -> bool:
 	var kind: String=condition.type
-	if (kind in ["ELIMINATE","TARGET"] and event!="DEATH") or (kind=="REACH" and event!="MOVE") or (kind=="OCCUPY" and event!="END"):
-		return false
 	if kind=="ELIMINATE":
 		var found=false
 		for u in units:
@@ -274,15 +267,6 @@ func _condition_met(condition: Dictionary, event: String, moved_indices: Array=[
 		for u in units:
 			if _matches_condition(u,condition):
 				return u.hp<=0
-	if kind=="REACH":
-		for index in moved_indices if not moved_indices.is_empty() else [actor]:
-			var u: Dictionary=units[index]
-			if u.hp>0 and _matches_condition(u,condition) and u.pos==condition.cell:
-				return true
-		return false
-	if kind=="OCCUPY":
-		var occupant=at(condition.cell)
-		return occupant>=0 and _matches_condition(units[occupant],condition)
 	return false
 
 static func _matches_condition(u: Dictionary, condition: Dictionary) -> bool:
@@ -290,9 +274,6 @@ static func _matches_condition(u: Dictionary, condition: Dictionary) -> bool:
 
 func _end_turn() -> void:
 	_movement_undo={}
-	check_result("END")
-	if not result.is_empty():
-		return
 	units[actor].next_time+=M.delay(units[actor])
 	turn+=1
 	next_actor()

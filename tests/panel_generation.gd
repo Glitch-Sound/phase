@@ -25,7 +25,7 @@ func _test_count(generator) -> void:
 		var before=stage.duplicate(true)
 		var panels=generator.generate(stage,128)
 		_check(panels.size()==target,"whole 100 cells form denominator "+stage.name)
-		_check(panels.keys().all(func(cell):return Rect2i(0,0,10,10).has_point(cell) and not stage.spawns.has(cell) and cell!=stage.goal and cell!=stage.enemy_goal),"spawn and both goals excluded "+stage.name)
+		_check(panels.keys().all(func(cell):return Rect2i(0,0,10,10).has_point(cell) and not stage.spawns.has(cell)),"spawn cells excluded "+stage.name)
 		var counts=[]
 		for kind in ["CLOCKWISE","RESET","COUNTERCLOCKWISE"]:
 			counts.append(panels.values().count(kind))
@@ -35,7 +35,7 @@ func _test_count(generator) -> void:
 	_check(generator.generate(stage,0,0.005).size()==1 and generator.generate(stage,0,0.0049).is_empty(),"half-up rounding independently of exclusions")
 ## REQ-034-S02
 func _test_repeat(generator) -> void:
-	var stage=C.stages()[2]
+	var stage=C.stages()[1]
 	var before=generator.generate(stage,730)
 	seed(8273)
 	var expected=randi()
@@ -61,7 +61,7 @@ func _test_spread(generator) -> void:
 			quadrants[int(cell.x/5)+2*int(cell.y/5)]+=1
 			if panels.has(cell+Vector2i.RIGHT) or panels.has(cell+Vector2i.DOWN):
 				neighbors+=1
-		# 現在の4ステージの候補数では各区画の比例配分を丸めると5枚ずつとなる。
+		# 現在の2ステージの候補数では各区画の比例配分を丸めると5枚ずつとなる。
 		var quarter=floori(100*T.new().get("PANEL_EFFECT_RATE")+0.5)/4.0
 		_check(quadrants.all(func(q):return q==floori(quarter) or q==ceili(quarter)) and quadrants.reduce(func(total,q):return total+q,0)==floori(100*T.new().get("PANEL_EFFECT_RATE")+0.5),"coarse spread for seed "+str(layout_seed))
 	_check(signatures.size()==512,"different seeds change actual coordinates and types")
@@ -69,7 +69,7 @@ func _test_spread(generator) -> void:
 	for y in range(10):
 		for x in range(10):
 			var cell=Vector2i(x,y)
-			if cell not in stage.spawns and cell!=stage.goal and cell!=stage.enemy_goal:eligible.append(cell)
+			if cell not in stage.spawns:eligible.append(cell)
 	_check(heat.size()==eligible.size() and eligible.all(func(cell):return heat.has(cell)) and heat.values().min()>512*0.1 and heat.values().max()<512*0.35,"every eligible cell appears without gross selection bias: "+str([heat.size(),heat.values().min(),heat.values().max()]))
 	_check(neighbors>0,"adjacent and clustered panels are allowed")
 	print("PANEL HEAT: eligible ",heat.size()," / min ",heat.values().min()," / max ",heat.values().max()," / adjacent ",neighbors)
@@ -89,7 +89,7 @@ func _test_scarcity(generator) -> void:
 ## REQ-034-S02
 func _test_link(generator) -> void:
 	var battle=B.new()
-	battle.call("start",2,C.player_builds(),730)
+	battle.call("start",1,C.player_builds(),730)
 	var expected=generator.generate(battle.stage,730)
 	_check(battle.panels==expected and battle.panel_seed==730,"runtime battle uses generated layout and retains seed")
 	var before=battle.panels.duplicate(true)

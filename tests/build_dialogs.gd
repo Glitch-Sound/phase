@@ -5,6 +5,10 @@ var game
 class AuditUI:
 	extends "res://ui/main.gd"
 	var dialog_rings=[]
+	var operation_icons=[]
+	func _reference_emblem(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary) -> void:
+		if is_instance_valid(build_dialog) and canvas==build_dialog.preview_area:operation_icons.append({"unit":u.duplicate(true),"profile":_assembly_profile(u.camp).duplicate(true)})
+		V.unit_emblem(canvas,center,radius,u,_assembly_profile(u.camp))
 	func _ring(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,active: bool=false) -> void:
 		if is_instance_valid(build_dialog) and canvas==build_dialog.preview_area:dialog_rings.append(u.duplicate(true))
 		super._ring(canvas,center,radius,u,active)
@@ -24,6 +28,7 @@ func _run() -> void:
 		await _class_selection()
 		await _mutation_selection()
 		await _presentation()
+		await _operation_symbols()
 		await _layout_alignment()
 	game.queue_free()
 	await process_frame
@@ -212,3 +217,18 @@ func _mutation_selection() -> void:
 func _check(ok: bool,message: String) -> void:
 	checks+=1
 	if not ok:failures+=1;printerr("FAIL: ",message)
+
+## REQ-042-S04
+func _operation_symbols() -> void:
+	game._open_build_choice("operation");await process_frame
+	var d=game.build_dialog
+	_check(d.has_method("operation_symbols"),"operation diagram exposes the same actual unit references as the description")
+	if d.has_method("operation_symbols"):
+		for id in ["0","1"]:
+			d.select_candidate(id)
+			var symbols=d.operation_symbols()
+			game.operation_icons=[];d.preview_area.queue_redraw();await process_frame;await process_frame
+			_check(game.operation_icons.map(func(row):return row.unit.id)==["01","02","03","A","B","C"] and game.operation_icons.all(func(row):return row.profile==game._assembly_profile(row.unit.camp)) and symbols.all(func(row):return row.unit==game._reference_unit(row.unit.id)),"diagram uses the actual six unit shapes and camps: "+id)
+			var description=game.C.stages()[int(id)].brief
+			_check(description==("ELIMINATE ALL ENEMY UNITS: A B C" if id=="0" else "DEFEAT A / KEEP 01 ALIVE"),"objective symbols have unambiguous all-enemy or protected-role meaning: "+id)
+	d.cancel();await process_frame

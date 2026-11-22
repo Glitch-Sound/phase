@@ -12,7 +12,7 @@ func _run() -> void:
 	root.add_child(game)
 	await process_frame
 	_test_quantities(game)
-	for stage in range(4):
+	for stage in range(game.C.stages().size()):
 		game.collection.stage_index=stage
 		game._start_battle()
 		await _check_scene(game,"stage "+str(stage))
@@ -65,9 +65,6 @@ func _check_scene(game, title: String) -> void:
 	var code={"STANDARD":"VIRSL","REVERSE":"VLSRI"}.get(displayed.class_name,displayed.class_name)
 	var expected_count=18+2*displayed.skills.size()+int(game.M.singularity(game.battle.preview()))
 	expected_count+=int(code=="VIRSL")
-	for goal in [game.battle.stage.goal,game.battle.stage.enemy_goal]:
-		if Rect2i(0,0,10,10).has_point(goal):
-			expected_count+=1
 	expected_count+=1 if game.message_time>0 else 0
 	_check(game.drawn_text.size()==expected_count,"complete text set excludes any extra caption fragment: "+title+" / "+str(game.drawn_text.size())+" / "+str(expected_count))
 	var required=["TURN 01","PREVIEW","PHASE","CLASS: "+code,"MOVE %d" % game.battle.movement(displayed),"DAMAGE / ADJACENT","HEAL / ADJACENT"]

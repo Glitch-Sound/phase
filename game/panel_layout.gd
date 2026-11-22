@@ -3,12 +3,10 @@ extends RefCounted
 const T=preload("res://game/tuning.gd")
 const KINDS=["CLOCKWISE","RESET","COUNTERCLOCKWISE"]
 
-## 配置を返す。stageは初期位置と両目標、layout_seedは再現用整数、rateは全100セルに対する密度。戻り値は座標と効果の辞書。入力と他の乱数を変更しない。
+## 配置を返す。stageは初期位置、layout_seedは再現用整数、rateは全100セルに対する密度。戻り値は座標と効果の辞書。入力と他の乱数を変更しない。
 static func generate(stage: Dictionary, layout_seed: int, rate: float=T.PANEL_EFFECT_RATE) -> Dictionary:
 	var bins=[[],[],[],[]]
 	var excluded=stage.spawns.duplicate()
-	excluded.append(stage.goal)
-	excluded.append(stage.enemy_goal)
 	var available=0
 	for y in range(10):
 		for x in range(10):

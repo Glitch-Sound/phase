@@ -31,7 +31,7 @@ func _session() -> void:
 	if not ResourceLoader.exists("res://game/debug_session.gd"):return
 	var session=load("res://game/debug_session.gd").new()
 	var normal=L.new()
-	normal.stage_index=2
+	normal.stage_index=1
 	var original=normal.snapshot()
 	session.allowed=false
 	_check(not session.available() and session.begin(normal)==null and not session.active() and normal.snapshot()==original,"unavailable mode refuses direct entry without touching normal state")
@@ -56,7 +56,7 @@ func _session() -> void:
 	var rng_state=rng.state
 	_check(sandbox.roll_loot(rng)==[] and rng.state==rng_state and sandbox.snapshot()==state,"debug result has no loot or random-state changes")
 	sandbox.builds[0].skills=[C.GUARD,C.FIELD_SLOW,C.SWAP]
-	sandbox.stage_index=3
+	sandbox.stage_index=0
 	_check(normal.snapshot()==original,"debug edits never mutate normal state")
 	_check(session.end()==normal and not session.active() and normal.snapshot()==original,"exit returns the exact untouched normal object")
 	var again=session.begin(normal)

@@ -68,9 +68,6 @@ func _run() -> void:
 	game._help()
 	await _capture("help")
 	game._close_aux()
-	game.collection.stage_index=2
-	game._start_battle()
-	await _capture("breach")
 	game.collection.stage_index=0
 	game._start_battle()
 	_click(root.get_final_transform()*(game.BOARD+Vector2(4.5,4.5)*game.CELL))

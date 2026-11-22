@@ -45,16 +45,12 @@ func _run() -> void:
 	game._cell_input(Vector2i(6,4))
 	_check(game.toasts.any(func(t):return t.text=="DEFEATED"),"defeat toast connected")
 	await process_frame
-	game.collection.stage_index=2
-	game._start_battle()
-	game.loot_rng.seed=187
-	# この検査はREACHからRESULTへの接続であり、実ステージの攻略ではない。
-	game.battle.stage.victory=[{"type":"REACH","camp":"PLAYER","unit":"01","cell":Vector2i(5,4)}]
-	game._cell_input(Vector2i(4,4))
-	game._cell_input(Vector2i(5,4))
-	game._cell_input(Vector2i(5,4),true)
-	await process_frame;await process_frame;game._pending_plan_tick();game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
-	_check(game.battle.result=="VICTORY" and is_instance_valid(game.overlay),"REACH connects to RESULT")
+	game.collection.stage_index=1
+	game._start_battle();game.loot_rng.seed=187
+	game.battle.units[0].pos=Vector2i(6,2);game.battle.units[2].hp=1.0
+	game.battle.mode="CHOICE";game.battle.units[0].moved=1
+	game.battle.choose_skill(C.DAMAGE);game._cell_input(Vector2i(7,2))
+	_check(game.battle.result=="VICTORY" and is_instance_valid(game.overlay),"TARGET connects to RESULT")
 	_check(game.drops.size()<=2,"RESULT loot connection")
 	game._build()
 	await process_frame

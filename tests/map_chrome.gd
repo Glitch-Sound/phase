@@ -11,7 +11,7 @@ func _run() -> void:
 	game.settings_path="res://artifacts/runtime/map-chrome-no-settings.json"
 	root.add_child(game)
 	await process_frame
-	for stage in range(4):
+	for stage in range(game.C.stages().size()):
 		game.collection.stage_index=stage
 		game._start_battle()
 		await _test_case(game,"stage "+str(stage))
@@ -97,7 +97,7 @@ func _test_help_and_build(game) -> void:
 	_check(content.has("Double-click the destination, pick skill\nand target to move and act.\nORTHO = cardinal; DIAGONAL = diagonal;\n1 / 2 = exact cell distance."),"HELP retains destination double-click, target selection, exact range and selection-based execution")
 	game._close_aux()
 	_check(game.battle.path==[Vector2i(4,4)],"HELP keeps pending route")
-	for stage in range(4):
+	for stage in range(game.C.stages().size()):
 		game.collection.stage_index=stage
 		game._build()
 		await process_frame
@@ -105,7 +105,7 @@ func _test_help_and_build(game) -> void:
 		for label in game.overlay.find_children("*","Label",true,false):
 			texts.append(label.text)
 		var views=game.overlay.find_children("*","Control",true,false).filter(func(node):return node.get_script()!=null and node.get_script().resource_path=="res://ui/unit_reference_text.gd")
-		var expected=[["ELIMINATE ALL ENEMY UNITS",[]],["DEFEAT  / KEEP  ALIVE",["A","01"]],[" REACH (9,0) / KEEP  ALIVE / STOP  (0,9)",["01","01","B"]],["PLAYER HOLD (8,0) / DENY ENEMY (0,9)",[]]]
+		var expected=[["ELIMINATE ALL ENEMY UNITS:   ",["A","B","C"]],["DEFEAT  / KEEP  ALIVE",["A","01"]]]
 		var view=views[0]
 		_check("".join(view.parts.filter(func(part):return part.has("text")).map(func(part):return part.text))==expected[stage][0] and view.parts.filter(func(part):return part.has("unit")).map(func(part):return part.unit.id)==expected[stage][1],"BUILD retains exact stage objective and glyph correspondence: "+str(stage))
 func _check(ok: bool,message: String) -> void:

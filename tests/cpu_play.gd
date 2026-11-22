@@ -4,7 +4,7 @@ const FLOW=preload("res://tests/contested_play.gd")
 func _run() -> void:
 	policy=load("res://game/cpu_policy.gd").new()
 	var reports=[]
-	for stage in range(4):
+	for stage in range(C.stages().size()):
 		for layout_seed in [1,128,729]:
 			var b=B.new()
 			b.start(stage,C.player_builds(),layout_seed)

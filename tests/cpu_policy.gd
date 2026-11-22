@@ -65,18 +65,6 @@ func _tactics() -> void:
 	b.units[3].hp=b.units[3].max_hp
 	_check(policy.choose(b,[]).skill!=C.HEAL,"full HP is never healed")
 	b=B.new()
-	b.start(2,C.player_builds().slice(0,2),128)
-	b.actor=3
-	b.units[3].pos=Vector2i(0,8)
-	plan=policy.choose(b,[])
-	_check(_execute(b,plan) and b.result=="DEFEAT","BREACH CPU reaches its own goal and stops before an extra action")
-	b=B.new()
-	b.start(3,C.player_builds().slice(0,2),128)
-	b.actor=3
-	b.units[3].pos=Vector2i(0,8)
-	plan=policy.choose(b,[])
-	_check(_execute(b,plan) and b.result=="DEFEAT","ANCHOR CPU ends its turn on the counter objective")
-	b=B.new()
 	b.start(1,C.player_builds().slice(0,2),128)
 	b.actor=2
 	b.units[0].pos=Vector2i(5,2)
@@ -84,15 +72,6 @@ func _tactics() -> void:
 	b.units[2].pos=Vector2i(7,2)
 	plan=policy.choose(b,[])
 	_check(plan.target==0 and _execute(b,plan) and b.result=="DEFEAT","SEVERANCE targets the actual protected PLAYER")
-	b=B.new()
-	b.start(2,C.player_builds().slice(0,2),1)
-	b.actor=2
-	b.units[0].pos=Vector2i(8,0)
-	b.units[1].hp=0
-	b.units[2].pos=Vector2i(7,1)
-	b.units[3].pos=Vector2i(3,3)
-	plan=policy.choose(b,[])
-	_check(plan.path.back()==Vector2i(9,0) and _execute(b,plan) and b.result.is_empty(),"A occupies the threatened PLAYER goal instead of allowing next-turn BREACH")
 	b=_battle()
 	plan=policy.choose(b,[])
 	var memory=[]

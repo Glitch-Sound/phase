@@ -41,7 +41,7 @@ func _capture(suffix: String) -> void:
 	await _shot("defeat-empty")
 	game._build()
 	await _shot("build")
-	for i in range(4):
+	for i in range(game.C.stages().size()):
 		game.collection.stage_index=i
 		game._build()
 		await _shot("build-stage-"+str(i))

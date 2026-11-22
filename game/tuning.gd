@@ -31,7 +31,6 @@ const SYNC_SIGMA_SCALE := 0.85
 const CPU_DAMAGE_WEIGHT := 1.2
 const CPU_HEAL_WEIGHT := 0.85
 # 位置操作だけの補助評価。確定した終局と即時ダメージより控えめに比較する。
-const CPU_UTILITY_GOAL_WEIGHT := 12.0
 const CPU_UTILITY_PRESSURE_WEIGHT := 0.25
 const CPU_KILL_BONUS := 120.0
 const CPU_DANGER_WEIGHT := 0.35
@@ -315,7 +314,7 @@ const CLASS_SWATCH_SIZE := 14.0
 const CLASS_SWATCH_STEP := 22.0
 const SKILL_AREA_Y := 200.0
 
-# 両軍は小さな矩形へまとめ、通常は鏡映する。目標の守備役だけは固定する。
+# 両軍は小さな矩形へまとめ、鏡映して陣営間の距離を保つ。
 const SPAWN_GROUP_SIZE := Vector2i(2,3)
 const SPAWN_X_RANGE := Vector2i(1,2)
 const SPAWN_Y_RANGE := Vector2i(2,5)

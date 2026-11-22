@@ -250,22 +250,29 @@ func _draw_skill_area() -> void:
 			if offsets.has(offset):preview_area.draw_rect(rect.grow(-3),Color(host.CYAN,0.38))
 	preview_area.draw_string(host.font,origin+Vector2(-214,38),"TARGET CELLS",HORIZONTAL_ALIGNMENT_LEFT,-1,13,host.MUTED)
 
+## 概要図の所属と紋章を返す。戻り値は現在の6体と開始可能領域内の相対位置。モデルと固定配置を変更しない。
+func operation_symbols() -> Array:
+	var result=[]
+	var areas=host.B.SPAWN_LAYOUT.areas()
+	for i in range(C.SQUAD_SIZE*2):
+		var unit=host._reference_unit((C.PLAYER_IDS+C.ENEMY_IDS)[i])
+		var area: Rect2i=areas[0 if i<C.SQUAD_SIZE else 1]
+		result.append({"unit":unit,"point":Vector2(area.position)+Vector2(area.size)*Vector2((i%C.SQUAD_SIZE+0.5)/C.SQUAD_SIZE,0.5)})
+	return result
+
 func _draw_operation() -> void:
-	var stage=C.stages()[int(selected_id)]
 	var origin=Vector2(162,12);var cell=24.0
 	for y in range(10):
 		for x in range(10):
 			preview_area.draw_rect(Rect2(origin+Vector2(x,y)*cell,Vector2.ONE*(cell-2)),host.EDGE,false,1)
-	var areas=host.B.SPAWN_LAYOUT.areas(stage)
+	var areas=host.B.SPAWN_LAYOUT.areas()
 	for i in range(areas.size()):
 		var area: Rect2i=areas[i]
 		var camp="PLAYER" if i==0 else "ENEMY"
 		var color=host.A.color(host._assembly_profile(camp))
 		for y in range(area.position.y,area.end.y):
 			for x in range(area.position.x,area.end.x):preview_area.draw_rect(Rect2(origin+Vector2(x,y)*cell,Vector2.ONE*(cell-2)),Color(color,0.12))
-		host._assembly_emblem(preview_area,origin+(Vector2(area.position)+Vector2(area.size)/2.0)*cell,12,host._assembly_profile(camp),camp)
+	for symbol in operation_symbols():
+		# 説明文のunit_reference_textと同じ紋章と所属色で役割を対応させる。
+		host._reference_emblem(preview_area,origin+symbol.point*cell,10,symbol.unit)
 	preview_area.draw_string(host.mono,Vector2(162,272),"START AREAS",HORIZONTAL_ALIGNMENT_LEFT,-1,13,host.MUTED)
-	if stage.goal.x>=0:
-		preview_area.draw_rect(Rect2(origin+Vector2(stage.goal)*cell,Vector2.ONE*(cell-2)),host.WHITE,false,2)
-	if stage.enemy_goal.x>=0:
-		preview_area.draw_rect(Rect2(origin+Vector2(stage.enemy_goal)*cell,Vector2.ONE*(cell-2)),host.status_colors[1],false,2)

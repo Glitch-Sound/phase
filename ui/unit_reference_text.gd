@@ -41,4 +41,4 @@ func _draw() -> void:
 		for key in paragraph.get_line_objects(line):
 			var rect=paragraph.get_line_object_rect(line,key)
 			var center=rect.get_center()
-			host.V.unit_emblem(self,center,font_size*host.T.OBJECTIVE_REF_CREST_SCALE,parts[int(key)].unit,host._assembly_profile(parts[int(key)].unit.camp))
+			host._reference_emblem(self,center,font_size*host.T.OBJECTIVE_REF_CREST_SCALE,parts[int(key)].unit)

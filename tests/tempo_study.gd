@@ -1,4 +1,5 @@
 extends SceneTree
+const C=preload("res://game/catalog.gd")
 ## REQ-005-S02、REQ-035-S05
 ## 旧版と現行の隔離コピーを、同じ条件と合法APIで比較する。
 func _initialize() -> void:
@@ -10,7 +11,7 @@ func _initialize() -> void:
 		var normal=load(prefix+"cpu_policy.gd").new()
 		var aggressive=load(prefix+"aggressive.gd").new()
 		for kind in ["starter","balanced","reverse","aggressive"]:
-			for stage in range(4):
+			for stage in range(C.stages().size()):
 				for layout_seed in ([1,128,729,7,2026] if kind=="starter" else ([128,2026] if kind=="reverse" else [128])):
 					var builds=catalog.player_builds()
 					if kind=="balanced": builds=[catalog.starter_build(),catalog.starter_build()]

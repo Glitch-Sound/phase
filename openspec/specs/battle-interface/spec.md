@@ -388,8 +388,6 @@ WHILE 戦闘盤面が表示される間、画面は中央マップ周辺の操�
 | --- | --- |
 | INTERFERENCE | 移動 |
 | SEVERANCE | 移動 |
-| BREACH | 移動 |
-| ANCHOR | 移動 |
 | INTERFERENCE | 行動選択 |
 | INTERFERENCE | 攻撃対象選択 |
 | INTERFERENCE | 回復対象選択 |

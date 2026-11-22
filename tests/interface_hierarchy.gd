@@ -49,7 +49,7 @@ func _build_inventory() -> void:
 			_check(not interactive[i].get_global_rect().intersects(interactive[j].get_global_rect()),"BUILD interaction regions do not overlap: "+str(interactive[i].get_global_rect())+" / "+str(interactive[j].get_global_rect()))
 ## REQ-014-S02
 func _stages() -> void:
-	for i in range(4):
+	for i in range(game.C.stages().size()):
 		game.collection.stage_index=i
 		game._build()
 		await process_frame

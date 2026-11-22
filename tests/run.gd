@@ -209,7 +209,7 @@ func test_zero_step_active() -> void:
 
 ## REQ-013-S01
 func test_objectives() -> void:
-	for stage in range(4):
+	for stage in range(C.stages().size()):
 		var b=B.new()
 		b.start(stage,[C.default_build(),C.default_build()])
 		if stage==0:
@@ -217,14 +217,9 @@ func test_objectives() -> void:
 			b.units[3].hp=0.0
 		elif stage==1:
 			b.units[2].hp=0.0
-		else:
-			b.units[2].pos=Vector2i(9,9)
-			b.units[0].pos=C.stages()[stage].goal
-		var event=["DEATH","DEATH","MOVE","END"][stage]
-		if stage>=2:
-			b.check_result("DEATH")
-			_check(b.result.is_empty(),"goal timing")
-		b.check_result(event)
+		for other in ["MOVE","END"]:b.check_result(other)
+		_check(b.result.is_empty(),"only a death event evaluates the configured elimination and target")
+		b.check_result("DEATH")
 		_check(b.result=="VICTORY","objective %d" % stage)
 
 ## REQ-013-S02
@@ -286,13 +281,13 @@ func test_duplicate_mutant() -> void:
 func test_save_roundtrip() -> void:
 	var l=L.new()
 	l.builds[0].class_name="REVERSE"
-	l.stage_index=2
+	l.stage_index=1
 	var p="res://artifacts/runtime/test-save-%d.json" % Time.get_ticks_usec()
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://artifacts/runtime"))
 	_check(l.save_to(p).is_empty(),"save")
 	l.builds[0].class_name="STANDARD"
 	_check(l.load_from(p).is_empty(),"load")
-	_check(l.stage_index==2 and l.builds[0].class_name=="REVERSE","restore content")
+	_check(l.stage_index==1 and l.builds[0].class_name=="REVERSE","restore content")
 	_check(l.save_to(p).is_empty(),"save with backup")
 	_check(not l.last_backup.is_empty() and FileAccess.file_exists(l.last_backup),"backup preserved")
 
@@ -301,7 +296,8 @@ func test_invalid_load() -> void:
 	var l=L.new()
 	var before=JSON.stringify(l.snapshot())
 	_check(not l.load_from("res://artifacts/runtime/no-such-save.json").is_empty(),"missing")
-	for value in ["{broken",'{"version":999}',JSON.stringify({"version":1,"builds":[]})]:
+	var unknown=L.new().snapshot();unknown.stage_index=2
+	for value in [JSON.stringify(unknown),"{broken",'{"version":999}',JSON.stringify({"version":1,"builds":[]})]:
 		var p="res://artifacts/runtime/invalid-test.json"
 		var f=FileAccess.open(p,FileAccess.WRITE)
 		f.store_string(value)
@@ -315,16 +311,11 @@ func test_deterministic_play() -> void:
 	var b=B.new()
 	a.start(0,[C.default_build(),C.default_build()])
 	b.start(0,[C.default_build(),C.default_build()])
-	# 接続のfixtureを実ステージの難易度から独立させる。
-	a.stage.victory=[{"type":"REACH","camp":"PLAYER","unit":"01","cell":Vector2i(5,4)}]
-	b.stage.victory=a.stage.victory.duplicate(true)
-	for cell in [Vector2i(4,4),Vector2i(5,4)]:
-		a.path_click(cell)
-		b.path_click(cell)
-	a.commit_path()
-	b.commit_path()
-	_check(a.result=="VICTORY" and b.result=="VICTORY","reach full flow")
-	_check(a.units==b.units,"deterministic states")
+	for battle in [a,b]:
+		for cell in [Vector2i(4,4),Vector2i(5,4)]:battle.path_click(cell)
+		battle.commit_path();battle.wait_turn()
+	_check(a.turn==2 and b.turn==2,"move and wait flow completes once")
+	_check(a.units==b.units and a.history==b.history,"deterministic states and history")
 
 ## REQ-005-S01
 func test_partial_interference() -> void:
@@ -373,36 +364,6 @@ func test_skill_unlock_and_distribution() -> void:
 				obtained=true
 	_check(obtained and l.skills.has(C.HEAL),"skill acquisition works")
 	_check(not l.accept_drop({"skill":C.HEAL}),"skill duplicate reroll candidate")
-
-## REQ-013-S03
-func test_stage_specific_defeat_and_occupant() -> void:
-	var b=B.new()
-	b.start(0,[C.default_build(),C.default_build()])
-	b.stage.defeat=[{"type":"REACH","camp":"ENEMY","unit":"A","cell":Vector2i(6,5)}]
-	b.actor=2
-	b.units[2].pos=Vector2i(6,5)
-	b.check_result("END")
-	_check(b.result.is_empty(),"enemy REACH not tested on END")
-	b.check_result("MOVE")
-	_check(b.result=="DEFEAT","configured enemy REACH defeat")
-	b.start(0,[C.default_build(),C.default_build()])
-	b.stage.victory=[{"type":"OCCUPY","camp":"PLAYER","unit":"02","cell":Vector2i(5,5)}]
-	b.units[0].pos=Vector2i(5,5)
-	b.check_result("END")
-	_check(b.result.is_empty(),"wrong PLAYER cannot occupy for 02")
-	b.units[0].pos=Vector2i(4,5)
-	b.units[1].pos=Vector2i(5,5)
-	b.check_result("MOVE")
-	_check(b.result.is_empty(),"occupation not tested on MOVE")
-	b.check_result("END")
-	_check(b.result=="VICTORY","specific 02 occupation")
-	b.start(0,[C.default_build(),C.default_build()])
-	b.stage.victory=[{"type":"TARGET","camp":"ENEMY","unit":"A"}]
-	b.stage.defeat=[{"type":"TARGET","camp":"PLAYER","unit":"02"}]
-	b.units[1].hp=0.0
-	b.units[2].hp=0.0
-	b.check_result("DEATH")
-	_check(b.result=="DEFEAT","simultaneous defeat priority")
 
 ## REQ-016-S02
 func test_complete_corrupt_save() -> void:

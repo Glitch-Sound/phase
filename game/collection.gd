@@ -11,7 +11,10 @@ var skills: Array=[C.DAMAGE,C.HEAL]
 var builds: Array=[]
 var unit_names: Array=I.PLAYER_NAMES.duplicate()
 var assembly: Dictionary=A.default_profile("PLAYER")
-var stage_index := 0
+var stage_index := 0:
+	set(value):
+		# 画面や既に保持する値の範囲外は最初の作戦へ戻す。旧モードの専用対応を置かない。
+		stage_index=value if value>=0 and value<C.stages().size() else 0
 var last_backup := ""
 var temporary := false
 

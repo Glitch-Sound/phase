@@ -56,15 +56,7 @@ func _interruptions() -> void:
 		presenter.reset()
 		presenter.advance(b,100.0,false,1.0)
 		_check(not presenter.active and before[0]==b.units and before[1]==b.path and before[2]==b.turn,"reset discards all pending work "+target_phase)
-	var b=B.new()
-	b.start(2,C.player_builds().slice(0,2),1)
-	b.actor=3
-	b.units[3].pos=Vector2i(0,8)
-	presenter.begin(b,{"path":[Vector2i(0,9)],"skill":"","target":-1})
-	for i in range(1000):
-		presenter.advance(b,0.01,false,1.0)
-	_check(b.result=="DEFEAT" and b.history.size()==1 and not presenter.active,"movement terminal never adds WAIT or next action")
-	b=_battle()
+	var b=_battle()
 	presenter.begin(b,{"path":[Vector2i(3,3)],"skill":"","target":-1})
 	b.turn+=1
 	_check(presenter.advance(b,1.0,false,1.0)=="cancel" and not presenter.active,"unexpected turn invalidates an old presentation")

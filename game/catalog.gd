@@ -141,17 +141,14 @@ static func unit(id: String, camp: String, pos: Vector2i, build: Dictionary,disp
 	u.next_time=M.delay(u)
 	return u
 
-## ステージ定義を返す。戻り値は目標と説明を持つ4件の独立した辞書。
+## ステージ定義を返す。戻り値は目標と説明を持つ2件の独立した辞書。
 static func stages() -> Array:
 	var result=[
-		{"name":"01 / INTERFERENCE","type":"ELIMINATE","goal":Vector2i(-1,-1),"brief":"ELIMINATE ALL ENEMY UNITS","hint":""},
-		{"name":"02 / SEVERANCE","type":"TARGET","goal":Vector2i(-1,-1),"brief":"DEFEAT A / KEEP 01 ALIVE","hint":"Lose if 01 falls. 02 and 03 can screen the guards."},
-		{"name":"03 / BREACH","type":"REACH","goal":Vector2i(9,0),"brief":"01 REACH (9,0) / KEEP 01 ALIVE / STOP B (0,9)","hint":"Lose if 01 falls. A guards the exit; 02 and 03 can intercept B."},
-		{"name":"04 / ANCHOR","type":"OCCUPY","goal":Vector2i(8,0),"brief":"PLAYER HOLD (8,0) / DENY ENEMY (0,9)","hint":"Occupation resolves at turn end. Moving every turn opens gaps."}
+		{"name":"01 / INTERFERENCE","type":"ELIMINATE","brief":"ELIMINATE ALL ENEMY UNITS: A B C","hint":""},
+		{"name":"02 / SEVERANCE","type":"TARGET","brief":"DEFEAT A / KEEP 01 ALIVE","hint":"Lose if 01 falls. 02 and 03 can screen the guards."},
 	]
 	for stage in result:
 		stage.spawns=[Vector2i(3,4),Vector2i(3,6),Vector2i(3,2),Vector2i(6,4),Vector2i(6,6),Vector2i(6,2)]
-		stage.enemy_goal=Vector2i(-1,-1)
 		stage.victory=[{"type":"ELIMINATE","camp":"ENEMY"}]
 		stage.defeat=[{"type":"ELIMINATE","camp":"PLAYER"}]
 		if stage.type=="TARGET":
@@ -160,15 +157,4 @@ static func stages() -> Array:
 			stage.spawns[5]=Vector2i(6,6)
 			stage.victory.append({"type":"TARGET","camp":"ENEMY","unit":"A"})
 			stage.defeat.append({"type":"TARGET","camp":"PLAYER","unit":"01"})
-		elif stage.type=="REACH":
-			stage.spawns[3]=stage.goal
-			stage.enemy_goal=Vector2i(0,9)
-			stage.victory=[{"type":"REACH","camp":"PLAYER","unit":"01","cell":stage.goal}]
-			stage.defeat.append({"type":"TARGET","camp":"PLAYER","unit":"01"})
-			stage.defeat.append({"type":"REACH","camp":"ENEMY","unit":"B","cell":stage.enemy_goal})
-		elif stage.type=="OCCUPY":
-			stage.spawns[3]=stage.goal
-			stage.enemy_goal=Vector2i(0,9)
-			stage.victory=[{"type":"OCCUPY","camp":"PLAYER","cell":stage.goal}]
-			stage.defeat.append({"type":"OCCUPY","camp":"ENEMY","cell":stage.enemy_goal})
 	return result

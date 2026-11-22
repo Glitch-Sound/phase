@@ -18,7 +18,6 @@ func _initialize() -> void:
 		_swap()
 		_push()
 		_guard()
-		_goals()
 	_inventory()
 	print("UTILITY SKILLS: %d checks / %d failures" % [checks,failures])
 	quit(0 if failures==0 else 1)
@@ -161,25 +160,6 @@ func _guard() -> void:
 	_check(b.units[0].guard_active,"moving and reselecting preserve existing guard")
 	b.start(0,C.player_builds().slice(0,2),1)
 	_check(b.units.all(func(u):return not u.guard_active),"new battle resets all runtime guard states")
-## REQ-013-S05
-func _goals() -> void:
-	var b=_battle(SWAP)
-	b.stage.victory=[{"type":"REACH","camp":"PLAYER","unit":"02","cell":Vector2i(4,4)}]
-	b.stage.defeat=[]
-	b.choose_skill(SWAP)
-	_check(b.act(1) and b.result=="VICTORY" and b.turn==1,"nonacting swapped ally can reach its actual goal and stops before another hand")
-	b=_battle(SWAP)
-	b.stage.victory=[{"type":"REACH","camp":"PLAYER","unit":"01","cell":Vector2i(5,4)}]
-	b.stage.defeat=[{"type":"REACH","camp":"PLAYER","unit":"02","cell":Vector2i(4,4)}]
-	b.choose_skill(SWAP)
-	_check(b.act(1) and b.result=="DEFEAT" and b.units[0].pos==Vector2i(5,4) and b.units[1].pos==Vector2i(4,4),"atomic SWAP applies both positions then resolves simultaneous loss first")
-	b=_battle(PUSH)
-	b.units[1].pos=Vector2i.ZERO
-	b.units[2].pos=Vector2i(5,4)
-	b.stage.victory=[]
-	b.stage.defeat=[{"type":"REACH","camp":"ENEMY","unit":"A","cell":Vector2i(6,4)}]
-	b.choose_skill(PUSH)
-	_check(b.act(2) and b.result=="DEFEAT" and b.turn==1,"pushed opponent reaching its goal is not ignored")
 ## REQ-026-S04
 func _inventory() -> void:
 	var l=L.new()

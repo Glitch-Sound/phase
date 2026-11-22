@@ -69,7 +69,7 @@ func _layout() -> void:
 func _deployment() -> void:
 	var tuning=load("res://game/tuning.gd").get_script_constant_map()
 	var size=tuning.get("SPAWN_GROUP_SIZE",Vector2i(10,10));var gap=tuning.get("SPAWN_CAMP_GAP",0)
-	for stage_index in range(4):
+	for stage_index in range(C.stages().size()):
 		var signatures={};var consistent=true;var safe=true;var objectives=true
 		for seed_value in range(64):
 			var b=B.new();b.start(stage_index,C.player_builds(),seed_value)
@@ -87,14 +87,11 @@ func _deployment() -> void:
 			for i in range(3):
 				for j in range(3,6):safe=safe and abs(positions[i].x-positions[j].x)+abs(positions[i].y-positions[j].y)>=gap
 			b.check_result("END");objectives=objectives and b.result.is_empty()
-			if b.stage.goal.x>=0:
-				objectives=objectives and positions[3]==b.stage.goal
-				for i in range(3):objectives=objectives and abs(positions[i].x-b.stage.goal.x)+abs(positions[i].y-b.stage.goal.y)>b.T.BASE_MOVE+1
 			var original=b.stage.spawns.duplicate();var panels=b.panels.duplicate(true);b.wait_turn()
 			consistent=consistent and b.stage.spawns==original and b.panels==panels
 		_check(consistent and signatures.size()>1,"same seed repeats; different seeds vary without regeneration: stage "+str(stage_index))
 		_check(safe,"seeded camps are compact, separated, unique, panel-free and movable: stage "+str(stage_index))
-		_check(objectives,"guarded goals and initial nonterminal state remain valid: stage "+str(stage_index))
+		_check(objectives,"initial nonterminal state remain valid: stage "+str(stage_index))
 	seed(919);var expected=randi();seed(919);var b=B.new();b.start(0,C.player_builds(),75)
 	_check(randi()==expected,"deployment does not consume the global random stream")
 func _check(ok: bool,message: String) -> void:

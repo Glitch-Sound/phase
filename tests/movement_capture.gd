@@ -67,7 +67,6 @@ func _run() -> void:
 		_check(game.build_open and not game.movement.active and game.playback_command.is_empty(),"restart during travel discards old arrival and action")
 	root.size=Vector2i(1920,1080);await _settle()
 	await _cpu()
-	await _terminal()
 	game._restart();_check(game._toggle_debug(false) and game.collection.snapshot()==normal,"normal BUILD and exact original collection restored")
 	await _settle()
 	var f=FileAccess.open("res://artifacts/runtime/arrival-gpu.json",FileAccess.WRITE);f.store_string(JSON.stringify({"checks":checks,"failures":failures,"observations":observations,"draw_ms":game.draw_times},"\t"));f.close()
@@ -127,14 +126,3 @@ func _cpu() -> void:
 		if game.battle.turn==2:break
 	_check(game.battle.turn==2 and game.battle.history.size()==2,"CPU attack follows arrival once")
 	game._restart();game.cpu_enabled=false
-func _terminal() -> void:
-	game.collection.stage_index=2;game._start_battle();await _settle()
-	# 移動で終局する境界だけの明示fixture。製品の通常配置と動画には使わない。
-	game.battle.actor=0;game.battle.units[0].pos=Vector2i(8,0);game.battle.units[3].pos=Vector2i.ZERO;game._follow_turn()
-	_cell(Vector2i(9,0));_cell(Vector2i(9,0),true);await _settle(3)
-	_check(game.movement.active and game.battle.result=="VICTORY" and not is_instance_valid(game.overlay),"movement terminal waits for landing display")
-	await _observe("terminal-1920")
-	_check(is_instance_valid(game.overlay) and game.result_awarded and game.battle.history.size()==1 and game.battle.turn==1,"landing opens only one terminal result without extra action")
-	var result=game.overlay;await _settle(10)
-	_check(game.overlay==result,"terminal result is not recreated")
-	_shot("terminal-1920")

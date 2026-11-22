@@ -24,7 +24,7 @@ func begin(battle: RefCounted, stationary: bool=false) -> bool:
 		if not projected.path_click(cell):reset();return false
 	if not route.is_empty():projected.commit_path()
 	else:projected.mode="CHOICE"
-	phase="READY" if not projected.result.is_empty() else "CHOICE"
+	phase="CHOICE"
 	return true
 
 ## 行動を予定する。skillは装備ID。戻り値は合法な対象があるか。原本を変更しない。
@@ -54,9 +54,9 @@ func select(index: int) -> bool:
 func back() -> void:
 	if not active():return
 	if route.is_empty():reset();return
-	if phase=="READY" and projected.result.is_empty() and target>=0 and target!=projected.actor:
+	if phase=="READY" and target>=0 and target!=projected.actor:
 		target=-1;phase="TARGET"
-	elif phase in ["TARGET","READY"] and projected.result.is_empty():
+	elif phase in ["TARGET","READY"]:
 		projected.back();projected.selected_skill="";target=-1;phase="CHOICE"
 	else:reset()
 

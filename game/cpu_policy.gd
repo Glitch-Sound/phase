@@ -88,19 +88,7 @@ func _utility_score(before, after, actor: int, kind: String) -> float:
 	if kind not in ["SWAP","PUSH"]:
 		return 0.0
 	var camp: String=after.units[actor].camp
-	var own=after.stage.defeat if camp=="ENEMY" else after.stage.victory
-	var opposing=after.stage.victory if camp=="ENEMY" else after.stage.defeat
-	var score=0.0
-	for pair in [[own,1.0],[opposing,-1.0]]:
-		for condition in pair[0]:
-			if condition.type not in ["REACH","OCCUPY"]:
-				continue
-			for i in range(after.units.size()):
-				var u: Dictionary=after.units[i]
-				if i==actor or u.hp<=0 or u.camp!=condition.camp or (condition.has("unit") and condition.unit!=u.id):
-					continue
-				score+=(_distance(before.units[i].pos,condition.cell)-_distance(u.pos,condition.cell))*pair[1]*T.CPU_UTILITY_GOAL_WEIGHT
-	return score+(_pressure(after,camp)-_pressure(before,camp))*T.CPU_UTILITY_PRESSURE_WEIGHT
+	return (_pressure(after,camp)-_pressure(before,camp))*T.CPU_UTILITY_PRESSURE_WEIGHT
 
 func _pressure(b, camp: String) -> float:
 	var value=0.0
@@ -122,24 +110,12 @@ func _position_score(b, actor: int) -> float:
 		if target.hp>0 and target.camp!=u.camp:
 			nearest=mini(nearest,_distance(u.pos,target.pos))
 	var score=-float(nearest)*3.0
-	var own=b.stage.defeat if u.camp=="ENEMY" else b.stage.victory
-	for condition in own:
-		if condition.type in ["REACH","OCCUPY"] and (not condition.has("unit") or condition.unit==u.id):
-			score-=_distance(u.pos,condition.cell)*12.0
-	# Aの守備は脅威が近いときに強め、Bは反対側の目標へ進む。
-	if u.camp=="ENEMY" and b.stage.type in ["REACH","OCCUPY"] and u.id=="A" and b.units.any(func(unit):return unit.id=="B" and unit.hp>0):
-		var approach=100
-		for target in b.units:
-			if target.hp>0 and target.camp=="PLAYER":
-				approach=mini(approach,_distance(target.pos,b.stage.goal))
-		score-=_distance(u.pos,b.stage.goal)*(18.0 if approach<=4 else 3.0)
 	return score
 
 func _danger(after, actor: int, threats: Array) -> float:
 	var u: Dictionary=after.units[actor]
 	var risk=0.0
 	var max_hits={}
-	var opposing=after.stage.victory if u.camp=="ENEMY" else after.stage.defeat
 	for entry in threats:
 		var i: int=entry.index
 		var attacker: Dictionary=after.units[i]
@@ -152,9 +128,6 @@ func _danger(after, actor: int, threats: Array) -> float:
 				break
 		if blocked:
 			continue
-		for condition in opposing:
-			if condition.type in ["REACH","OCCUPY"] and condition.camp==attacker.camp and (not condition.has("unit") or condition.unit==attacker.id) and entry.unit.pos==condition.cell:
-				risk=maxf(risk,T.CPU_TERMINAL_SCORE*0.5)
 		for j in range(after.units.size()):
 			var victim: Dictionary=after.units[j]
 			if victim.camp!=u.camp:

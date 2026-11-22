@@ -380,12 +380,6 @@ func _draw_board() -> void:
 			if panel!="NORMAL":
 				var pc=MAGENTA if panel=="COUNTERCLOCKWISE" else (status_colors[3] if panel=="RESET" else CYAN)
 				_draw_panel_icon(panel,Rect2(pos+T.PANEL_ICON_OFFSET,Vector2.ONE*T.PANEL_ICON_SIZE),pc)
-			if cell==battle.stage.goal:
-				draw_rect(rect.grow(-4),Color(MAGENTA,0.6),false,1)
-				_text("GOAL",pos+Vector2(6,62)*BOARD_SCALE,11,MAGENTA,mono)
-			if cell==battle.stage.enemy_goal:
-				draw_rect(rect.grow(-4),status_colors[1],false,2)
-				_text("LOSS",pos+Vector2(6,62)*BOARD_SCALE,11,status_colors[1],mono)
 			if target_cells.has(cell) and effect!="GUARD":
 				var tc=_action_color(effect)
 				draw_rect(rect,Color(tc,0.12))
@@ -734,8 +728,7 @@ func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 		elif double_click and not battle.path.is_empty() and cell==battle.path.back():
 			if planning.begin(battle):
 				selected=-1
-				if planning.phase=="READY":_confirm_plan()
-				else:_action_dialog()
+				_action_dialog()
 		elif battle.path_click(cell):
 			selected=-1
 		else:
@@ -1143,6 +1136,9 @@ func _build() -> void:
 func _assembly_profile(camp: String) -> Dictionary:
 	return collection.assembly if camp=="PLAYER" else opponent_assembly
 
+func _reference_emblem(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary) -> void:
+	V.unit_emblem(canvas,center,radius,u,_assembly_profile(u.camp))
+
 func _assembly_emblem(canvas: CanvasItem,center: Vector2,radius: float,profile: Dictionary,camp: String) -> void:
 	V.assembly_emblem(canvas,center,radius,profile,camp)
 
@@ -1456,7 +1452,7 @@ func _skill_help() -> void:
 	_prose_label(panel,"After moving, target yourself. Reduce the next attack by %d%%; even zero damage consumes it.\nThe octagon means guarded. No stacking. Moving / healing keeps it; a new battle clears it." % roundi((1-T.GUARD_DAMAGE_MULTIPLIER)*100),Rect2(36,290,1048,68),19,WHITE)
 	_label(panel,"PANEL IGNORE",Rect2(36,388,1048,32),20,CYAN)
 	_prose_label(panel,"Ignore special CORE panels only. GEAR and ARMS still turn normally.\nSWAP moves both units; PUSH moves its target. Each receives one normal entry and its own passives.",Rect2(36,433,1048,68),19,WHITE)
-	_prose_label(panel,"These actions replace damage or healing; moving first is still required.\nHover a valid target to preview positions and rings.\nForced movement keeps the target clock. All landings resolve before objectives.",Rect2(36,536,1048,88),18,MUTED)
+	_prose_label(panel,"These actions replace damage or healing; moving first is still required.\nHover a valid target to preview positions and rings.\nForced movement keeps the target clock. Both landings use the normal entry rule.",Rect2(36,536,1048,88),18,MUTED)
 	_button(panel,"BACK",Rect2(36,670,552,44),_help)
 	_button(panel,"FIELDS",Rect2(608,670,228,44),_field_help)
 	_button(panel,"CLOSE / ESC",Rect2(856,670,228,44),_close_aux)
@@ -1767,7 +1763,7 @@ func _cpu_tick(delta: float) -> void:
 	_follow_turn()
 	if event=="act":
 		_feedback()
-	if event in ["act","wait"] or (event=="commit" and not battle.result.is_empty()):
+	if event in ["act","wait"]:
 		cpu_memory.append({"actor":actor,"pos":battle.units[actor].pos,"skill":command.skill,"target":command.target})
 		cpu_memory=cpu_memory.slice(-T.CPU_MEMORY_LIMIT)
 	if event=="commit":
