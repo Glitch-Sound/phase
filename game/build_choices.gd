@@ -56,7 +56,7 @@ static func candidates(collection: RefCounted,index: int,kind: String,slot: int=
 		var stages=C.stages()
 		for i in range(stages.size()):
 			var stage=stages[i]
-			result.append(_row(str(i),stage.name,stage.brief+"\n"+stage.hint,"OPERATION",true,str(i)==equipped))
+			result.append(_row(str(i),stage.name,stage.brief+("\n"+stage.hint if not stage.hint.is_empty() else ""),"OPERATION",true,str(i)==equipped))
 	return result
 
 ## 絞り込んだ行を返す。rowsは候補、statusは能力番号で負なら全件、minimumは下限。戻り値は下限以上を値降順にした独立した配列。候補自体を変更しない。

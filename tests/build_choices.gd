@@ -73,7 +73,7 @@ func _class_catalog(model) -> void:
 ## REQ-045-S02
 func _class_battle() -> void:
 	var builds=C.player_builds();builds[0].class_name="LSRIV"
-	var battle=load("res://game/battle.gd").new();battle.start(0,builds,19)
+	var battle=load("res://tests/fixture_squad_battle.gd").new();battle.start(0,builds,19)
 	battle.panels={Vector2i(4,4):"CLOCKWISE",Vector2i(4,5):"RESET"}
 	var initial=battle.units[0].duplicate(true)
 	var sectors=[]

@@ -34,7 +34,7 @@ func _build_inventory() -> void:
 	expected_buttons.sort()
 	_check(buttons==expected_buttons,"complete exact BUILD operation set includes CPU and the debug-only choice")
 	_check(["CLASS","CORE / TOTAL 100","ARMS","GEAR","MUTATION","SKILLS / 3 SLOTS","OPERATION"].all(func(s):return labels.has(s)),"necessary build labels remain visible")
-	_check(labels.any(func(s):return s.contains("MIN 1") and s.contains("AUTOMATIC REDISTRIBUTION")) and labels.any(func(s):return s.contains("SHARED ARCHIVE") and s.contains("BOTH SIDES: HUMAN")),"allocation and shared archive rules remain available")
+	_check(not labels.has("MIN 1 / AUTOMATIC REDISTRIBUTION") and not labels.has("Choose equipment to compare rings and stat values.") and not labels.has("Compare routes. Both sides are under your control.") and labels.any(func(s):return s.contains("SHARED ARCHIVE") and s.contains("BOTH SIDES: HUMAN")),"only the specified BUILD prose is absent; the shared archive stays available")
 	_check(game.equipment_views.size()==2 and is_instance_valid(game.build_preview),"five equipment values, differences and resulting build preview remain connected")
 	_check(game.has_method("_equipment_values"),"build equipment readout exposes all five exact values and comparison")
 	if game.has_method("_equipment_values"):
@@ -57,9 +57,8 @@ func _stages() -> void:
 		var objectives=game.overlay.find_children("*","Control",true,false).filter(func(node):return node.get_script()!=null and node.get_script().resource_path=="res://ui/unit_reference_text.gd")
 		var stage=game.C.stages()[i]
 		var sources=objectives.map(func(view):return "".join(view.parts.map(func(part):return part.unit.id if part.has("unit") else part.text)))
-		_check(options[-1].text==stage.name and sources==[stage.brief,stage.hint],"complete stage identity, victory condition and hint remain "+str(i))
-		var hint=objectives[1]
-		_check(hint.get_global_rect().end.x<=options[-1].get_global_rect().end.x,"stage hint wraps within the deployment column "+str(i))
+		_check(options[-1].text==stage.name and sources==([stage.brief] if stage.hint.is_empty() else [stage.brief,stage.hint]),"complete stage identity, victory condition and hint remain "+str(i))
+		_check(objectives.all(func(view):return view.get_global_rect().end.x<=options[-1].get_global_rect().end.x),"stage objective and remaining hint fit the deployment column "+str(i))
 	game.collection.stage_index=0
 	_check(game.mono.get_string_size("96",HORIZONTAL_ALIGNMENT_LEFT,-1,game.T.BUILD_EQUIPMENT_VALUE_FONT).x<game.T.BUILD_EQUIPMENT_STAT_STEP,"largest legal equipment delta fits its fixed column")
 ## REQ-014-S01、REQ-014-S02、REQ-016-S01、REQ-028-S01

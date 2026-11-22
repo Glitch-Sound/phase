@@ -2,15 +2,23 @@ extends SceneTree
 var checks=0
 var failures=0
 var game
+class AuditUI:
+	extends "res://ui/main.gd"
+	var dialog_rings=[]
+	func _ring(canvas: CanvasItem,center: Vector2,radius: float,u: Dictionary,active: bool=false) -> void:
+		if is_instance_valid(build_dialog) and canvas==build_dialog.preview_area:dialog_rings.append(u.duplicate(true))
+		super._ring(canvas,center,radius,u,active)
 func _initialize() -> void:_run.call_deferred()
 func _run() -> void:
-	game=load("res://ui/main.gd").new()
+	game=AuditUI.new()
 	game.save_path="res://artifacts/runtime/build-dialog-test-save.json"
 	game.settings_path="res://artifacts/runtime/build-dialog-test-settings.json"
 	root.add_child(game)
 	await process_frame
 	_check(game.has_method("_open_build_choice"),"shared BUILD selection entry exists")
 	if game.has_method("_open_build_choice"):
+		await _slot_switch()
+		await _compact_content()
 		await _dialogs()
 		await _keyboard()
 		await _class_selection()
@@ -148,6 +156,41 @@ func _class_selection() -> void:
 	game.collection.builds=before.builds.duplicate(true)
 	game._build()
 	await process_frame
+## REQ-014-S02
+func _slot_switch() -> void:
+	var original=game.collection.builds.duplicate(true)
+	for index in [0,1,2,0]:
+		var button=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="SLOT "+str(index+1))[0]
+		button.pressed.emit();await process_frame;await process_frame
+		var selected=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text.begins_with("SLOT ") and b.get_theme_stylebox("normal").get_border_width(SIDE_BOTTOM)>0)
+		_check(game.edit_unit==index and selected.size()==1 and selected[0].text=="SLOT "+str(index+1) and root.gui_get_focus_owner()==selected[0],"SLOT selection, focus and editing agree: "+str(index))
+		game.core_controls[0].value=[25,35,45][index]
+	_check(game.collection.builds.map(func(b):return int(b.core[0]))==[25,35,45],"each visible slot edits its own CORE")
+	var path="res://artifacts/runtime/slot-roundtrip-"+str(Time.get_ticks_usec())+".json";var previous=game.save_path;game.save_path=path
+	game._save();game.collection.builds=original.duplicate(true);game._load();await process_frame
+	_check(game.collection.builds.map(func(b):return int(b.core[0]))==[25,35,45],"SAVE and LOAD preserve the three independent slots")
+	game.save_path=previous;game.collection.builds=original;game._build();await process_frame
+## REQ-042-S03、REQ-042-S04、REQ-042-S06
+func _compact_content() -> void:
+	var guide="Select a candidate. Apply to confirm. Esc to cancel."
+	for kind in ["class_name","skill","operation","arms","gear"]:
+		game._open_build_choice(kind);await process_frame;await process_frame
+		var d=game.build_dialog
+		var labels=d.find_children("*","Label",true,false).map(func(node):return node.text)
+		_check(labels.has(guide)==(kind in ["arms","gear"]),"only the specified selection guides are removed: "+kind)
+		if kind=="class_name":
+			for row in [["VIRSL",[0,1,2,3,4]],["VLSRI",[0,4,3,2,1]]]:
+				var squares=d.row_buttons[row[0]].get_children().filter(func(node):return node is ColorRect)
+				_check(squares.map(func(node):return node.color)==row[1].map(func(i):return game.status_colors[i]),"five squares follow real CORE order and status colors: "+row[0])
+			_check(d.description.text.is_empty() and not d.row_buttons.values().any(func(b):return b.text.contains("CORE order") or b.text.contains(" > ")),"CLASS has no redundant order paragraphs")
+		elif kind=="skill":
+			game.dialog_rings=[];d.preview_area.queue_redraw();await process_frame;await process_frame
+			_check(game.dialog_rings.is_empty() and not d.description.text.is_empty(),"SKILL keeps the effect description and draws no current or candidate rings")
+		game._close_aux();await process_frame
+	game._open_assembly();await process_frame
+	var text=game.assembly_dialog.find_children("*","Label",true,false).map(func(node):return node.text)
+	_check(not text.has("A shared crest and color for your units.") and not text.has("Names may repeat. Your ownership mark stays separate."),"ASSEMBLY omits the two specified paragraphs")
+	game._close_aux();await process_frame
 func _check(ok: bool,message: String) -> void:
 	checks+=1
 	if not ok:failures+=1;printerr("FAIL: ",message)

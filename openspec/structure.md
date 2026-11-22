@@ -22,6 +22,8 @@
 ## 配置原則
 
 モデルから画面へ依存しない。
+game/spawn_layout.gdが開始位置と可能な範囲を生成し、battleが実位置を確定してからgame/panel_layout.gdで開始セルを除外する。\
+OPERATIONの概要図は固定位置の代わりに同じ開始可能領域を使う。
 ビルドと収集の保存をgame/collection.gdに集約する。\
 構成候補と可否、原本から独立したプレビューはgame/build_choices.gd、共通の選択画面はui/build_dialog.gdへ置く。
 game/unit_identity.gdが表示名の規約と固定の幾何を生成し、戦闘の不変IDと構成には名前を混ぜない。\

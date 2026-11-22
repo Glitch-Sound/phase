@@ -2,6 +2,7 @@
 extends RefCounted
 const M = preload("res://game/phase_math.gd")
 const C = preload("res://game/catalog.gd")
+const SPAWN_LAYOUT = preload("res://game/spawn_layout.gd")
 const PANEL_LAYOUT = preload("res://game/panel_layout.gd")
 const T = preload("res://game/tuning.gd")
 const F = preload("res://game/rotation_field.gd")
@@ -25,6 +26,7 @@ var _movement_undo: Dictionary={}
 func start(stage_index: int, builds: Array, layout_seed: int=0,unit_names: Array=[]) -> void:
 	stage=C.stages()[stage_index].duplicate(true)
 	panel_seed=layout_seed
+	stage.spawns=_spawn_positions(layout_seed)
 	panels=PANEL_LAYOUT.generate(stage,panel_seed)
 	units=[]
 	var count=mini(builds.size(),C.SQUAD_SIZE)
@@ -37,6 +39,9 @@ func start(stage_index: int, builds: Array, layout_seed: int=0,unit_names: Array
 	history=[]
 	last_effect={}
 	next_actor()
+
+func _spawn_positions(layout_seed: int) -> Array:
+	return SPAWN_LAYOUT.generate(stage,layout_seed)
 
 ## 生存占有者を返す。cellは座標。戻り値はユニット番号、空きなら-1。
 func at(cell: Vector2i) -> int:

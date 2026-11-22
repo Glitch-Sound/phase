@@ -90,7 +90,7 @@ func _test_scarcity(generator) -> void:
 func _test_link(generator) -> void:
 	var battle=B.new()
 	battle.call("start",2,C.player_builds(),730)
-	var expected=generator.generate(C.stages()[2],730)
+	var expected=generator.generate(battle.stage,730)
 	_check(battle.panels==expected and battle.panel_seed==730,"runtime battle uses generated layout and retains seed")
 	var before=battle.panels.duplicate(true)
 	battle.path_click(Vector2i(4,4))

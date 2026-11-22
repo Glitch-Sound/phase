@@ -8,6 +8,7 @@ var checks=0
 var failures=0
 func _initialize() -> void:
 	_initial()
+	_deployment()
 	if C.player_builds().size()==3:
 		_storage()
 		_progression()
@@ -64,6 +65,38 @@ func _layout() -> void:
 		var cards=view.cards.filter(func(c):return c.unit.camp==camp)
 		cards.sort_custom(func(a,z):return a.center.y<z.center.y)
 		_check(not cards[0].rect.intersects(cards[1].rect) and not cards[1].rect.intersects(cards[2].rect),"three status cards never overlap")
+## REQ-060-S01、REQ-060-S02、REQ-060-S03
+func _deployment() -> void:
+	var tuning=load("res://game/tuning.gd").get_script_constant_map()
+	var size=tuning.get("SPAWN_GROUP_SIZE",Vector2i(10,10));var gap=tuning.get("SPAWN_CAMP_GAP",0)
+	for stage_index in range(4):
+		var signatures={};var consistent=true;var safe=true;var objectives=true
+		for seed_value in range(64):
+			var b=B.new();b.start(stage_index,C.player_builds(),seed_value)
+			var positions=b.units.map(func(u):return u.pos);signatures[str(positions)]=true
+			var second=B.new();second.start(stage_index,C.player_builds(),seed_value)
+			consistent=consistent and b.units==second.units and b.panels==second.panels
+			var unique={}
+			for u in b.units:
+				unique[u.pos]=true
+				safe=safe and Rect2i(0,0,10,10).has_point(u.pos) and not b.panels.has(u.pos) and b.DIRS.any(func(d):return Rect2i(0,0,10,10).has_point(u.pos+d) and b.at(u.pos+d)<0)
+			safe=safe and unique.size()==6
+			for offset in [0,3]:
+				var group=positions.slice(offset,offset+3);var xs=group.map(func(v):return v.x);var ys=group.map(func(v):return v.y)
+				safe=safe and xs.max()-xs.min()<size.x and ys.max()-ys.min()<size.y
+			for i in range(3):
+				for j in range(3,6):safe=safe and abs(positions[i].x-positions[j].x)+abs(positions[i].y-positions[j].y)>=gap
+			b.check_result("END");objectives=objectives and b.result.is_empty()
+			if b.stage.goal.x>=0:
+				objectives=objectives and positions[3]==b.stage.goal
+				for i in range(3):objectives=objectives and abs(positions[i].x-b.stage.goal.x)+abs(positions[i].y-b.stage.goal.y)>b.T.BASE_MOVE+1
+			var original=b.stage.spawns.duplicate();var panels=b.panels.duplicate(true);b.wait_turn()
+			consistent=consistent and b.stage.spawns==original and b.panels==panels
+		_check(consistent and signatures.size()>1,"same seed repeats; different seeds vary without regeneration: stage "+str(stage_index))
+		_check(safe,"seeded camps are compact, separated, unique, panel-free and movable: stage "+str(stage_index))
+		_check(objectives,"guarded goals and initial nonterminal state remain valid: stage "+str(stage_index))
+	seed(919);var expected=randi();seed(919);var b=B.new();b.start(0,C.player_builds(),75)
+	_check(randi()==expected,"deployment does not consume the global random stream")
 func _check(ok: bool,message: String) -> void:
 	checks+=1
 	if not ok:failures+=1;printerr("FAIL: ",message)

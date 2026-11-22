@@ -5,7 +5,7 @@ var game
 func _initialize() -> void:
 	_run.call_deferred()
 func _run() -> void:
-	game=load("res://ui/main.gd").new()
+	game=load("res://tests/fixture_squad_main.gd").new()
 	game.settings_path="res://artifacts/runtime/decisions-no-settings.json"
 	game.save_path="res://artifacts/runtime/decisions-no-save.json"
 	root.add_child(game)

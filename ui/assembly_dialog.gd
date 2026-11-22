@@ -16,28 +16,26 @@ func configure(owner_ui: Control,data: RefCounted) -> void:
 	host=owner_ui;collection=data;candidate=data.assembly.duplicate(true)
 	size=host.T.ASSEMBLY_DIALOG_RECT.size;mouse_filter=Control.MOUSE_FILTER_IGNORE
 	host._label(self,"ASSEMBLY",Rect2(36,25,620,42),28,host.WHITE)
-	host._prose_label(self,"A shared crest and color for your units.",Rect2(36,76,700,26),16,host.MUTED)
-	host._label(self,"NAME",Rect2(36,132,58,38),14,host.MUTED)
-	name_edit=LineEdit.new();name_edit.position=Vector2(106,128);name_edit.size=Vector2(405,42);name_edit.text=candidate.name
+	host._label(self,"NAME",Rect2(36,92,58,38),14,host.MUTED)
+	name_edit=LineEdit.new();name_edit.position=Vector2(106,88);name_edit.size=Vector2(405,42);name_edit.text=candidate.name
 	name_edit.placeholder_text="ORBIT";name_edit.add_theme_font_size_override("font_size",20)
 	host._set_prose(name_edit,"Up to 32 characters. Blank uses ORBIT. Apply to confirm; Esc cancels.","tooltip_text")
 	add_child(name_edit);name_edit.text_changed.connect(_name_changed)
 	name_edit.text_submitted.connect(func(_value):name_edit.text=candidate.name;name_edit.release_focus())
 	name_edit.focus_exited.connect(func():name_edit.text=candidate.name)
-	host._label(self,"COLOR",Rect2(36,213,490,26),14,host.MUTED)
+	host._label(self,"COLOR",Rect2(36,173,490,26),14,host.MUTED)
 	var keys=A.PALETTE.keys()
 	for i in range(keys.size()):
 		var key: String=keys[i]
-		var button=host._button(self,key,Rect2(36+(i%3)*158,253+floori(i/3.0)*54,146,42),func():choose_color(key))
+		var button=host._button(self,key,Rect2(36+(i%3)*158,213+floori(i/3.0)*54,146,42),func():choose_color(key))
 		button.add_theme_font_size_override("font_size",14);host._set_prose(button,key+" / crest and bright HP","tooltip_text")
 		var swatch=ColorRect.new();swatch.color=A.color({"color":key});swatch.position=Vector2(9,15);swatch.size=Vector2(5,12);swatch.mouse_filter=Control.MOUSE_FILTER_IGNORE;button.add_child(swatch)
 		color_buttons[key]=button
-	preview=Control.new();preview.position=Vector2(552,132);preview.size=Vector2(220,230);preview.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(preview)
+	preview=Control.new();preview.position=Vector2(552,92);preview.size=Vector2(220,230);preview.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(preview)
 	preview.draw.connect(func():
 		host._assembly_emblem(preview,Vector2(110,76),62,candidate,"PLAYER")
 		preview.draw_string(host.font,Vector2(30,180),"ASSEMBLY COLOR",HORIZONTAL_ALIGNMENT_LEFT,-1,13,host.MUTED)
 		preview.draw_rect(Rect2(30,200,160,5),A.color(candidate)))
-	host._prose_label(self,"Names may repeat. Your ownership mark stays separate.",Rect2(36,host.T.ASSEMBLY_COLOR_NOTE_Y,748,28),14,host.MUTED)
 	host._button(self,"APPLY",Rect2(36,host.T.ASSEMBLY_ACTION_Y,360,44),confirm)
 	host._button(self,"CANCEL",Rect2(424,host.T.ASSEMBLY_ACTION_Y,360,44),func():cancelled.emit())
 	_refresh()

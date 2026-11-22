@@ -1,4 +1,4 @@
-extends "res://ui/main.gd"
+extends "res://tests/fixture_squad_main.gd"
 var draw_times=[]
 var displayed_rings=[]
 var displayed_text=[]

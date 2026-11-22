@@ -10,3 +10,6 @@ func start(stage_index: int, builds: Array, layout_seed: int=0,unit_names: Array
 	next_actor()
 	panels=LEGACY_PANELS.duplicate(true)
 	panels.merge(LEGACY_OVERRIDES[stage_index],true)
+
+func _spawn_positions(_layout_seed: int) -> Array:
+	return stage.spawns.duplicate()

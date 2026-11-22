@@ -274,9 +274,8 @@ const ASSEMBLY_INFO_GAP := 12.0
 const ASSEMBLY_EMBLEM_EDGE := 1.0
 const ASSEMBLY_EMBLEM_PIXEL_MIN := 1.0
 const ASSEMBLY_BUILD_ENTRY := Rect2(1030,77,246,35)
-const ASSEMBLY_DIALOG_RECT := Rect2(550,244,820,544)
-const ASSEMBLY_COLOR_NOTE_Y := 413.0
-const ASSEMBLY_ACTION_Y := 468.0
+const ASSEMBLY_DIALOG_RECT := Rect2(550,284,820,464)
+const ASSEMBLY_ACTION_Y := 388.0
 const OWNER_MARK_RADIUS := 6.0
 
 # 同じ操作行を分け、文字とスイッチの余白を確保して言語と配色の配置を維持する。
@@ -296,3 +295,18 @@ const JAPANESE_PROSE_SPACING := 0
 
 # 既存の目標文の紋章比率。段落の行内領域も同じ直径を確保する。
 const OBJECTIVE_REF_CREST_SCALE := 0.65
+
+# 指定された補助文の削除で生まれた余白を、同じグループ内で詰める。
+const BUILD_CORE_HEADER_Y := 220.0
+const BUILD_PREVIEW_Y := 428.0
+const CHOICE_COMPACT_TOP := 88.0
+const CLASS_SWATCH_ORIGIN := Vector2(344,19)
+const CLASS_SWATCH_SIZE := 14.0
+const CLASS_SWATCH_STEP := 22.0
+const SKILL_AREA_Y := 200.0
+
+# 両軍は小さな矩形へまとめ、通常は鏡映する。目標の守備役だけは固定する。
+const SPAWN_GROUP_SIZE := Vector2i(2,3)
+const SPAWN_X_RANGE := Vector2i(1,2)
+const SPAWN_Y_RANGE := Vector2i(2,5)
+const SPAWN_CAMP_GAP := 3

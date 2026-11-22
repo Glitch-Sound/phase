@@ -1,5 +1,6 @@
-extends "res://ui/main.gd"
+extends "res://tests/fixture_squad_main.gd"
 func _init() -> void:
+	battle=preload("res://tests/fixture_squad_battle.gd").new()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	grow_horizontal=Control.GROW_DIRECTION_BOTH
 	grow_vertical=Control.GROW_DIRECTION_BOTH

@@ -995,7 +995,8 @@ func _build() -> void:
 	var right=T.BUILD_COLUMNS[2]
 	_label(panel,"BUILD",Rect2(left,20,200,45),32,WHITE)
 	for i in range(collection.builds.size()):
-		_button(panel,"SLOT %d" % (i+1),Rect2(210+i*110,22,100,43),func():edit_unit=i;_build(),"",i==edit_unit)
+		var slot_button=_button(panel,"SLOT %d" % (i+1),Rect2(210+i*110,22,100,43),func():edit_unit=i;_build(),"",i==edit_unit)
+		if i==edit_unit:overlay.set_meta("initial_focus",weakref(slot_button))
 	_toggle(panel,"ENEMY CPU",T.BUILD_CPU_TOGGLE_RECT,cpu_enabled,func(value):cpu_enabled=value;_build())
 	if debug_session.available():
 		_toggle(panel,"UNLOCK ALL",T.DEBUG_TOGGLE_RECT,collection.temporary,func(value):_toggle_debug(value))
@@ -1016,7 +1017,7 @@ func _build() -> void:
 	name_edit.text_submitted.connect(func(_value):_finish_name_edit();name_edit.release_focus())
 	name_edit.gui_input.connect(_name_key)
 	_update_name_hint()
-	_label(panel,"CORE / TOTAL 100",Rect2(left,208,400,28),17,WHITE)
+	_label(panel,"CORE / TOTAL 100",Rect2(left,T.BUILD_CORE_HEADER_Y,400,28),17,WHITE)
 	var class_title=_label(panel,"CLASS",Rect2(left,248,96,28),14,MUTED)
 	var class_field=_choice_button(panel,"class_name",b.class_name,Rect2(left+100,248,300,43))
 	_align_layout_text(class_field,class_title)
@@ -1037,7 +1038,6 @@ func _build() -> void:
 		panel.add_child(spin)
 		core_controls.append(spin)
 		spin.value_changed.connect(func(value):_core_change(k,int(value)))
-	_prose_label(panel,"MIN 1 / AUTOMATIC REDISTRIBUTION",Rect2(left,408,400,27),14,MUTED)
 	for r in range(2):
 		var key="arms" if r==0 else "gear"
 		var y=T.BUILD_EQUIPMENT_ROWS[r]
@@ -1061,7 +1061,6 @@ func _build() -> void:
 		var mutation_title=_label(panel,"MUTATION",Rect2(middle,y+176,100,24),14,MUTED)
 		var mutation_field=_choice_button(panel,key+"_mutation",b[key+"_mutation"],Rect2(middle+116,y+176,T.BUILD_EQUIPMENT_WIDTH-116,40))
 		_align_layout_text(mutation_field,mutation_title)
-	_prose_wrapped_label(panel,"Choose equipment to compare rings and stat values.",Rect2(middle,656,T.BUILD_EQUIPMENT_WIDTH,42),13,MUTED)
 	_label(panel,"SKILLS / 3 SLOTS",Rect2(right,136,342,30),15,MUTED)
 	for i in range(3):
 		var current: String=b.skills[i] if i<b.skills.size() else "NONE"
@@ -1070,11 +1069,9 @@ func _build() -> void:
 	_choice_button(panel,"operation",C.stages()[collection.stage_index].name,Rect2(right,432,342,44))
 	_objective_label(panel,C.stages()[collection.stage_index].brief,Rect2(right,496,342,52),17,WHITE)
 	var stage_hint=C.stages()[collection.stage_index].hint
-	if cpu_enabled and collection.stage_index==0:
-		stage_hint="Compare routes. The CPU controls A, B and C."
-	_objective_label(panel,stage_hint,Rect2(right,564,342,120),16,MUTED)
+	if not stage_hint.is_empty():_objective_label(panel,stage_hint,Rect2(right,564,342,120),16,MUTED)
 	build_preview=Control.new()
-	build_preview.position=Vector2(left,456)
+	build_preview.position=Vector2(left,T.BUILD_PREVIEW_Y)
 	build_preview.size=Vector2(400,220)
 	build_preview.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	panel.add_child(build_preview)
@@ -1921,7 +1918,9 @@ func _focus_modal(layer) -> void:
 	for i in range(controls.size()):
 		controls[i].focus_next=controls[(i+1)%controls.size()].get_path()
 		controls[i].focus_previous=controls[(i-1+controls.size())%controls.size()].get_path()
-	controls[0].grab_focus()
+	var preferred=layer.get_meta("initial_focus") if layer.has_meta("initial_focus") else null
+	var initial=preferred.get_ref() if preferred is WeakRef else null
+	(initial if is_instance_valid(initial) and controls.has(initial) else controls[0]).grab_focus()
 
 func _restore_focus(previous) -> void:
 	if is_instance_valid(auxiliary):
