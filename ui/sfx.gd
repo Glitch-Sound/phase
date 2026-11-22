@@ -25,7 +25,7 @@ func _exit_tree() -> void:
 	for player in players.values():player.stop();player.stream=null
 	players.clear();streams.clear();_movement_context=[];_effect_context=[]
 
-## 実移動の半歩を観測する。motionは既存の確定移動表示。戻り値なし。各歩の中間と到着で2音を交互に出し、表示時間とモデルは変更しない。
+## 実移動の半歩を観測する。motionは既存の確定移動表示。戻り値なし。等間隔の2音を同じ量だけ早め、表示時間とモデルは変更しない。
 func movement_tick(motion: RefCounted) -> void:
 	if motion.owner==null or motion.route.is_empty():return
 	var context=[motion,motion.owner,motion.turn,motion.actor,motion.route]
@@ -33,8 +33,10 @@ func movement_tick(motion: RefCounted) -> void:
 		_movement_context=context.duplicate();_completed_pulses=0
 	if motion.duration<=0:
 		_completed_pulses=motion.route.size()*2;return
+	if motion.elapsed<=0:return
 	var total=motion.route.size()*2
-	var completed=clampi(floori(motion.elapsed/motion.duration*total+0.00000001),0,total)
+	var lead=clampf(T.SFX_MOVEMENT_LEAD_SECONDS,0,motion.duration/total)
+	var completed=clampi(floori((motion.elapsed+lead)/motion.duration*total+0.00000001),0,total)
 	for index in range(_completed_pulses,completed):_play("ring_rotate1" if index%2==0 else "ring_rotate2")
 	_completed_pulses=maxi(_completed_pulses,completed)
 

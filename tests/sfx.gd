@@ -41,14 +41,17 @@ func _rotation() -> void:
 		motion.deltas=motion.deltas.map(func(_delta):return [0.0,0.0,0.0])
 		var times=[];var record=func(_kind):times.append(motion.elapsed)
 		sound.played.connect(record)
-		var expected_times=[0.5,1.0] if count==1 else [1.0/6,1.0/3,0.5,2.0/3,5.0/6,1.0]
+		var original_times=[0.5,1.0] if count==1 else [1.0/6,1.0/3,0.5,2.0/3,5.0/6,1.0]
+		var lead=minf(float(sound.T.get_script_constant_map().get("SFX_MOVEMENT_LEAD_SECONDS",0.0)),1.0/(count*2))
+		var expected_times=original_times.map(func(time):return time-lead)
 		var no_early=true
 		sound.movement_tick(motion)
 		for index in range(expected_times.size()):
 			motion.elapsed=expected_times[index]-0.00001;sound.movement_tick(motion);no_early=no_early and events.size()==index
 			motion.elapsed=expected_times[index];sound.movement_tick(motion);sound.movement_tick(motion)
 		_check(events==alternating.slice(0,count*2),"one or three real steps produce exactly two alternating sounds per cell, even without rotation")
-		_check(no_early and times==expected_times and motion.elapsed==1.0,"half-step intervals stay equal across cells and end at existing arrival without duplicate updates")
+		var at_last=events.duplicate();motion.elapsed=1.0;sound.movement_tick(motion)
+		_check(no_early and times==expected_times and times.front()<original_times.front() and events==at_last,"all cues shift equally earlier, keep half-step intervals and do not add a late cue or movement wait")
 		sound.played.disconnect(record)
 	events.clear();sound.reset_battle();var motion=Motion.new();motion.elapsed=0.5;sound.movement_tick(motion);var at_pause=events.duplicate();sound.suspend();sound.movement_tick(motion)
 	_check(events==at_pause,"pause and resume at unchanged movement time do not replay past sounds")
