@@ -817,7 +817,7 @@ func _after_action() -> void:
 func _feedback() -> void:
 	var e: Dictionary=battle.last_effect
 	var u: Dictionary=battle.units[e.target]
-	sfx.effect(battle,battle.history.size(),e.kind,e.get("actual",0.0))
+	sfx.effect(battle,battle.history.size(),e.kind,e.get("actual",0.0),e.get("dead",false) and u.hp<=0)
 	if e.kind=="GUARD":
 		return
 	if e.kind in ["SWAP","PUSH"]:

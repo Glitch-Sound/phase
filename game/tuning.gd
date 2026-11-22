@@ -2,7 +2,13 @@
 extends RefCounted
 
 # 移動の2音は従来のゲインを使う。原音RMSから決めた攻撃と回復の音量は維持する。
-const SFX_VOLUME_DB := {"ring_rotate1":-18.0,"ring_rotate2":-18.0,"attack":-15.0,"heal":-8.0}
+const SFX_VOLUME_DB := {"ring_rotate1":-18.0,"ring_rotate2":-18.0,"attack":-15.0,"heal":-8.0,"defeated":-18.0}
+
+# 攻撃原音の立ち上がり約132msに続ける。冒頭を保ち、余韻だけを滑らかに消す。
+const SFX_DEFEAT_DELAY_SECONDS := 0.24
+const SFX_DEFEAT_HOLD_SECONDS := 0.20
+const SFX_DEFEAT_FADE_SECONDS := 0.65
+const SFX_DEFEAT_MAX_VOICES := 6
 
 const BASE_HP := 100.0
 # 位相の落差と有限の反撃評価を組み合わせ、通常対戦を短くする比較値。

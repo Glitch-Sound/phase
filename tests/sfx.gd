@@ -21,6 +21,7 @@ func _run() -> void:
 		await _selection()
 		_rotation()
 		_effects()
+		_defeats()
 		_resources()
 		sound.queue_free();await process_frame
 	await _connections()
@@ -72,17 +73,41 @@ func _effects() -> void:
 	_check(events==["attack","heal"],"actual capped healing uses one distinct sound")
 	sound.effect(owner,7,"DAMAGE",1);_check(events==["attack","heal","attack"],"a new identical action is not confused with repeat feedback")
 	sound.reset_battle();sound.effect(owner,1,"DAMAGE",1);_check(events.size()==4,"a new battle may reuse its first history number")
+## REQ-058-S01、REQ-058-S02
+func _defeats() -> void:
+	_check(sound.has_method("advance_defeats"),"defeat audio owns a nonblocking delay and envelope")
+	if not sound.has_method("advance_defeats"):return
+	sound.set_process(false);events.clear();sound.reset_battle();var owner=RefCounted.new()
+	var delay=sound.T.SFX_DEFEAT_DELAY_SECONDS;var hold=sound.T.SFX_DEFEAT_HOLD_SECONDS;var fade=sound.T.SFX_DEFEAT_FADE_SECONDS
+	sound.effect(owner,10,"DAMAGE",0.25,true);sound.effect(owner,10,"DAMAGE",0.25,true)
+	sound.advance_defeats(delay-0.00001)
+	_check(events==["attack"],"lethal hit starts unchanged attack immediately, with one delayed death")
+	sound.advance_defeats(0.00001+hold+fade/4);var voice=sound.defeat_voices.filter(func(p):return p.stream!=null)[0]
+	_check(events==["attack","defeated"] and voice.volume_db==sound.T.SFX_VOLUME_DB.defeated,"death starts once after its single delay; late frame still preserves initial gain")
+	sound.advance_defeats(hold);var before=voice.volume_db;sound.advance_defeats(fade/2)
+	_check(before==sound.T.SFX_VOLUME_DB.defeated and voice.volume_db<before and voice.stream!=null,"attack portion remains intact before a continuous quieter tail")
+	sound.effect(owner,11,"DAMAGE",0.25,true);sound.advance_defeats(delay)
+	_check(events==["attack","defeated","attack","defeated"] and sound.defeat_voices.filter(func(p):return p.stream!=null).size()==2,"another turn can start a death without cutting the earlier tail")
+	sound.effect(owner,10,"DAMAGE",0.25,true);sound.advance_defeats(hold+fade)
+	_check(events.count("defeated")==2 and sound.defeat_voices.all(func(p):return p.stream==null),"old death does not repeat after later feedback; both envelopes finish")
+	events.clear();sound.reset_battle()
+	sound.effect(owner,1,"DAMAGE",0,true);sound.effect(owner,2,"DAMAGE",1,false);sound.effect(owner,3,"HEAL",1,true);sound.effect(owner,4,"GUARD",1,true);sound.advance_defeats(delay+hold+fade)
+	_check(events==["attack","heal"],"zero loss, nonlethal damage, healing and utility never schedule death")
+	sound.effect(owner,5,"DAMAGE",1,true);sound.suspend();sound.advance_defeats(delay+hold+fade)
+	sound.effect(owner,6,"DAMAGE",1,true);sound.reset_battle();sound.advance_defeats(delay+hold+fade)
+	_check(events.count("defeated")==0 and sound.defeat_voices.all(func(p):return p.stream==null),"stop and battle reset clear pending or sounding deaths")
+	sound.set_process(true)
 ## REQ-057-S01
 func _resources() -> void:
-	_check(sound.streams.keys()==["ring_rotate1","ring_rotate2","attack","heal"] and FileAccess.file_exists("res://assets/sfx/select.ogg"),"only the new movement pair and unchanged effects play; selection original remains")
+	_check(sound.streams.keys()==["ring_rotate1","ring_rotate2","attack","heal","defeated"] and FileAccess.file_exists("res://assets/sfx/select.ogg"),"only the movement pair, unchanged effects and defeat source play; selection original remains")
 	_check(sound.streams.values().all(func(stream):return stream is AudioStreamOggVorbis and stream.get_length()>0 and not stream.loop),"all active original Ogg streams decode without looping")
-	_check(sound.players.size()==2 and sound.players.values().all(func(p):return p.max_polyphony==1 and p.bus=="Master"),"bounded lanes use the existing Master volume")
-	for key in sound.streams:
+	_check(sound.players.size()==2 and sound.players.values().all(func(p):return p.max_polyphony==1 and p.bus=="Master") and sound.defeat_voices.size()==sound.T.SFX_DEFEAT_MAX_VOICES and sound.defeat_voices.all(func(p):return p.max_polyphony==1 and p.bus=="Master"),"bounded lanes use the existing Master volume")
+	for key in ["ring_rotate1","ring_rotate2","attack","heal"]:
 		sound._play(key)
 		var lane="effect" if key in ["attack","heal"] else "ring_rotate"
 		_check(sound.players[lane].stream==sound.streams[key] and sound.players[lane].volume_db==sound.T.SFX_VOLUME_DB[key],"stream and configured gain connected: "+key)
 	events.clear();sound.enabled=false;sound._play("attack");_check(events==[],"disabled audio does not emit or play a request");sound.enabled=true
-## REQ-054-S01、REQ-055-S01、REQ-056-S01
+## REQ-054-S01、REQ-055-S01、REQ-056-S01、REQ-058-S01
 func _connections() -> void:
 	var game=load("res://tests/fixture_main.gd").new();var folder="res://artifacts/runtime/sfx-test-"+str(Time.get_ticks_usec());game.save_path=folder+"/unused.json";game.settings_path=folder+"/settings.json";root.add_child(game);await process_frame
 	var audio=game.get("sfx");_check(audio!=null,"real UI owns the central SFX component")
@@ -98,6 +123,11 @@ func _connections() -> void:
 	game._restart();game._start_battle();game.battle.units[1].pos=Vector2i(4,5);game.battle.units[1].hp=game.battle.units[1].max_hp-1
 	game.battle.path_click(Vector2i(4,4));game.battle.commit_path();game.battle.choose_skill(game.C.HEAL);_check(game.battle.act(1),"fixture performs legal capped healing")
 	game._feedback();_check(actual.back()=="heal" and game.battle.last_effect.actual>0,"real healing feedback reaches audio using actual gain")
+	if audio.has_method("advance_defeats"):
+		game._restart();game._start_battle();audio.set_process(false);actual.clear();game.battle.units[2].pos=Vector2i(5,4);game.battle.units[2].hp=0.25
+		game.battle.path_click(Vector2i(4,4));game.battle.commit_path();game.battle.choose_skill(game.C.DAMAGE);game.battle.act(2);game._feedback();game._after_action();audio.advance_defeats(game.T.SFX_DEFEAT_DELAY_SECONDS)
+		_check(actual==["attack","defeated"] and game.battle.units[2].hp==0 and game.battle.at(Vector2i(5,4))==-1,"real lethal feedback reaches delayed audio after next-turn transition without model waits")
+		audio.set_process(true)
 	game._restart();game._open_build_choice("class_name");await process_frame
 	var dialog=game.build_dialog;actual.clear();dialog.navigate(_key(KEY_DOWN));_check(actual==[],"accepted keyboard candidate selection is silent")
 	var locked=dialog.rows.filter(func(row):return not row.selectable)[0];_check(not dialog.select_candidate(locked.id) and actual==[],"locked preview selection remains silent")
