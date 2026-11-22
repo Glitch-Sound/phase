@@ -168,6 +168,7 @@ const BATTLE_HP_BAR := Rect2(96,-6,130,5)
 const BATTLE_HP_GAP := 16.0
 const BATTLE_HP_RIGHT := 360.0
 # BUILDは左から構成と結果、装備の比較、スキルと出撃の3列。
+const BUILD_CONTENT_GAP := 12.0
 const BUILD_RECT := Rect2(300,115,1320,810)
 # トグル同士を近づけて右へ揃え、ユニット選択との余白を広くする。
 const BUILD_CPU_TOGGLE_RECT := Rect2(988,22,288,43)
@@ -281,13 +282,19 @@ const OWNER_MARK_RADIUS := 6.0
 # 同じ操作行を分け、文字とスイッチの余白を確保して言語と配色の配置を維持する。
 const SETTINGS_SE_CHOICE := Rect2(36,205,162,46)
 # 配色は説明行と分離し、DISPLAYと同じ見出しの階層に揃える。
-const SETTINGS_COLOR_SHIFT := 30.0
-const SETTINGS_COLOR_HEADER_Y := 286.0+SETTINGS_COLOR_SHIFT
+const SETTINGS_COLOR_SHIFT := -19.0
+const SETTINGS_COLOR_HEADER_Y := 270.0
 const SETTINGS_HEADING_FONT := 14
 # Languageは表示操作の行へ収める。
 const SETTINGS_LANGUAGE_LABEL := Rect2(524,214,120,26)
 const SETTINGS_LANGUAGE_CHOICE := Rect2(652,205,372,44)
-const SETTINGS_LANGUAGE_NOTE := Rect2(36,254,988,26)
+# 通常の補足文を除き、操作と失敗の領域だけを残す。
+const SETTINGS_RECT := Rect2(430,179,1060,722)
+const SETTINGS_ERROR_RECT := Rect2(36,532,988,40)
+const SETTINGS_APPLY_RECT := Rect2(36,588,988,48)
+const SETTINGS_CLOSE_RECT := Rect2(36,654,988,42)
+# 非同期切替を連続した実状態で確認してから保存する。
+const DISPLAY_SETTLE_SECONDS := 0.2
 # HELPの既存SVGだけ、見出しの大文字の実描画中心へ合わせる。
 const HELP_ICON_VERTICAL_OFFSET := -5.5
 # 見出しと本文だけを近づけ、次のセクションと区切りの位置は保つ。

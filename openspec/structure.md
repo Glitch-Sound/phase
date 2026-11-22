@@ -31,7 +31,7 @@ game/assembly_identity.gdが独立した所属紋章と安定色キーと共通R
 リングと波形、両方の紋章はui/visuals.gdで手続き的に描く。\
 目標文の固定参照はui/unit_reference_text.gdで紋章へ置換し、名前を非表示のアクセシビリティ用名称に保持する。
 配色と判読性はui/palette.gd、操作アイコンと権利表示はassets/lucide/に集約する。\
-説明言語の解決と独立設定はui/language.gd、説明の日本語対訳はui/japanese.gdへ置き、モデルの名称と説明の原文を変更しない。\
+表示モードの保存と安定確認はui/display_settings.gd、説明言語の解決と独立設定はui/language.gd、説明の日本語対訳はui/japanese.gdへ置き、モデルの名称と説明の原文を変更しない。\
 表示は説明の原文を保持して更新し、ui/unit_reference_text.gdの段落組版は固定参照を紋章で描く。
 CPUの判断はgame/cpu_policy.gd、段階と表示時間はui/cpu_turn.gdへ分離し、どちらも既存のbattleを操作する。
 経路と行動の予定はui/turn_plan.gd、各歩の描画補間はui/movement.gdへ分離する。\

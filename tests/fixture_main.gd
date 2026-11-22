@@ -6,3 +6,7 @@ func _init() -> void:
 	grow_vertical=Control.GROW_DIRECTION_BOTH
 	mouse_filter=Control.MOUSE_FILTER_IGNORE
 	battle=preload("res://tests/fixture_battle.gd").new()
+
+var embedded_window=false
+func _display_embedded() -> bool:
+	return embedded_window or super._display_embedded()

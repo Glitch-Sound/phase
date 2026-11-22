@@ -67,7 +67,8 @@ var sfx: Node
 var preferred_locale_override: Variant=null
 var se_selector: CheckButton
 var language_selector: OptionButton
-var language_note: Label
+const DISPLAY_SETTINGS=preload("res://ui/display_settings.gd")
+var display_settings=DISPLAY_SETTINGS.new()
 var settings_path="res://artifacts/runtime/ui-settings.json"
 const BOARD = T.BATTLE_BOARD_ORIGIN
 const CELL = T.BATTLE_CELL
@@ -160,6 +161,9 @@ func _ready() -> void:
 	copy_language.preferred_locale=TranslationServer.get_locale() if preferred_locale_override==null else str(preferred_locale_override)
 	copy_language.selection=LANGUAGE.read_from(settings_path+".language.json")
 	palette_colors=P.load_from(settings_path)
+	if not _display_embedded() and DisplayServer.get_name()!="headless" and FileAccess.file_exists(settings_path+".display.json"):
+		var restored=DISPLAY_SETTINGS.read_from(settings_path+".display.json")
+		display_settings.restore(restored);get_window().mode=restored
 	_set_theme()
 	notice=Label.new()
 	notice.position=Vector2(300,956)
@@ -1033,7 +1037,10 @@ func _build() -> void:
 	_toggle(panel,"ENEMY CPU",T.BUILD_CPU_TOGGLE_RECT,cpu_enabled,func(value):cpu_enabled=value;_build())
 	if debug_session.available():
 		_toggle(panel,"UNLOCK ALL",T.DEBUG_TOGGLE_RECT,collection.temporary,func(value):_toggle_debug(value))
-	_label(panel,"SHARED ARCHIVE   %d ARMS / %d GEAR / %d MUTATIONS     %s" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size(),"PLAYER: HUMAN / ENEMY: CPU" if cpu_enabled else "BOTH SIDES: HUMAN"],Rect2(left,83,880,26),14,MUTED)
+	_label(panel,"SHARED ARCHIVE   %d ARMS / %d GEAR / %d MUTATIONS     %s" % [collection.items.ARMS.size(),collection.items.GEAR.size(),collection.mutations.size(),"PLAYER: HUMAN / ENEMY: CPU" if cpu_enabled else "BOTH SIDES: HUMAN"],Rect2(left,83+T.BUILD_CONTENT_GAP,880,26),14,MUTED)
+	var header_panel=panel
+	var content=Control.new();content.position=Vector2(0,T.BUILD_CONTENT_GAP);content.size=panel.size-Vector2(0,T.BUILD_CONTENT_GAP);content.mouse_filter=Control.MOUSE_FILTER_IGNORE;panel.add_child(content)
+	panel=content
 	_build_assembly_entry(panel)
 	var b: Dictionary=collection.builds[edit_unit]
 	_label(panel,"NAME",Rect2(left,132,62,40),14,MUTED)
@@ -1116,6 +1123,7 @@ func _build() -> void:
 		preview.draw_string(mono,Vector2(205,92),"MOVE %d" % battle.movement(u),HORIZONTAL_ALIGNMENT_LEFT,-1,18,WHITE)
 		preview.draw_string(mono,Vector2(205,140),"DELAY %.1f" % M.delay(u),HORIZONTAL_ALIGNMENT_LEFT,-1,16,MUTED)
 		preview.draw_string(mono,Vector2(205,173),"INF %.1f%%" % (M.sync(u,1).factor*100),HORIZONTAL_ALIGNMENT_LEFT,-1,16,MUTED))
+	panel=header_panel
 	for row in [["SAVE",36,108,_save],["LOAD",158,108,_load],["HELP",280,108,_help],["SETTINGS",402,150,_settings],["QUIT",566,108,_quit]]:
 		var button=_button(panel,row[0],Rect2(row[1],730,row[2],44),row[3])
 		button.disabled=collection.temporary and row[0] in ["SAVE","LOAD"]
@@ -1470,12 +1478,14 @@ func _field_help() -> void:
 
 func _settings() -> void:
 	_close_aux()
-	var panel=_modal(Rect2(430,135,1060,810),true)
+	var panel=_modal(T.SETTINGS_RECT,true)
 	_label(panel,"SETTINGS",Rect2(36,25,960,48),32,WHITE)
 	_label(panel,"DISPLAY",Rect2(36,98,400,28),T.SETTINGS_HEADING_FONT,MUTED)
 	display_buttons.clear();display_mode=-1
 	for mode in [DisplayServer.WINDOW_MODE_WINDOWED,DisplayServer.WINDOW_MODE_FULLSCREEN]:
-		display_buttons[mode]=_button(panel,"WINDOWED" if mode==DisplayServer.WINDOW_MODE_WINDOWED else "FULLSCREEN",Rect2(36 if mode==DisplayServer.WINDOW_MODE_WINDOWED else 524,138,470 if mode==DisplayServer.WINDOW_MODE_WINDOWED else 500,48),func():DisplayServer.window_set_mode(mode))
+		display_buttons[mode]=_button(panel,"WINDOWED" if mode==DisplayServer.WINDOW_MODE_WINDOWED else "FULLSCREEN",Rect2(36 if mode==DisplayServer.WINDOW_MODE_WINDOWED else 524,138,470 if mode==DisplayServer.WINDOW_MODE_WINDOWED else 500,48),func():_request_display_mode(mode))
+		display_buttons[mode].disabled=_display_embedded()
+		if _display_embedded():_set_prose(display_buttons[mode],"Window mode is controlled by the editor. Run in a separate window to switch.","tooltip_text")
 	se_selector=CheckButton.new();se_selector.name="SE"
 	se_selector.position=T.SETTINGS_SE_CHOICE.position;se_selector.size=T.SETTINGS_SE_CHOICE.size
 	se_selector.text="SE ON" if sfx.enabled else "SE OFF";se_selector.button_pressed=sfx.enabled
@@ -1491,7 +1501,6 @@ func _settings() -> void:
 	language_selector.selected=LANGUAGE.CHOICES.find(copy_language.selection)
 	language_selector.item_selected.connect(func(index):_change_language(LANGUAGE.CHOICES[index]))
 	panel.add_child(language_selector)
-	language_note=_prose_label(panel,"Descriptions only. Names and labels stay unchanged.",T.SETTINGS_LANGUAGE_NOTE,13,MUTED)
 	_label(panel,"COLOR / ACCENT + FIVE SIGNALS",Rect2(36,T.SETTINGS_COLOR_HEADER_Y,988,28),T.SETTINGS_HEADING_FONT,MUTED)
 	var presets=P.PRESETS.keys()
 	for i in range(presets.size()):
@@ -1515,9 +1524,8 @@ func _settings() -> void:
 		editor.sliders_visible=false
 		editor.presets_visible=false
 		palette_pickers.append(picker)
-	_prose_label(panel,"RINGS: VIVID PRESETS / CUSTOM COLORS AS CHOSEN",Rect2(36,558+T.SETTINGS_COLOR_SHIFT,988,30),15,MUTED)
-	palette_error=_label(panel,"",Rect2(36,600+T.SETTINGS_COLOR_SHIFT,988,52),17,status_colors[1])
-	for item in [["APPLY COLORS",Rect2(36,676,988,48),_apply_colors,"check"],["CLOSE / ESC",Rect2(36,742,988,42),_close_aux,"close"]]:
+	palette_error=_label(panel,"",T.SETTINGS_ERROR_RECT,17,status_colors[1])
+	for item in [["APPLY COLORS",T.SETTINGS_APPLY_RECT,_apply_colors,"check"],["CLOSE / ESC",T.SETTINGS_CLOSE_RECT,_close_aux,"close"]]:
 		var button=_button(panel,item[0],item[1],item[2],item[3])
 		button.alignment=HORIZONTAL_ALIGNMENT_CENTER
 		button.vertical_icon_alignment=VERTICAL_ALIGNMENT_CENTER
@@ -1530,10 +1538,24 @@ func _settings() -> void:
 			button.add_theme_stylebox_override(state,style)
 	_sync_display_mode()
 
+func _display_embedded() -> bool:
+	return Engine.is_embedded_in_editor()
+
+func _request_display_mode(mode: int) -> void:
+	if _display_embedded():return
+	if collection.temporary:display_settings.restore(mode)
+	else:display_settings.request(mode)
+	get_window().mode=mode
+
 func _sync_display_mode() -> void:
-	if not is_instance_valid(auxiliary) or display_buttons.is_empty():return
-	var actual=DisplayServer.window_get_mode()
+	var actual=DisplayServer.window_get_mode(get_window().get_window_id())
 	var mode=DisplayServer.WINDOW_MODE_FULLSCREEN if actual in [DisplayServer.WINDOW_MODE_FULLSCREEN,DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN] else DisplayServer.WINDOW_MODE_WINDOWED
+	if not _display_embedded():
+		var confirmed=display_settings.observe(mode,get_process_delta_time())
+		if confirmed>=0 and not collection.temporary:
+			var error=DISPLAY_SETTINGS.write_to(settings_path+".display.json",confirmed)
+			if not error.is_empty() and is_instance_valid(palette_error):_set_prose(palette_error,error)
+	if not is_instance_valid(auxiliary) or display_buttons.is_empty():return
 	if display_mode==mode:return
 	display_mode=mode
 	for key in display_buttons:
@@ -1579,8 +1601,6 @@ func _apply_colors() -> void:
 		_result()
 	_hud()
 	_settings()
-	_set_prose(palette_error,"APPLIED / DEBUG / NOT SAVED" if collection.temporary else "APPLIED / Saved separately from your build.")
-	palette_error.add_theme_color_override("font_color",CYAN)
 	queue_redraw()
 
 func _explain(source: String) -> String:
@@ -1626,12 +1646,11 @@ func _change_language(choice: String) -> bool:
 	var error="" if collection.temporary else LANGUAGE.write_to(settings_path+".language.json",value)
 	if not error.is_empty():
 		if is_instance_valid(language_selector):language_selector.selected=LANGUAGE.CHOICES.find(copy_language.selection)
-		if is_instance_valid(language_note):_set_prose(language_note,error)
+		if is_instance_valid(palette_error):_set_prose(palette_error,error)
 		return false
 	copy_language.selection=value
 	_refresh_explanations(self)
 	if is_instance_valid(language_selector):language_selector.selected=LANGUAGE.CHOICES.find(value)
-	if is_instance_valid(language_note):_set_prose(language_note,"Descriptions only. Names and labels stay unchanged.")
 	if is_instance_valid(notice):notice.text=_explain(message)
 	_update_panel_hint();queue_redraw()
 	return true

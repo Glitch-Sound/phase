@@ -62,7 +62,7 @@ func _test_connection() -> void:
 	game._settings()
 	await process_frame
 	var labels=game.auxiliary.find_children("*","Label",true,false).map(func(l):return l.text)
-	_check(labels.has("RINGS: VIVID PRESETS / CUSTOM COLORS AS CHOSEN"),"color settings explains the presentation relationship")
+	_check(not labels.has("RINGS: VIVID PRESETS / CUSTOM COLORS AS CHOSEN"),"removed ring relationship prose stays absent")
 	for i in range(6):
 		game.palette_pickers[i].color=P.PRESETS.DEFAULT[i]
 	game._apply_colors()

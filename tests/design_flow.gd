@@ -21,6 +21,8 @@ func _run() -> void:
 	await _test_action_context(game,palette)
 	await _test_focus_scope(game)
 	await _test_settings_state()
+	_test_display_preferences()
+	await _test_embedded_display()
 	game.queue_free()
 	await process_frame
 	_finish()
@@ -158,6 +160,7 @@ func _test_help_terms(game) -> void:
 	game._close_aux()
 	game._settings()
 	await process_frame
+	_check(not game.auxiliary.find_children("*","Label",true,false).any(func(b):return b.text in ["Descriptions only. Names and labels stay unchanged.","RINGS: VIVID PRESETS / CUSTOM COLORS AS CHOSEN"]),"specified normal settings prose is removed")
 	var captions=[]
 	for label in game.auxiliary.find_children("*","Label",true,false):
 		if label.text.begins_with("INF") or label.text.begins_with("RES"):
@@ -281,3 +284,31 @@ func _test_settings_state() -> void:
 		_check(not ui.auxiliary.find_children("*","BaseButton",true,false).any(func(b):return b.text=="REDUCED MOTION"),"removed motion setting has no English or Japanese control")
 		_check(FileAccess.get_file_as_bytes(path+".language.json")==bytes and not FileAccess.file_exists(path),"legacy and unrelated settings remain unchanged")
 		ui.queue_free();await process_frame
+
+## REQ-020-S02、REQ-020-S03
+func _test_display_preferences() -> void:
+	if not ResourceLoader.exists("res://ui/display_settings.gd"):
+		_check(false,"display preferences component exists");return
+	var component=load("res://ui/display_settings.gd")
+	var path="res://artifacts/runtime/settings-window/test-"+str(Time.get_ticks_usec())+".json"
+	_check(component.read_from(path)==0,"missing display preference is windowed without writes")
+	_check(not FileAccess.file_exists(path),"opening missing display preferences never saves")
+	var state=component.new();state.restore(3)
+	_check(state.observe(0,1.0)==-1 and state.observe(3,1.0)==-1,"startup stale native mode never overwrites restored preference")
+	state.request(0)
+	_check(state.observe(3,1.0)==-1 and state.observe(0,0.0)==-1,"pending transition does not persist stale or unconfirmed native mode")
+	_check(state.observe(0,component.SETTLE_SECONDS)==0,"settled explicit mode is emitted once")
+	_check(state.observe(0,1.0)==-1,"stable mode never saves repeatedly")
+	_check(component.write_to(path,3).is_empty() and component.read_from(path)==3,"fullscreen preference round trip")
+	var f=FileAccess.open(path,FileAccess.WRITE);f.store_string('{"mode":"bad"}');f.close()
+	_check(component.read_from(path)==0,"unknown stored display mode is windowed")
+
+## REQ-020-S03
+func _test_embedded_display() -> void:
+	var ui=load("res://tests/fixture_main.gd").new();ui.embedded_window=true
+	ui.settings_path="res://artifacts/runtime/settings-window/embedded-"+str(Time.get_ticks_usec())+".json"
+	root.add_child(ui);await process_frame;ui._settings();await process_frame
+	_check(ui.display_buttons.values().all(func(b):return b.disabled and b.tooltip_text=="Window mode is controlled by the editor. Run in a separate window to switch."),"embedded mode disables unsupported controls with an explanation")
+	ui._request_display_mode(3);ui._sync_display_mode()
+	_check(not FileAccess.file_exists(ui.settings_path+".display.json"),"embedded request never changes saved display mode")
+	ui.queue_free();await process_frame
