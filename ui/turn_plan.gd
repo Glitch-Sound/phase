@@ -12,12 +12,11 @@ var route: Array=[]
 ## 予定の有無を返す。戻り値は独立した予測が開いているか。副作用なし。
 func active() -> bool:return projected!=null
 
-## 経路から予定を開く。battleは原本。戻り値は開始可否。原本を変更しない。
-func begin(battle: RefCounted) -> bool:
+## 経路またはその場の予定を開く。battleは原本、stationaryは未確定経路を使わない指定。戻り値は開始可否。原本を変更しない。
+func begin(battle: RefCounted, stationary: bool=false) -> bool:
 	reset()
 	if battle.mode!="MOVE" or battle.actor<0 or not battle.result.is_empty():return false
-	if battle.path.is_empty() and not battle.trapped():return false
-	owner=battle;route=battle.path.duplicate();original=_state(battle)
+	owner=battle;route=[] if stationary else battle.path.duplicate();original=_state(battle)
 	projected=B.new()
 	for key in ["units","panels","stage","history","last_effect"]:projected.set(key,battle.get(key).duplicate(true))
 	projected.actor=battle.actor;projected.turn=battle.turn;projected.mode="MOVE"
@@ -30,7 +29,7 @@ func begin(battle: RefCounted) -> bool:
 
 ## 行動を予定する。skillは装備ID。戻り値は合法な対象があるか。原本を変更しない。
 func choose(skill: String) -> bool:
-	if not active() or phase!="CHOICE":return false
+	if not active() or phase!="CHOICE" or route.is_empty():return false
 	var valid=false
 	for i in range(projected.units.size()):
 		if projected.valid_target(projected.actor,i,skill):valid=true;break
@@ -54,6 +53,7 @@ func select(index: int) -> bool:
 ## 一段戻す。戻り値なし。予定だけを戻し、経路編集では原本の経路を保持する。
 func back() -> void:
 	if not active():return
+	if route.is_empty():reset();return
 	if phase=="READY" and projected.result.is_empty() and target>=0 and target!=projected.actor:
 		target=-1;phase="TARGET"
 	elif phase in ["TARGET","READY"] and projected.result.is_empty():
@@ -64,11 +64,10 @@ func back() -> void:
 func commit(battle: RefCounted) -> Dictionary:
 	if not active() or phase!="READY" or battle!=owner or _state(battle)!=original:return {}
 	var skill: String=projected.selected_skill
-	if not skill.is_empty() and not projected.valid_target(projected.actor,target,skill):return {}
+	if not skill.is_empty() and (route.is_empty() or not projected.valid_target(projected.actor,target,skill)):return {}
 	var command={"path":route.duplicate(),"skill":skill,"target":target}
 	if not route.is_empty():
 		if not battle.commit_path():return {}
-	elif not battle.trapped():return {}
 	reset()
 	return command
 

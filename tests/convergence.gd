@@ -47,7 +47,7 @@ func _healing() -> void:
 func _connection(game) -> void:
 	for kind in [game.C.DAMAGE,game.C.HEAL]:
 		game._start_battle();game.battle.actor=0;game.battle.units[0].pos=Vector2i(4,4);game.battle.units[2].pos=Vector2i(5,4)
-		game.battle.units[0].skills=[kind];game.battle.mode="CHOICE"
+		game.battle.units[0].skills=[kind];game.battle.units[0].moved=1;game.battle.mode="CHOICE"
 		if kind==game.C.HEAL:game.battle.units[2].camp="PLAYER";game.battle.units[2].hp-=1
 		game.battle.choose_skill(kind);var before=game.battle.units[2].hp
 		game._cell_input(Vector2i(5,4))

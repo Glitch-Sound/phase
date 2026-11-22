@@ -113,24 +113,29 @@ func _guard() -> void:
 	_check(M.effect(b.units[1],b.units[0],"HEAL")==floori(T.BASE_HEAL*2.0),"GUARD does not affect healing")
 	b.actor=0
 	b.mode="CHOICE"
+	b.units[b.actor].moved=1
 	b.choose_skill(GUARD)
 	var state=_state(b)
 	_check(not b.act(0) and _state(b)==state,"GUARD cannot stack")
 	b.actor=2
 	b.mode="CHOICE"
+	b.units[b.actor].moved=1
 	b.units[2].pos=Vector2i(4,3)
 	b.units[2].skills=[C.DAMAGE]
 	b.choose_skill(C.DAMAGE)
 	_check(b.act(0) and not b.units[0].guard_active and b.units[0].hp==hp-expected,"first real attack consumes guard and uses the same preview amount")
 	b.actor=0
 	b.mode="CHOICE"
+	b.units[b.actor].moved=1
 	b.units[0].skills=[GUARD]
 	_check(b.choose_skill(GUARD) and b.act(0) and b.units[0].guard_active,"guard can be reapplied after consumption")
 	b.actor=1
 	b.mode="CHOICE"
+	b.units[b.actor].moved=1
 	_check(b.choose_skill(C.HEAL) and b.act(0) and b.units[0].guard_active,"actual HEAL preserves the target's guard")
 	b.actor=1
 	b.mode="CHOICE"
+	b.units[b.actor].moved=1
 	_check(b.wait_turn() and b.units[0].guard_active,"WAIT and hand progression preserve another unit's guard")
 	# 現行式で0になり得る入力でも、期待値をバランスの固定値にしない。
 	var weak=C.default_build()
@@ -143,6 +148,7 @@ func _guard() -> void:
 	var amount=M.effect(b.units[2],b.units[0],"DAMAGE")
 	b.actor=2
 	b.mode="CHOICE"
+	b.units[b.actor].moved=1
 	b.choose_skill(C.DAMAGE)
 	_check(b.act(0) and not b.units[0].guard_active and b.last_effect.amount==amount,"attack consumes guard independently of zero or positive damage")
 	b.units[0].guard_active=true
@@ -203,7 +209,7 @@ func _battle(skill: String):
 	b.units[2].pos=Vector2i(8,8)
 	b.units[3].pos=Vector2i(9,9)
 	b.mode="CHOICE"
-	b.units[0].moved=1
+	b.units[b.actor].moved=1
 	return b
 func _state(b) -> Array:
 	return [b.units.duplicate(true),b.actor,b.mode,b.selected_skill,b.path.duplicate(),b.history.duplicate(),b.turn,b.last_effect.duplicate(true),b.result]

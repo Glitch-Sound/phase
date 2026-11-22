@@ -12,6 +12,7 @@ func _run() -> void:
 	await process_frame
 	game.set_process(false)
 	await _entry_points()
+	await _stationary_wait()
 	_focus()
 	game._restart()
 	_check(game.build_open,"interface verification returns BUILD")
@@ -56,6 +57,39 @@ func _entry_points() -> void:
 		game._reselect_path()
 	_check(before==[game.battle.units,game.battle.history,game.battle.mode],"human cannot invoke reselection on an enemy CPU turn")
 	game.cpu_enabled=false
+## REQ-012-S04
+func _stationary_wait() -> void:
+	for blocked in [false,true]:
+		game._start_battle();game.set_process(false)
+		var b=game.battle
+		b.units[0].pos=Vector2i(4,4)
+		if blocked:
+			for i in range(4):b.units[i+1].pos=Vector2i(4,4)+b.DIRS[i]
+		else:b.path=[Vector2i(5,4)]
+		b.units[0].core_angle=57.0;b.panels[b.units[0].pos]="RESET"
+		game._hud();await process_frame
+		var original=game.planning._state(b)
+		var waits=game.hud.find_children("*","Button",true,false).filter(func(button):return button.text=="WAIT")
+		_check(waits.size()==1,"permanent WAIT is available with or without free cells")
+		if waits.size()!=1:continue
+		waits[0].pressed.emit();await process_frame
+		_check(game.planning.phase=="READY" and game.planning.route.is_empty() and game.planning._state(b)==original and game._visible_route().is_empty(),"WAIT goes straight to stationary confirmation without moving or showing the old route")
+		var labels=game.overlay.find_children("*","Label",true,false).map(func(label):return label.text)
+		_check(labels.has("WAIT / NO MOVE"),"stationary summary explicitly identifies no movement")
+		if blocked:
+			var key=InputEventKey.new();key.keycode=KEY_ESCAPE;key.pressed=true;root.push_input(key,false)
+		else:
+			for button in game.overlay.find_children("*","Button",true,false):
+				if button.text=="BACK":button.pressed.emit();break
+		await process_frame
+		_check(not game.planning.active() and game.planning._state(b)==original,"BACK/Esc restores the unchanged original route without another menu")
+		var sounds=[]
+		var listener=func(kind):sounds.append(kind)
+		game.sfx.played.connect(listener)
+		game._wait_action();game._confirm_plan();game._confirm_plan();game._movement_tick(10.0)
+		await process_frame
+		_check(b.turn==original[2]+1 and not game.movement.active and sounds.filter(func(kind):return kind.begins_with("ring_rotate")).is_empty(),"confirmed WAIT ends one turn with no movement animation or movement sound")
+		game.sfx.played.disconnect(listener)
 ## REQ-018-S02、REQ-018-S04、REQ-018-S05
 func _focus() -> void:
 	_check(not game.has_method("_acting_marker"),"obsolete triangle drawing is removed")

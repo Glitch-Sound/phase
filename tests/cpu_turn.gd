@@ -14,6 +14,7 @@ func _run() -> void:
 	presenter=load("res://ui/cpu_turn.gd").new()
 	_sequence()
 	_interruptions()
+	_zero_wait()
 	_finish()
 ## REQ-036-S01
 func _sequence() -> void:
@@ -67,6 +68,23 @@ func _interruptions() -> void:
 	presenter.begin(b,{"path":[Vector2i(3,3)],"skill":"","target":-1})
 	b.turn+=1
 	_check(presenter.advance(b,1.0,false,1.0)=="cancel" and not presenter.active,"unexpected turn invalidates an old presentation")
+## REQ-012-S03、REQ-035-S04
+func _zero_wait() -> void:
+	for blocked in [false,true]:
+		var b=_battle()
+		b.units[2].pos=Vector2i(0,0)
+		if blocked:
+			b.units[0].pos=Vector2i(1,0);b.units[1].pos=Vector2i(0,1)
+		var command={"path":[],"skill":"","target":-1}
+		if blocked:command=load("res://game/cpu_policy.gd").new().choose(b)
+		presenter.begin(b,command)
+		for i in range(10):presenter.advance(b,1.0,false)
+		_check(b.turn==2 and b.history==["A WAIT"] and not presenter.active,"CPU zero-step WAIT completes with or without free cells")
+	var b=_battle()
+	var before=[b.units.duplicate(true),b.history.duplicate(),b.turn,b.mode]
+	presenter.begin(b,{"path":[],"skill":C.DAMAGE,"target":0})
+	for i in range(10):presenter.advance(b,1.0,false)
+	_check(not presenter.active and before==[b.units,b.history,b.turn,b.mode],"CPU presenter rejects a forged zero-step non-WAIT without state changes")
 func _battle():
 	var b=B.new()
 	b.start(0,C.player_builds().slice(0,2),128)

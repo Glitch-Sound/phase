@@ -327,6 +327,7 @@ func _timeline_matches(event: Dictionary, inspected: Dictionary) -> bool:
 
 
 func _draw_board() -> void:
+	var display_path=_visible_route()
 	var decision=_decision_battle()
 	var fields=_field_view()
 	var effect_chips=[]
@@ -343,7 +344,7 @@ func _draw_board() -> void:
 			var color=Color("0d1013") if (x+y)%2==0 else Color("090c0f")
 			if panel!="NORMAL":
 				color=Color("13181d")
-			if battle.path.has(cell):
+			if display_path.has(cell):
 				color=Color(CYAN,0.16)
 			if cell==hover_cell and not is_instance_valid(overlay):
 				color=color.lightened(0.055)
@@ -403,12 +404,12 @@ func _draw_board() -> void:
 	elif battle.mode=="MOVE":
 		for segment in _route_segments():
 			draw_line(segment[0],segment[1],CYAN,T.ROUTE_LINE_WIDTH*BOARD_SCALE,true)
-		for i in range(battle.path.size()):
-			var center=_board_point(battle.path[i],Vector2(35,35))
+		for i in range(display_path.size()):
+			var center=_board_point(display_path[i],Vector2(35,35))
 			draw_circle(center,T.ROUTE_NODE_RADIUS*BOARD_SCALE,WHITE)
 			_center(str(i+1),center+Vector2(0,6)*BOARD_SCALE,roundi(17*BOARD_SCALE),BG,mono)
-		if not battle.path.is_empty():
-			_draw_cell_focus(_cell_rect(battle.path.back()),CYAN)
+		if not display_path.is_empty():
+			_draw_cell_focus(_cell_rect(display_path.back()),CYAN)
 	var turn_cell=_turn_focus_cell()
 	if turn_cell!=Vector2i(-1,-1):
 		_draw_cell_focus(_cell_rect(turn_cell),CYAN)
@@ -512,6 +513,9 @@ func _update_panel_hint() -> void:
 	panel_hint.get_child(0).text=lines[0]
 	detail.text=body
 
+func _visible_route() -> Array:
+	return planning.route if planning.active() else battle.path
+
 func _route_segments() -> Array:
 	var segments=[]
 	var pixel_scale=maxf(0.001,get_viewport_transform().get_scale().x*get_global_transform().get_scale().x)
@@ -522,7 +526,7 @@ func _route_segments() -> Array:
 		return segments
 	var node_clear=(T.ROUTE_NODE_RADIUS+T.ROUTE_LINE_WIDTH/2)*BOARD_SCALE
 	var prev: Vector2i=battle.units[battle.actor].pos
-	for cell in battle.path:
+	for cell in _visible_route():
 		var start_clear=unit_clear if battle.at(prev)>=0 else node_clear
 		var end_clear=unit_clear if battle.at(cell)>=0 else node_clear
 		var segment=V.route_segment(_board_point(prev,Vector2(35,35)),_board_point(cell,Vector2(35,35)),start_clear,end_clear)
@@ -788,7 +792,7 @@ func _confirm_dialog() -> void:
 	var panel=_modal(Rect2(700,380,420,220),false,true)
 	_unit_action_heading(panel,"READY",battle.units[battle.actor])
 	var decision=planning.projected
-	var text="MOVE / FINISH" if not decision.result.is_empty() else ("WAIT" if decision.selected_skill.is_empty() else C.SKILLS[decision.selected_skill].label)
+	var text="MOVE / FINISH" if not decision.result.is_empty() else (("WAIT / NO MOVE" if planning.route.is_empty() else "WAIT") if decision.selected_skill.is_empty() else C.SKILLS[decision.selected_skill].label)
 	if planning.target>=0 and planning.target!=battle.actor:_unit_badge(panel,Vector2(376,76),13,battle.units[planning.target])
 	var summary=_label(panel,_fit_text(text,325,16),Rect2(25,60,325,32),16,MUTED)
 	summary.tooltip_text=text
@@ -908,8 +912,9 @@ func _hud() -> void:
 		return
 	if battle.mode=="TARGET":
 		_button(hud,"BACK",T.BATTLE_CONTEXT_BUTTON,func():battle.back();_action_dialog())
-	elif battle.mode=="MOVE" and battle.trapped():
-		_button(hud,"WAIT",T.BATTLE_CONTEXT_BUTTON,_wait_action)
+	elif not build_open and battle.mode=="MOVE":
+		var wait_button=_button(hud,"WAIT",T.BATTLE_CONTEXT_BUTTON,_wait_action)
+		_set_prose(wait_button,"Stay here. CONFIRM ends this turn.","tooltip_text")
 
 func _action_dialog() -> void:
 	if movement.active:return
@@ -918,7 +923,7 @@ func _action_dialog() -> void:
 	var active=[]
 	var decision=_decision_battle()
 	for skill in decision.units[decision.actor].skills:
-		if C.SKILLS[skill].type=="ACTIVE":
+		if C.SKILLS[skill].type=="ACTIVE" and decision.units[decision.actor].moved>0:
 			active.append(skill)
 	var height=185+active.size()*63
 	var panel=_modal(Rect2(700,330,420,height),false,true)
@@ -953,8 +958,8 @@ func _wait_action() -> void:
 	if planning.active():
 		if planning.wait():_confirm_dialog()
 		return
-	if battle.mode=="MOVE" and battle.trapped():
-		if planning.begin(battle) and planning.wait():_confirm_dialog()
+	if battle.mode=="MOVE":
+		if planning.begin(battle,true) and planning.wait():_confirm_dialog()
 		return
 	if battle.wait_turn():_after_action()
 
@@ -1331,7 +1336,7 @@ func _start_battle() -> void:
 	_follow_turn()
 	_clear_overlay()
 	_hud()
-	_notify("Click adjacent empty cells, then double-click the endpoint.")
+	_notify("Choose a route, or WAIT without moving.")
 
 func _result() -> void:
 	planning.reset();playback_command={}
@@ -1381,7 +1386,7 @@ func _help() -> void:
 		_prose_label(panel,steps[i][2],Rect2(x,201+T.HELP_BODY_VERTICAL_OFFSET,340,96 if i==2 else 76),16 if i==2 else 18,MUTED)
 	_separator(panel,Rect2(36,300,1048,1))
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
-	_prose_label(panel,"Move at least 1 cell, or WAIT if trapped.\nBefore CONFIRM, BACK / Esc steps back to revise the route.",Rect2(36,377+T.HELP_BODY_VERTICAL_OFFSET,500,174),18,WHITE)
+	_prose_label(panel,"WAIT stays put. Move first to use skills.\nBefore CONFIRM, BACK / Esc steps back to revise the route.",Rect2(36,377+T.HELP_BODY_VERTICAL_OFFSET,500,174),18,WHITE)
 	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
 	_prose_label(panel,"Each step turns GEAR left and ARMS right.\nPanels turn CORE using SPD, or reset its start angle.",Rect2(580,377+T.HELP_BODY_VERTICAL_OFFSET,510,152),18,WHITE)
 	var panel_kinds=["CLOCKWISE","RESET","COUNTERCLOCKWISE"]

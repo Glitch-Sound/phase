@@ -26,6 +26,7 @@ func _run() -> void:
 	if C.SKILLS.has("PASSIVE_FIELD_SLOW_ADJACENT"):game.battle.units[0].skills.append("PASSIVE_FIELD_SLOW_ADJACENT")
 	game.battle.units[1].pos=Vector2i(8,8)
 	game.battle.mode="CHOICE"
+	game.battle.units[game.battle.actor].moved=1
 	game.battle.choose_skill(C.GUARD)
 	game._follow_turn()
 	game.hover_cell=Vector2i(4,4)

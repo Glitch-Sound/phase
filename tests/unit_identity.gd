@@ -37,7 +37,7 @@ func _independence() -> void:
 	var plan=policy.choose(b)
 	for u in b.units:u.display_name="Aster"
 	_check(policy.choose(b)==plan,"CPU choices ignore cosmetic names")
-	b.units[3].pos=Vector2i(5,4);b.units[0].pos=Vector2i(4,4);b.units[1].pos=Vector2i(6,4);b.mode="CHOICE";b.units[3].skills=[C.DAMAGE]
+	b.units[3].pos=Vector2i(5,4);b.units[0].pos=Vector2i(4,4);b.units[1].pos=Vector2i(6,4);b.mode="CHOICE";b.units[b.actor].moved=1;b.units[3].skills=[C.DAMAGE]
 	var before=b.units.duplicate(true)
 	_check(b.choose_skill(C.DAMAGE) and b.act(1) and b.last_effect.target==1 and b.units[0].hp==before[0].hp and b.units[1].hp==before[1].hp-b.last_effect.actual,"target indices remain independent for identical names")
 ## REQ-016-S01、REQ-016-S02

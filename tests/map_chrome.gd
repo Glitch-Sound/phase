@@ -34,6 +34,7 @@ func _run() -> void:
 			game.battle.units[1].pos=Vector2i(6,5)
 			game.battle.units[1].hp=90
 			game.battle.mode="CHOICE"
+			game.battle.units[game.battle.actor].moved=1
 			game.battle.choose_skill(game.C.HEAL)
 			game._clear_overlay()
 			game._hud()

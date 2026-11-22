@@ -140,9 +140,9 @@ func trapped() -> bool:
 			return false
 	return true
 
-## WAITを実行する。戻り値は成功可否。無移動は閉塞時だけ許可する。
+## WAITを実行する。戻り値は成功可否。未確定経路は適用せず、その場でも手番を終えられる。
 func wait_turn() -> bool:
-	if mode=="CHOICE" or (mode=="MOVE" and trapped()):
+	if mode in ["MOVE","CHOICE"] and actor>=0 and actor<units.size() and units[actor].hp>0 and result.is_empty():
 		history.append(units[actor].id+" WAIT")
 		_end_turn()
 		return true
@@ -150,11 +150,15 @@ func wait_turn() -> bool:
 
 ## ACTIVEを選ぶ。skillは保有するID。戻り値は成功可否、成功時は対象選択へ移る。
 func choose_skill(skill: String) -> bool:
-	if mode!="CHOICE" or not units[actor].skills.has(skill) or not C.SKILLS.has(skill) or C.SKILLS[skill].type!="ACTIVE":
+	if mode!="CHOICE" or not _has_moved() or not units[actor].skills.has(skill) or not C.SKILLS.has(skill) or C.SKILLS[skill].type!="ACTIVE":
 		return false
 	selected_skill=skill
 	mode="TARGET"
 	return true
+
+# 対象の幾何判定とは分け、実行入口だけに移動必須を適用する。
+func _has_moved() -> bool:
+	return actor>=0 and actor<units.size() and units[actor].hp>0 and result.is_empty() and units[actor].moved>0
 
 ## 対象選択を戻す。位置と位相を維持して行動選択へ戻る。
 func back() -> void:
@@ -182,7 +186,7 @@ static func enter_cell(u: Dictionary, cell: Vector2i, panel: String, world: Arra
 
 ## 位置操作と防御を予測する。targetは対象番号。戻り値はunits、moved、kind、targetを含む独立した辞書、無効または他の作用なら空。戦闘を変更しない。
 func action_preview(target: int) -> Dictionary:
-	if mode!="TARGET" or not valid_target(actor,target,selected_skill):
+	if mode!="TARGET" or not _has_moved() or not valid_target(actor,target,selected_skill):
 		return {}
 	var kind: String=C.SKILLS[selected_skill].effect
 	if kind not in ["SWAP","PUSH","GUARD"]:
@@ -212,7 +216,7 @@ func _apply_utility(target_units: Array, source: int, target: int, kind: String)
 
 ## 効果を実行する。targetは番号。戻り値は成功可否。位置、角度、防御またはHPと手番、勝敗を更新する。
 func act(target: int) -> bool:
-	if mode!="TARGET" or not valid_target(actor,target,selected_skill):
+	if mode!="TARGET" or not _has_moved() or not valid_target(actor,target,selected_skill):
 		return false
 	var kind: String=C.SKILLS[selected_skill].effect
 	if kind in ["SWAP","PUSH","GUARD"]:

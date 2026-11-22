@@ -115,7 +115,7 @@ func _test_menu(game) -> void:
 	await process_frame
 	var labels=["HELP","SETTINGS","RESTART","QUIT"]
 	var methods=["_help","_settings","_restart","_quit"]
-	var buttons=game.hud.get_children()
+	var buttons=game.hud.get_children().filter(func(button):return button.text in labels)
 	_check(buttons.size()==4,"four system operations")
 	var board=Rect2(game.T.BATTLE_BOARD_ORIGIN,Vector2.ONE*10*game.T.BATTLE_CELL)
 	var previous=[]

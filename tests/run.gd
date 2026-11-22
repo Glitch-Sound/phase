@@ -101,6 +101,7 @@ func test_heal_cap() -> void:
 	b.start(0,[C.default_build(),C.default_build()])
 	b.units[1].pos=Vector2i(4,4)
 	b.units[1].hp=95.0
+	b.units[b.actor].moved=1
 	b.mode="CHOICE"
 	_check(b.choose_skill(C.HEAL), "choose heal")
 	_check(b.act(1), "heal action")
@@ -177,14 +178,34 @@ func test_targets_back() -> void:
 
 ## REQ-012-S01
 func test_trapped_wait() -> void:
-	var b=B.new()
-	b.start(0,[C.default_build(),C.default_build()])
-	_check(not b.wait_turn(), "must move")
-	_check(b.movement(b.units[0])==T.BASE_MOVE+1,"passive movement")
-	for p in [Vector2i(2,4),Vector2i(4,4),Vector2i(3,3),Vector2i(3,5)]:
-		b.units.append(C.unit("X","ENEMY",p,C.default_build()))
-	_check(b.trapped(),"trapped")
-	_check(b.wait_turn(),"forced WAIT")
+	for blocked in [false,true]:
+		var b=B.new()
+		b.start(0,[C.default_build(),C.default_build()])
+		_check(b.movement(b.units[0])==T.BASE_MOVE+1,"passive movement")
+		if blocked:
+			for p in [Vector2i(2,4),Vector2i(4,4),Vector2i(3,3),Vector2i(3,5)]:
+				b.units.append(C.unit("X","ENEMY",p,C.default_build()))
+		b.units[0].core_angle=57.0;b.units[0].gear_angle=123.0;b.units[0].arms_angle=234.0
+		b.panels[b.units[0].pos]="RESET"
+		var expected=b.units.duplicate(true)
+		expected[0].next_time+=M.delay(expected[0])
+		var panels=b.panels.duplicate(true)
+		_check(b.trapped()==blocked and b.wait_turn(),"zero-move WAIT with or without free cells")
+		_check(b.units==expected and b.panels==panels and b.turn==2 and b.mode=="MOVE" and b.history==["01 WAIT"],"WAIT changes only normal scheduling and one turn, never panel/rings/HP/passives")
+
+## REQ-012-S03
+func test_zero_step_active() -> void:
+	for skill in [C.DAMAGE,C.HEAL,C.GUARD,C.PUSH,C.SWAP]:
+		var b=B.new();b.start(0,[C.default_build(),C.default_build()])
+		b.units[0].pos=Vector2i(4,4);b.units[1].pos=Vector2i(5,4);b.units[1].hp=50.0
+		b.units[2].pos=Vector2i(4,5);b.units[3].pos=Vector2i(9,9)
+		b.units[0].skills=[skill];b.mode="CHOICE"
+		var target=0 if skill==C.GUARD else (1 if skill in [C.HEAL,C.SWAP] else 2)
+		var original=[b.units.duplicate(true),b.history.duplicate(),b.turn,b.actor,b.mode,b.selected_skill,b.last_effect.duplicate(true)]
+		_check(b.valid_target(0,target,skill) and not b.choose_skill(skill) and original==[b.units,b.history,b.turn,b.actor,b.mode,b.selected_skill,b.last_effect],"no movement cannot choose "+skill)
+		b.mode="TARGET";b.selected_skill=skill
+		original=[b.units.duplicate(true),b.history.duplicate(),b.turn,b.actor,b.mode,b.selected_skill,b.last_effect.duplicate(true)]
+		_check(b.action_preview(target).is_empty() and not b.act(target) and original==[b.units,b.history,b.turn,b.actor,b.mode,b.selected_skill,b.last_effect],"forged zero-step action cannot mutate state "+skill)
 
 ## REQ-013-S01
 func test_objectives() -> void:
@@ -329,6 +350,7 @@ func test_partial_interference() -> void:
 func test_skill_limits() -> void:
 	var b=B.new()
 	b.start(0,[C.default_build(),C.default_build()])
+	b.units[b.actor].moved=1
 	b.mode="CHOICE"
 	_check(not b.choose_skill(C.MOVE),"passive never consumes action")
 	_check(not b.choose_skill("ACTIVE_DAMAGE_DIAGONAL"),"undefined skill refused")

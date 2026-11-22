@@ -32,6 +32,7 @@ func _run() -> void:
 	game.battle.units[1].pos=Vector2i(6,5)
 	game.battle.units[1].hp=95.0
 	game.battle.mode="CHOICE"
+	game.battle.units[game.battle.actor].moved=1
 	game.battle.choose_skill(C.HEAL)
 	game._cell_input(Vector2i(6,5))
 	_check(game.toasts.back().text=="+5","heal toast reports actual capped recovery")
@@ -39,6 +40,7 @@ func _run() -> void:
 	game.battle.units[0].pos=Vector2i(5,4)
 	game.battle.units[2].hp=1.0
 	game.battle.mode="CHOICE"
+	game.battle.units[game.battle.actor].moved=1
 	game.battle.choose_skill(C.DAMAGE)
 	game._cell_input(Vector2i(6,4))
 	_check(game.toasts.any(func(t):return t.text=="DEFEATED"),"defeat toast connected")
