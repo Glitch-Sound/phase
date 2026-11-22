@@ -3,8 +3,6 @@ extends RefCounted
 
 # 移動の2音は従来のゲインを使う。原音RMSから決めた攻撃と回復の音量は維持する。
 const SFX_VOLUME_DB := {"ring_rotate1":-18.0,"ring_rotate2":-18.0,"attack":-15.0,"heal":-8.0}
-# 半マス待ちを短くする。原音と再生開始位置は変えず、移動音の列だけを一度前へ寄せる。
-const SFX_MOVEMENT_LEAD_SECONDS := 0.10
 
 const BASE_HP := 100.0
 # 位相の落差と有限の反撃評価を組み合わせ、通常対戦を短くする比較値。
