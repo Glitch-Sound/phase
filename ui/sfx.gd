@@ -58,18 +58,38 @@ func _bind_input_node(node: Node) -> void:
 	node.set_meta("phase_sfx_binding",get_instance_id())
 	if node is BaseButton:
 		node.gui_input.connect(_arm_button_input.bind(node))
-		node.pressed.connect(_button_pip.bind(node))
+		node.button_down.connect(_button_pip.bind(node))
 	else:
-		node.window_input.connect(_arm_button_input.bind(node))
-		# PopupMenuの入力通知は確定信号の後にも届く。同じ更新の末尾で一度だけ照合する。
-		node.id_pressed.connect(func(_id):_button_pip.call_deferred(node))
+		node.window_input.connect(_popup_input.bind(node))
+		node.id_pressed.connect(_popup_confirm.bind(node))
+		node.about_to_popup.connect(func():node.set_meta("phase_sfx_popup_press",false);node.set_meta("phase_sfx_confirmation_frame",-1);node.set_meta("phase_sfx_input_frame",-1))
 
 func _arm_button_input(event: InputEvent,node: Node) -> void:
 	if not _owns_button(node):return
 	if node is BaseButton and (node.disabled or not node.is_visible_in_tree()):return
-	if event is InputEventKey and event.echo:return
+	if not event.is_pressed() or (event is InputEventKey and event.echo):return
 	if (event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT) or event.is_action("ui_accept"):
 		node.set_meta("phase_sfx_input_frame",Engine.get_process_frames())
+
+func _popup_input(event: InputEvent,node: PopupMenu) -> void:
+	if not _owns_button(node) or (event is InputEventKey and event.echo):return
+	if not ((event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT) or event.is_action("ui_accept")):return
+	if event.is_pressed():node.set_meta("phase_sfx_popup_press",true)
+	elif not node.get_meta("phase_sfx_popup_press",false):return
+	else:node.set_meta("phase_sfx_popup_press",false)
+	node.set_meta("phase_sfx_input_frame",Engine.get_process_frames())
+	_popup_pip(node)
+
+func _popup_confirm(_id: int,node: PopupMenu) -> void:
+	node.set_meta("phase_sfx_confirmation_frame",Engine.get_process_frames())
+	_popup_pip(node)
+
+func _popup_pip(node: PopupMenu) -> void:
+	# ネイティブの有効確定と入力を同じ更新で照合し、開いた押下の離しでは鳴らさない。
+	var frame=Engine.get_process_frames()
+	if node.get_meta("phase_sfx_confirmation_frame",-1)!=frame or node.get_meta("phase_sfx_input_frame",-1)!=frame:return
+	node.set_meta("phase_sfx_confirmation_frame",-1)
+	_button_pip(node)
 
 func _button_pip(node: Node) -> void:
 	if not is_instance_valid(node) or not _owns_button(node):return

@@ -124,7 +124,8 @@ func _test_menu(game) -> void:
 		var expected=Rect2(game.T.BATTLE_MENU_ORIGIN+Vector2(i%2,floori(i/2.0))*(game.T.BATTLE_MENU_SIZE+game.T.BATTLE_MENU_GAP),game.T.BATTLE_MENU_SIZE)
 		_check(button.text==labels[i] and button.get_rect()==expected,"row-major menu geometry "+labels[i]+" / "+str(button.get_rect()))
 		var callbacks=button.pressed.get_connections().map(func(connection):return connection.callable)
-		_check(callbacks.size()==2 and Callable(game,methods[i]) in callbacks and Callable(game.sfx,"_button_pip").bind(button) in callbacks,"operation and button-audio callbacks retained exactly "+labels[i])
+		var down=button.button_down.get_connections().map(func(connection):return connection.callable)
+		_check(callbacks==[Callable(game,methods[i])] and down==[Callable(game.sfx,"_button_pip").bind(button)],"release operation and down-audio callbacks retained exactly "+labels[i])
 		_check(not button.get_rect().intersects(board) and button.get_rect().position.x-board.end.x>0,"menu separated from board "+labels[i])
 		for rect in previous:
 			_check(not rect.intersects(button.get_rect()),"menu buttons do not overlap")

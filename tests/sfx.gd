@@ -36,27 +36,47 @@ func _selection() -> void:
 	_check(sound.has_method("bind_buttons"),"central audio observes actual button input")
 	if not sound.has_method("bind_buttons"):return
 	var ui=Control.new();ui.size=Vector2(1920,1080);ui.mouse_filter=Control.MOUSE_FILTER_IGNORE;root.add_child(ui);sound.bind_buttons(ui);sound.bind_buttons(ui)
-	var button=Button.new();button.text="STATIC";button.position=Vector2(40,40);button.size=Vector2(160,50);ui.add_child(button);sound.bind_buttons(ui)
-	await process_frame;events.clear();await _click(button.get_global_rect().get_center())
-	_check(events==["button"],"mouse activation has one pip even when binding is repeated")
-	events.clear();button.grab_focus();await _press_key(KEY_ENTER)
-	_check(events==["button"],"keyboard activation has one pip")
-	events.clear();button.grab_focus();var hover=InputEventMouseMotion.new();hover.position=button.get_global_rect().get_center();root.push_input(hover,true);await _press_key(KEY_TAB);button.pressed.emit();await process_frame
+	var button=Button.new();button.text="STATIC";button.position=Vector2(40,40);button.size=Vector2(160,50);ui.add_child(button);sound.bind_buttons(ui);var operations=[];button.pressed.connect(func():operations.append(true))
+	await process_frame;events.clear();var held=await _hold(button,false,false,operations)
+	_check(held.sounds==["button"] and held.operations==0 and events==["button"] and operations.size()==1,"mouse down sounds while held; release operates once without a second pip")
+	events.clear();button.grab_focus();held=await _hold(button,true,false,operations)
+	_check(held.sounds==["button"] and held.operations==1 and events==["button"] and operations.size()==2,"key down sounds while held; repeats are silent and release operates once")
+	events.clear();held=await _hold(button,false,true,operations)
+	_check(held.sounds==["button"] and events==["button"] and operations.size()==2,"outside release cancels the operation but keeps only its early down sound")
+	events.clear();button.grab_focus();var hover=InputEventMouseMotion.new();hover.position=button.get_global_rect().get_center();root.push_input(hover,true);await _press_key(KEY_TAB);button.pressed.emit();button.button_down.emit();await process_frame
 	_check(events==[],"hover, focus and an internal pressed notification without activation stay silent")
 	button.disabled=true;await _click(button.get_global_rect().get_center());_check(events==[],"disabled button has no pip");button.disabled=false
 	var check=CheckButton.new();check.position=Vector2(250,40);check.size=Vector2(160,50);ui.add_child(check);await process_frame
 	check.button_pressed=true;await process_frame;_check(events==[],"internal toggle update stays silent")
-	await _click(check.get_global_rect().get_center());_check(events==["button"] and not check.button_pressed,"user toggle has one pip")
+	held=await _hold(check);_check(held.sounds==["button"] and events==["button"] and not check.button_pressed,"user toggle has one early pip and keeps native toggle behavior")
 	events.clear();var dynamic=Button.new();dynamic.position=Vector2(40,120);dynamic.size=Vector2(160,50);dynamic.text="DYNAMIC";ui.add_child(dynamic)
 	dynamic.pressed.connect(func():dynamic.queue_free();sound.reset_battle())
-	await process_frame;await _click(dynamic.get_global_rect().get_center());_check(events==["button"] and not is_instance_valid(dynamic),"new candidate and screen transition neither lose nor double its pip")
+	await process_frame;held=await _hold(dynamic);_check(held.sounds==["button"] and events==["button"] and not is_instance_valid(dynamic),"new candidate and screen transition neither lose nor double its pip")
 	events.clear();var previous=root.gui_embed_subwindows;root.gui_embed_subwindows=true
 	var option=OptionButton.new();option.position=Vector2(450,40);option.size=Vector2(180,50);option.add_item("A");option.add_item("B");ui.add_child(option);await process_frame
 	option.select(1);option.get_popup().id_pressed.emit(1);await process_frame;_check(events==[],"internal option selection and notification stay silent")
-	option.grab_focus();await _press_key(KEY_ENTER);await _press_key(KEY_UP);await _press_key(KEY_ENTER);await process_frame
-	_check(events==["button","button"],"dropdown opening and actual confirmation each have one pip; arrow focus is silent")
+	option.grab_focus();await _press_key(KEY_ENTER);await _press_key(KEY_UP)
+	root.push_input(_key(),true);var at_confirmation=events.duplicate();await process_frame
+	var release=_key();release.pressed=false;root.push_input(release,true);await process_frame
+	_check(at_confirmation==["button","button"] and events==at_confirmation,"dropdown opening and actual confirmation each have one pip; arrow focus is silent")
 	events.clear();sound.enabled=false;button.grab_focus();await _press_key(KEY_SPACE);_check(events==[],"disabled SFX flag suppresses a valid button press");sound.enabled=true
 	ui.queue_free();await process_frame;root.gui_embed_subwindows=previous;events.clear()
+func _hold(button: BaseButton,keyboard: bool=false,outside: bool=false,operations: Array=[]) -> Dictionary:
+	var position=button.get_global_rect().get_center()
+	if keyboard:button.grab_focus();root.push_input(_key(),true)
+	else:
+		var down=InputEventMouseButton.new();down.button_index=MOUSE_BUTTON_LEFT;down.pressed=true;down.button_mask=MOUSE_BUTTON_MASK_LEFT;down.position=position;down.global_position=position;root.push_input(down,true)
+	await process_frame;await process_frame
+	if keyboard:
+		var repeat=_key();repeat.echo=true;root.push_input(repeat,true);await process_frame
+	var result={"sounds":events.duplicate(),"operations":operations.size()}
+	if keyboard:
+		var up=_key();up.pressed=false;root.push_input(up,true)
+	else:
+		if outside:
+			position=Vector2(10,10);var motion=InputEventMouseMotion.new();motion.position=position;motion.global_position=position;root.push_input(motion,true)
+		var up=InputEventMouseButton.new();up.button_index=MOUSE_BUTTON_LEFT;up.position=position;up.global_position=position;root.push_input(up,true)
+	await process_frame;return result
 func _click(position: Vector2) -> void:
 	for down in [true,false]:
 		var event=InputEventMouseButton.new();event.button_index=MOUSE_BUTTON_LEFT;event.button_mask=MOUSE_BUTTON_MASK_LEFT if down else 0;event.pressed=down;event.position=position;event.global_position=position;root.push_input(event,true);await process_frame
