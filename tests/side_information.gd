@@ -109,7 +109,7 @@ func _test_equipment_layout(game) -> void:
 func _bounds(record: Dictionary) -> Rect2:
 	var face: Font=record.typeface
 	return Rect2(record.position-Vector2(0,face.get_ascent(record.font_size)),Vector2(face.get_string_size(record.text,HORIZONTAL_ALIGNMENT_LEFT,-1,record.font_size).x,face.get_height(record.font_size)))
-## NREQ-001-S04
+## NREQ-001-S04、REQ-054-S01
 func _test_menu(game) -> void:
 	game._start_battle()
 	await process_frame
@@ -123,7 +123,8 @@ func _test_menu(game) -> void:
 		var button=buttons[i]
 		var expected=Rect2(game.T.BATTLE_MENU_ORIGIN+Vector2(i%2,floori(i/2.0))*(game.T.BATTLE_MENU_SIZE+game.T.BATTLE_MENU_GAP),game.T.BATTLE_MENU_SIZE)
 		_check(button.text==labels[i] and button.get_rect()==expected,"row-major menu geometry "+labels[i]+" / "+str(button.get_rect()))
-		_check(button.pressed.get_connections().size()==1 and button.pressed.get_connections()[0].callable.get_method()==methods[i],"callback retained "+labels[i])
+		var callbacks=button.pressed.get_connections().map(func(connection):return connection.callable)
+		_check(callbacks.size()==2 and Callable(game,methods[i]) in callbacks and Callable(game.sfx,"_button_pip").bind(button) in callbacks,"operation and button-audio callbacks retained exactly "+labels[i])
 		_check(not button.get_rect().intersects(board) and button.get_rect().position.x-board.end.x>0,"menu separated from board "+labels[i])
 		for rect in previous:
 			_check(not rect.intersects(button.get_rect()),"menu buttons do not overlap")

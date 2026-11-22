@@ -29,10 +29,40 @@ func _run() -> void:
 	print("SFX: %d checks / %d failures" % [checks,failures]);quit(0 if failures==0 else 1)
 func _key(code: Key=KEY_ENTER) -> InputEventKey:
 	var event=InputEventKey.new();event.keycode=code;event.pressed=true;return event
-## REQ-054-S01
+## REQ-054-S01、REQ-054-S02
 func _selection() -> void:
 	sound._play("select")
-	_check(events==[],"selection is excluded from playback even when requested directly")
+	_check(events==[],"old select asset stays excluded even when requested directly")
+	_check(sound.has_method("bind_buttons"),"central audio observes actual button input")
+	if not sound.has_method("bind_buttons"):return
+	var ui=Control.new();ui.size=Vector2(1920,1080);ui.mouse_filter=Control.MOUSE_FILTER_IGNORE;root.add_child(ui);sound.bind_buttons(ui);sound.bind_buttons(ui)
+	var button=Button.new();button.text="STATIC";button.position=Vector2(40,40);button.size=Vector2(160,50);ui.add_child(button);sound.bind_buttons(ui)
+	await process_frame;events.clear();await _click(button.get_global_rect().get_center())
+	_check(events==["button"],"mouse activation has one pip even when binding is repeated")
+	events.clear();button.grab_focus();await _press_key(KEY_ENTER)
+	_check(events==["button"],"keyboard activation has one pip")
+	events.clear();button.grab_focus();var hover=InputEventMouseMotion.new();hover.position=button.get_global_rect().get_center();root.push_input(hover,true);await _press_key(KEY_TAB);button.pressed.emit();await process_frame
+	_check(events==[],"hover, focus and an internal pressed notification without activation stay silent")
+	button.disabled=true;await _click(button.get_global_rect().get_center());_check(events==[],"disabled button has no pip");button.disabled=false
+	var check=CheckButton.new();check.position=Vector2(250,40);check.size=Vector2(160,50);ui.add_child(check);await process_frame
+	check.button_pressed=true;await process_frame;_check(events==[],"internal toggle update stays silent")
+	await _click(check.get_global_rect().get_center());_check(events==["button"] and not check.button_pressed,"user toggle has one pip")
+	events.clear();var dynamic=Button.new();dynamic.position=Vector2(40,120);dynamic.size=Vector2(160,50);dynamic.text="DYNAMIC";ui.add_child(dynamic)
+	dynamic.pressed.connect(func():dynamic.queue_free();sound.reset_battle())
+	await process_frame;await _click(dynamic.get_global_rect().get_center());_check(events==["button"] and not is_instance_valid(dynamic),"new candidate and screen transition neither lose nor double its pip")
+	events.clear();var previous=root.gui_embed_subwindows;root.gui_embed_subwindows=true
+	var option=OptionButton.new();option.position=Vector2(450,40);option.size=Vector2(180,50);option.add_item("A");option.add_item("B");ui.add_child(option);await process_frame
+	option.select(1);option.get_popup().id_pressed.emit(1);await process_frame;_check(events==[],"internal option selection and notification stay silent")
+	option.grab_focus();await _press_key(KEY_ENTER);await _press_key(KEY_UP);await _press_key(KEY_ENTER);await process_frame
+	_check(events==["button","button"],"dropdown opening and actual confirmation each have one pip; arrow focus is silent")
+	events.clear();sound.enabled=false;button.grab_focus();await _press_key(KEY_SPACE);_check(events==[],"disabled SFX flag suppresses a valid button press");sound.enabled=true
+	ui.queue_free();await process_frame;root.gui_embed_subwindows=previous;events.clear()
+func _click(position: Vector2) -> void:
+	for down in [true,false]:
+		var event=InputEventMouseButton.new();event.button_index=MOUSE_BUTTON_LEFT;event.button_mask=MOUSE_BUTTON_MASK_LEFT if down else 0;event.pressed=down;event.position=position;event.global_position=position;root.push_input(event,true);await process_frame
+func _press_key(code: Key) -> void:
+	for down in [true,false]:
+		var event=InputEventKey.new();event.keycode=code;event.pressed=down;root.push_input(event,true);await process_frame
 ## REQ-055-S01、REQ-055-S02
 func _rotation() -> void:
 	var alternating=["ring_rotate1","ring_rotate2","ring_rotate1","ring_rotate2","ring_rotate1","ring_rotate2"]
@@ -99,9 +129,18 @@ func _defeats() -> void:
 	sound.set_process(true)
 ## REQ-057-S01
 func _resources() -> void:
-	_check(sound.streams.keys()==["ring_rotate1","ring_rotate2","attack","heal","defeated"] and FileAccess.file_exists("res://assets/sfx/select.ogg"),"only the movement pair, unchanged effects and defeat source play; selection original remains")
-	_check(sound.streams.values().all(func(stream):return stream is AudioStreamOggVorbis and stream.get_length()>0 and not stream.loop),"all active original Ogg streams decode without looping")
-	_check(sound.players.size()==2 and sound.players.values().all(func(p):return p.max_polyphony==1 and p.bus=="Master") and sound.defeat_voices.size()==sound.T.SFX_DEFEAT_MAX_VOICES and sound.defeat_voices.all(func(p):return p.max_polyphony==1 and p.bus=="Master"),"bounded lanes use the existing Master volume")
+	_check(sound.streams.keys()==["ring_rotate1","ring_rotate2","attack","heal","defeated","button"] and FileAccess.file_exists("res://assets/sfx/select.ogg"),"only the original combat sources and generated button stream play; select original remains")
+	_check(sound.streams.values().all(func(stream):return stream.get_length()>0 and ((stream is AudioStreamOggVorbis and not stream.loop) or (stream is AudioStreamWAV and stream.loop_mode==AudioStreamWAV.LOOP_DISABLED))),"all active original and generated streams decode without looping")
+	_check(sound.players.size()==3 and sound.players.values().all(func(p):return p.max_polyphony==1 and p.bus=="Master") and sound.defeat_voices.size()==sound.T.SFX_DEFEAT_MAX_VOICES and sound.defeat_voices.all(func(p):return p.max_polyphony==1 and p.bus=="Master"),"bounded lanes use the existing Master volume")
+	if sound.streams.has("button"):
+		var tone=sound.streams.button;var samples=tone.data.size()/2;var crossings=0;var peak=0;var first_peak=0;var last_peak=0
+		for index in range(samples):
+			var value=absi(tone.data.decode_s16(index*2));peak=maxi(peak,value)
+			if index<sound.T.SFX_BUTTON_SAMPLE_RATE*sound.T.SFX_BUTTON_ATTACK_SECONDS/4:first_peak=maxi(first_peak,value)
+			if index>=samples-sound.T.SFX_BUTTON_SAMPLE_RATE*sound.T.SFX_BUTTON_RELEASE_SECONDS/4:last_peak=maxi(last_peak,value)
+		for index in range(1,samples):
+			if tone.data.decode_s16((index-1)*2)<0 and tone.data.decode_s16(index*2)>=0:crossings+=1
+		_check(tone is AudioStreamWAV and tone.format==AudioStreamWAV.FORMAT_16_BITS and not tone.stereo and tone.mix_rate==sound.T.SFX_BUTTON_SAMPLE_RATE and samples==roundi(sound.T.SFX_BUTTON_SAMPLE_RATE*sound.T.SFX_BUTTON_SECONDS) and tone.data.decode_s16(0)==0 and tone.data.decode_s16((samples-1)*2)==0 and crossings==floori(sound.T.SFX_BUTTON_FREQUENCY*sound.T.SFX_BUTTON_SECONDS) and first_peak<peak/2 and last_peak<peak/2,"generated mono sine has configured length and frequency, zero endpoints and reusable PCM")
 	for key in ["ring_rotate1","ring_rotate2","attack","heal"]:
 		sound._play(key)
 		var lane="effect" if key in ["attack","heal"] else "ring_rotate"

@@ -2,7 +2,14 @@
 extends RefCounted
 
 # 移動の2音は従来のゲインを使う。原音RMSから決めた攻撃と回復の音量は維持する。
-const SFX_VOLUME_DB := {"ring_rotate1":-18.0,"ring_rotate2":-18.0,"attack":-15.0,"heal":-8.0,"defeated":-18.0}
+const SFX_VOLUME_DB := {"ring_rotate1":-18.0,"ring_rotate2":-18.0,"attack":-15.0,"heal":-8.0,"defeated":-18.0,"button":-30.0}
+
+# UIの成立だけを伝える短い単音。原音ファイルは追加せず、両端を滑らかに0へ落とす。
+const SFX_BUTTON_SECONDS := 0.032
+const SFX_BUTTON_FREQUENCY := 880.0
+const SFX_BUTTON_ATTACK_SECONDS := 0.003
+const SFX_BUTTON_RELEASE_SECONDS := 0.012
+const SFX_BUTTON_SAMPLE_RATE := 44100
 
 # 攻撃原音の立ち上がり約132msに続ける。冒頭を保ち、余韻だけを滑らかに消す。
 const SFX_DEFEAT_DELAY_SECONDS := 0.24

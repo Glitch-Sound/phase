@@ -138,7 +138,7 @@ var cpu_memory: Array=[]
 var followed_turn: Array=[]
 
 func _ready() -> void:
-	sfx=SFX.new();add_child(sfx)
+	sfx=SFX.new();add_child(sfx);sfx.bind_buttons(self)
 	get_window().focus_exited.connect(_window_focus_exited)
 	get_window().focus_entered.connect(_window_focus_entered)
 	get_window().mouse_exited.connect(_timeline_mouse_exited)
