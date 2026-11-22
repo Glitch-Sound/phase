@@ -196,7 +196,8 @@ const UI_FOCUS_LINE := 2
 # 右情報を盤面から56px離し、識別と行動判断に必要な内容へ絞る。
 # 作戦の一行目的を上に置き、MOVE以降と下部操作はそのままに保つ。
 const BATTLE_OPERATION_TITLE := Rect2(1440,55,400,28)
-const BATTLE_OPERATION_PURPOSE := Rect2(1440,88,400,28)
+# 目的を作戦名へ寄せ、固定したCLASSとの間にグループ外の余白を作る。
+const BATTLE_OPERATION_PURPOSE := Rect2(1440,75,400,28)
 const BATTLE_OPERATION_FONT := 17
 const BATTLE_OPERATION_PURPOSE_FONT := 15
 const BATTLE_INFO_CLASS := Vector2(1440,156)
