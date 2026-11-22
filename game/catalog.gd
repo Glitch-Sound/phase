@@ -144,8 +144,8 @@ static func unit(id: String, camp: String, pos: Vector2i, build: Dictionary,disp
 ## ステージ定義を返す。戻り値は目標と説明を持つ2件の独立した辞書。
 static func stages() -> Array:
 	var result=[
-		{"name":"01 / INTERFERENCE","type":"ELIMINATE","brief":"ELIMINATE ALL ENEMY UNITS: A B C","hint":""},
-		{"name":"02 / SEVERANCE","type":"TARGET","brief":"DEFEAT A / KEEP 01 ALIVE","hint":"Lose if 01 falls. 02 and 03 can screen the guards."},
+		{"name":"01 / INTERFERENCE","type":"ELIMINATE","summary":"Defeat every enemy.","brief":"ELIMINATE ALL ENEMY UNITS: A B C","hint":""},
+		{"name":"02 / SEVERANCE","type":"TARGET","summary":"Keep 01 alive; defeat A.","brief":"DEFEAT A / KEEP 01 ALIVE","hint":"Lose if 01 falls. 02 and 03 can screen the guards."},
 	]
 	for stage in result:
 		stage.spawns=[Vector2i(3,4),Vector2i(3,6),Vector2i(3,2),Vector2i(6,4),Vector2i(6,6),Vector2i(6,2)]

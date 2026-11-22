@@ -11,6 +11,9 @@ func _run() -> void:
 	await process_frame
 	game._start_battle()
 	await _redraw(game)
+	_check(game.hud.find_children("*","Label",true,false).filter(func(label):return label.text=="01 / INTERFERENCE" and label.is_visible_in_tree()).size()==1,"battle keeps its selected OPERATION above the unit information")
+	var objectives=game.hud.find_children("*","Control",true,false).filter(func(n):return n.get_script()!=null and n.get_script().resource_path=="res://ui/unit_reference_text.gd")
+	_check(objectives.size()==1 and objectives[0].is_visible_in_tree() and objectives[0].source_text=="Defeat every enemy.","battle objective is a short persistent one-line description")
 	_check(game.info_text==["CLASS: VIRSL","STANDARD","ARMS-1414141414","GEAR-1414141414","MOVE %d" % game.T.BASE_MOVE,"Move up to %d cells per turn." % game.T.BASE_MOVE,"DAMAGE / ADJACENT","Damage one adjacent enemy.","HEAL / ADJACENT","Heal one adjacent wounded ally."],"exact default right information: "+str(game.info_text))
 	_check(game.info_bars.is_empty(),"no allocation bars remain")
 	_check(game.info_rings.size()==1 and game.info_rings[0].center==game.T.BATTLE_INFO_RING and game.info_rings[0].unit==game.battle.units[0],"keep current selected ring at spaced position")
@@ -115,7 +118,7 @@ func _test_menu(game) -> void:
 	await process_frame
 	var labels=["HELP","SETTINGS","RESTART","QUIT"]
 	var methods=["_help","_settings","_restart","_quit"]
-	var buttons=game.hud.get_children().filter(func(button):return button.text in labels)
+	var buttons=game.hud.get_children().filter(func(button):return button is Button and button.text in labels)
 	_check(buttons.size()==4,"four system operations")
 	var board=Rect2(game.T.BATTLE_BOARD_ORIGIN,Vector2.ONE*10*game.T.BATTLE_CELL)
 	var previous=[]
@@ -139,7 +142,7 @@ func _test_menu(game) -> void:
 			game.battle.units[2].pos=Vector2i(0,1)
 		game._hud()
 		await process_frame
-		var context=game.hud.get_children().filter(func(b):return b.text in ["BACK","WAIT"])
+		var context=game.hud.get_children().filter(func(b):return b is Button and b.text in ["BACK","WAIT"])
 		_check(context.size()==1,"context operation retained "+state)
 		if context.size()==1:
 			_check(previous.all(func(rect):return not rect.intersects(context[0].get_rect())) and not context[0].get_rect().intersects(board),"context button separated from menu and map "+state)

@@ -46,7 +46,7 @@ const TEXT = {
 	"%d shown / %d available   |   Up / Down, Home / End": "%d件 / 選択可%d件   |   ↑↓、Home / End",
 	"Up to 32 characters. Blank uses ORBIT. Apply to confirm; Esc cancels.": "32文字まで。空欄はORBIT。APPLYで確定、Escで取消。",
 	"%s / crest and bright HP": "%s / 紋章とHPの色",
-	"Up to 32 characters. Blank uses the slot name. Enter / Tab confirms; Esc cancels this edit.": "32文字まで。空欄は既定名。Enter / Tabで確定、Escで編集を取消。",
+	"Up to 32 characters. Blank uses the default unit name. Enter / Tab confirms; Esc cancels this edit.": "32文字まで。空欄は既定名。Enter / Tabで確定、Escで編集を取消。",
 	"32 characters / blank uses a default": "32文字まで / 空欄は既定名",
 	"Choose %s": "%sの候補を選択",
 	"Choose color / %s": "色の選択 / %s",
@@ -169,4 +169,6 @@ const TEXT = {
 	"Could not save display settings.": "表示設定を保存できない",
 	"Could not back up display settings.": "表示設定を退避できない",
 	"Could not replace display settings.": "表示設定を置き換えられない",
+	"Defeat every enemy.": "敵ユニットの全滅",
+	"Keep 01 alive; defeat A.": "01 を守り、A を撃破",
 }

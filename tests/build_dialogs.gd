@@ -29,6 +29,7 @@ func _run() -> void:
 		await _mutation_selection()
 		await _presentation()
 		await _operation_symbols()
+		await _operation_renames()
 		await _layout_alignment()
 	game.queue_free()
 	await process_frame
@@ -96,7 +97,7 @@ func _presentation() -> void:
 		_check(is_equal_approx(style.content_margin_left,style.content_margin_right) and absf(2*style.content_margin_left+content_width-start.size.x)<1.0,"START icon and text share a centered content area: "+state)
 	var cpu=toggles.filter(func(c):return c.text=="ENEMY CPU")[0]
 	var unlock=toggles.filter(func(c):return c.text=="UNLOCK ALL")[0]
-	var unit_end=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="SLOT 3")[0].get_global_rect().end.x
+	var unit_end=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="UNIT 3")[0].get_global_rect().end.x
 	var group_gap=cpu.global_position.x-unlock.get_global_rect().end.x
 	_check(group_gap>0 and unlock.global_position.x-unit_end>group_gap and is_equal_approx(cpu.get_global_rect().end.x,start.get_global_rect().end.x),"right-aligned toggles form a closer group than the unit selection gap")
 	var cpu_label_left=cpu.get_global_rect().end.x-cpu.get_theme_stylebox("normal").content_margin_right-cpu.get_theme_icon("unchecked").get_width()-cpu.get_theme_constant("h_separation")-cpu.get_theme_font("font").get_string_size(cpu.text,HORIZONTAL_ALIGNMENT_LEFT,-1,cpu.get_theme_font_size("font_size")).x
@@ -166,10 +167,10 @@ func _class_selection() -> void:
 func _slot_switch() -> void:
 	var original=game.collection.builds.duplicate(true)
 	for index in [0,1,2,0]:
-		var button=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="SLOT "+str(index+1))[0]
+		var button=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="UNIT "+str(index+1))[0]
 		button.pressed.emit();await process_frame;await process_frame
-		var selected=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text.begins_with("SLOT ") and b.get_theme_stylebox("normal").get_border_width(SIDE_BOTTOM)>0)
-		_check(game.edit_unit==index and selected.size()==1 and selected[0].text=="SLOT "+str(index+1) and root.gui_get_focus_owner()==selected[0],"SLOT selection, focus and editing agree: "+str(index))
+		var selected=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text.begins_with("UNIT ") and b.get_theme_stylebox("normal").get_border_width(SIDE_BOTTOM)>0)
+		_check(game.edit_unit==index and selected.size()==1 and selected[0].text=="UNIT "+str(index+1) and root.gui_get_focus_owner()==selected[0],"UNIT selection, focus and editing agree: "+str(index))
 		game.core_controls[0].value=[25,35,45][index]
 	_check(game.collection.builds.map(func(b):return int(b.core[0]))==[25,35,45],"each visible slot edits its own CORE")
 	var path="res://artifacts/runtime/slot-roundtrip-"+str(Time.get_ticks_usec())+".json";var previous=game.save_path;game.save_path=path
@@ -229,6 +230,30 @@ func _operation_symbols() -> void:
 			var symbols=d.operation_symbols()
 			game.operation_icons=[];d.preview_area.queue_redraw();await process_frame;await process_frame
 			_check(game.operation_icons.map(func(row):return row.unit.id)==["01","02","03","A","B","C"] and game.operation_icons.all(func(row):return row.profile==game._assembly_profile(row.unit.camp)) and symbols.all(func(row):return row.unit==game._reference_unit(row.unit.id)),"diagram uses the actual six unit shapes and camps: "+id)
+			var legend=Rect2(d.preview_area.position+game.T.OPERATION_LEGEND-Vector2(0,game.mono.get_ascent(13)),game.mono.get_string_size("START AREAS",HORIZONTAL_ALIGNMENT_LEFT,-1,13))
+			_check(not legend.intersects(d.candidate_name.get_rect()) and d.objective_description.position.y>legend.end.y,"operation title, diagram caption and explanation have separate vertical space: "+id)
 			var description=game.C.stages()[int(id)].brief
 			_check(description==("ELIMINATE ALL ENEMY UNITS: A B C" if id=="0" else "DEFEAT A / KEEP 01 ALIVE"),"objective symbols have unambiguous all-enemy or protected-role meaning: "+id)
 	d.cancel();await process_frame
+
+## REQ-042-S04
+func _operation_renames() -> void:
+	var names=game.collection.unit_names.duplicate()
+	game.edit_unit=0;game._build();game._open_build_choice("operation");await process_frame
+	game.build_dialog.select_candidate("1");game.build_dialog.confirm();await process_frame
+	var victory=game.battle.stage.victory.duplicate(true);var defeat=game.battle.stage.defeat.duplicate(true)
+	for row in [["Orion","Orion"],["澄","澄"],["Vesper","Vesper"],["","Kestrel"]]:
+		var field=game.name_edit;field.focus_entered.emit();field.text=row[0];field.text_changed.emit(row[0]);field.text_submitted.emit(row[0]);await process_frame
+		var views=game.overlay.find_children("*","Control",true,false).filter(func(n):return n.get_script()!=null and n.get_script().resource_path=="res://ui/unit_reference_text.gd")
+		var protected_units=[]
+		for view in views:
+			protected_units.append_array(view.parts.filter(func(part):return part.has("unit") and part.unit.id=="01").map(func(part):return part.unit.display_name))
+		_check(not protected_units.is_empty() and protected_units.all(func(value):return value==row[1]),"already visible BUILD objective follows renamed target: "+row[0])
+		game._open_build_choice("operation");await process_frame
+		_check(game.build_dialog.operation_symbols().filter(func(symbol):return symbol.unit.id=="01")[0].unit.display_name==row[1],"reopened diagram follows the same target")
+		game.build_dialog.cancel();await process_frame;game._start_battle()
+		_check(game.battle.units[0].display_name==row[1] and game.battle.stage.victory==victory and game.battle.stage.defeat==defeat,"battle and unchanged roles follow the same target")
+		game._restart();await process_frame
+	game.edit_unit=1;game._build();game.name_edit.text="Lantern";game.name_edit.text_changed.emit("Lantern");await process_frame
+	_check(game._reference_unit("01").display_name=="Kestrel" and game.battle.stage.victory==victory and game.battle.stage.defeat==defeat,"renaming a non-target does not change the protected role")
+	game.collection.unit_names=names;game.edit_unit=0;game._build();await process_frame

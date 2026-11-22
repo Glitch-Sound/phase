@@ -29,7 +29,7 @@ func _build_inventory() -> void:
 	var buttons=panel.find_children("*","Button",true,false).filter(func(c):return not c.has_meta("build_choice")).map(func(c):return c.text)
 	_check(options.size()==9 and spins.size()==5,"class, two equipment, two mutation, three skills and stage remain editable")
 	buttons.sort()
-	var expected_buttons=["ORBIT","ENEMY CPU","HELP","LOAD","QUIT","SAVE","SETTINGS","START","SLOT 1","SLOT 2","SLOT 3"]
+	var expected_buttons=["ORBIT","ENEMY CPU","HELP","LOAD","QUIT","SAVE","SETTINGS","START","UNIT 1","UNIT 2","UNIT 3"]
 	if OS.is_debug_build():expected_buttons.append("UNLOCK ALL")
 	expected_buttons.sort()
 	_check(buttons==expected_buttons,"complete exact BUILD operation set includes CPU and the debug-only choice")
@@ -119,7 +119,7 @@ func _surfaces() -> void:
 	await process_frame
 	_check_surface(game.overlay,"BUILD")
 	var panel=game.overlay.get_child(1)
-	var selected=panel.find_children("*","Button",true,false).filter(func(b):return b.text=="SLOT 1")[0]
+	var selected=panel.find_children("*","Button",true,false).filter(func(b):return b.text=="UNIT 1")[0]
 	var style=selected.get_theme_stylebox("normal")
 	_check(style.border_width_bottom>0 and style.border_width_left==0 and style.border_width_right==0 and style.border_width_top==0,"selected unit uses an underline, never an enclosing frame")
 	game._help()

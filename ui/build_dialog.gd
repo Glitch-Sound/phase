@@ -70,10 +70,12 @@ func configure(owner_ui: Control,data: RefCounted,index: int,selection_kind: Str
 	counter=host._label(self,"",Rect2(36,710,600,24),14,host.MUTED)
 	preview_area=Control.new()
 	preview_area.position=Vector2(672,top-4);preview_area.size=Vector2(572,574)
+	if kind=="operation":preview_area.position.y=T.OPERATION_PREVIEW_TOP;preview_area.size.y=T.OPERATION_PREVIEW_HEIGHT
 	preview_area.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	preview_area.draw.connect(_draw_preview)
 	add_child(preview_area)
 	candidate_name=host._label(self,"",Rect2(684,top+0 if kind=="skill" else top+264,548,32),18,host.WHITE)
+	if kind=="operation":candidate_name.position.y=top
 	candidate_caption=host._label(self,"",Rect2(684,top+298,548,24),T.LAYOUT_STANDARD_FONT,host.MUTED)
 	description=host._wrapped_label(self,"",Rect2(684,top+48 if kind=="skill" else top+330,548,102),17,host.MUTED)
 	host._button(self,"CANCEL",Rect2(36,752,260,44),cancel,"back")
@@ -208,7 +210,7 @@ func _refresh_preview() -> void:
 	if is_instance_valid(objective_description):remove_child(objective_description);objective_description.queue_free()
 	if kind=="operation":
 		host._set_prose(description,"")
-		objective_description=host._objective_label(self,row.description,Rect2(684,T.CHOICE_COMPACT_TOP+330,548,102),17,host.MUTED)
+		objective_description=host._objective_label(self,row.description,T.OPERATION_DESCRIPTION_RECT,17,host.MUTED)
 	apply_button.disabled=not row.selectable
 	# 省いた領域を再描画した時も、スクロール後の確定と取消を確実に更新する。
 	if kind in ["class_name","arms_mutation","gear_mutation","skill","operation"]:
@@ -275,4 +277,4 @@ func _draw_operation() -> void:
 	for symbol in operation_symbols():
 		# 説明文のunit_reference_textと同じ紋章と所属色で役割を対応させる。
 		host._reference_emblem(preview_area,origin+symbol.point*cell,10,symbol.unit)
-	preview_area.draw_string(host.mono,Vector2(162,272),"START AREAS",HORIZONTAL_ALIGNMENT_LEFT,-1,13,host.MUTED)
+	preview_area.draw_string(host.mono,T.OPERATION_LEGEND,"START AREAS",HORIZONTAL_ALIGNMENT_LEFT,-1,13,host.MUTED)

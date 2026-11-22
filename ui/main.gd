@@ -912,6 +912,9 @@ func _hud() -> void:
 	hud.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	hud.visible=not build_open
 	add_child(hud)
+	if not build_open:
+		_label(hud,battle.stage.name,T.BATTLE_OPERATION_TITLE,T.BATTLE_OPERATION_FONT,WHITE)
+		_objective_label(hud,battle.stage.summary,T.BATTLE_OPERATION_PURPOSE,T.BATTLE_OPERATION_PURPOSE_FONT,MUTED)
 	var rows=[["HELP",1218,_help],["SETTINGS",1346,_settings],["RESTART",1492,_restart],["QUIT",1640,_quit]]
 	for i in range(rows.size()):
 		var row=rows[i]
@@ -1025,7 +1028,7 @@ func _build() -> void:
 	var right=T.BUILD_COLUMNS[2]
 	_label(panel,"BUILD",Rect2(left,20,200,45),32,WHITE)
 	for i in range(collection.builds.size()):
-		var slot_button=_button(panel,"SLOT %d" % (i+1),Rect2(210+i*110,22,100,43),func():edit_unit=i;_build(),"",i==edit_unit)
+		var slot_button=_button(panel,"UNIT %d" % (i+1),Rect2(210+i*110,22,100,43),func():edit_unit=i;_build(),"",i==edit_unit)
 		if i==edit_unit:overlay.set_meta("initial_focus",weakref(slot_button))
 	_toggle(panel,"ENEMY CPU",T.BUILD_CPU_TOGGLE_RECT,cpu_enabled,func(value):cpu_enabled=value;_build())
 	if debug_session.available():
@@ -1040,7 +1043,7 @@ func _build() -> void:
 	name_edit=LineEdit.new();name_edit.position=Vector2(left+70,132);name_edit.size=Vector2(330,40)
 	name_edit.placeholder_text=I.PLAYER_NAMES[edit_unit];name_edit.text=collection.unit_names[edit_unit]
 	name_edit.add_theme_font_size_override("font_size",20)
-	_set_prose(name_edit,"Up to 32 characters. Blank uses the slot name. Enter / Tab confirms; Esc cancels this edit.","tooltip_text")
+	_set_prose(name_edit,"Up to 32 characters. Blank uses the default unit name. Enter / Tab confirms; Esc cancels this edit.","tooltip_text")
 	panel.add_child(name_edit)
 	name_hint=_label(panel,"",Rect2(left,178,400,20),12,MUTED)
 	name_before_edit=collection.unit_names[edit_unit]
@@ -1260,6 +1263,7 @@ func _refresh_build() -> void:
 	queue_redraw()
 	if is_instance_valid(build_preview):
 		build_preview.queue_redraw()
+	if is_instance_valid(overlay):_refresh_explanations(overlay)
 	for view in equipment_views.values():
 		if is_instance_valid(view):
 			view.queue_redraw()
@@ -1713,6 +1717,9 @@ func _unit_action_heading(panel: Control,text: String,u: Dictionary) -> void:
 	_label(panel,text,Rect2(70,16,325,32),18,WHITE)
 
 func _reference_unit(id: String) -> Dictionary:
+	if not build_open:
+		for unit in battle.units:
+			if unit.id==id:return unit
 	var camp="PLAYER" if id.begins_with("0") else "ENEMY"
 	var index=I.PLAYER_IDS.find(id) if camp=="PLAYER" else I.ENEMY_IDS.find(id)
 	return C.unit(id,camp,Vector2i.ZERO,collection.builds[index] if camp=="PLAYER" else C.default_build(),collection.unit_names[index] if camp=="PLAYER" else "")

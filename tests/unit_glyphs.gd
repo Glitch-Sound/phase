@@ -81,7 +81,7 @@ func _test_screens() -> void:
 	root.add_child(game)
 	await process_frame
 	var buttons=game.overlay.find_children("*","Button",true,false).map(func(b):return b.text)
-	_check(buttons.has("SLOT 1") and buttons.has("SLOT 2") and not buttons.has("UNIT 01"),"BUILD presents unpadded unit names")
+	_check(buttons.has("UNIT 1") and buttons.has("UNIT 2") and not buttons.has("UNIT 01"),"BUILD presents unpadded unit names")
 	game.collection.stage_index=1
 	game._build()
 	await process_frame

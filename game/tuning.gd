@@ -194,15 +194,20 @@ const BUILD_EQUIPMENT_ICON := Rect2(0,-1,20,20)
 const UI_FIELD_LINE := 1
 const UI_FOCUS_LINE := 2
 # 右情報を盤面から56px離し、識別と行動判断に必要な内容へ絞る。
-const BATTLE_INFO_CLASS := Vector2(1440,96)
-const BATTLE_INFO_RING := Vector2(1640,201)
+# 作戦の一行目的を上に置き、MOVE以降と下部操作はそのままに保つ。
+const BATTLE_OPERATION_TITLE := Rect2(1440,55,400,28)
+const BATTLE_OPERATION_PURPOSE := Rect2(1440,88,400,28)
+const BATTLE_OPERATION_FONT := 17
+const BATTLE_OPERATION_PURPOSE_FONT := 15
+const BATTLE_INFO_CLASS := Vector2(1440,156)
+const BATTLE_INFO_RING := Vector2(1640,255)
 const BATTLE_INFO_MOVE := Vector2(1440,477)
 const BATTLE_INFO_SKILLS := Vector2(1440,563)
 # 説明は低い不透明度ではなく既存MUTED色で読みやすさを保つ。
 const BATTLE_INFO_DESCRIPTION_OFFSET := Vector2(0,24)
 const BATTLE_INFO_DESCRIPTION_FONT := 15
 # 背景と枠を持たない種別記号と名称。最長の突然変異名でも省略しない。
-const BATTLE_EQUIPMENT_ICON := Rect2(1440,334,20,20)
+const BATTLE_EQUIPMENT_ICON := Rect2(1440,354,20,20)
 const BATTLE_EQUIPMENT_STEP := 56.0
 const BATTLE_EQUIPMENT_NAME_GAP := 12.0
 const BATTLE_EQUIPMENT_BASELINE := 16.0
@@ -280,9 +285,9 @@ const OWNER_MARK_RADIUS := 6.0
 
 # 同じ操作行を分け、文字とスイッチの余白を確保して言語と配色の配置を維持する。
 const SETTINGS_SE_CHOICE := Rect2(36,205,162,46)
-# 配色は説明行と分離し、DISPLAYと同じ見出しの階層に揃える。
-const SETTINGS_COLOR_SHIFT := -19.0
-const SETTINGS_COLOR_HEADER_Y := 270.0
+# 配色を前の操作行から離し、見出し以下の間隔は維持する。
+const SETTINGS_COLOR_SHIFT := -3.0
+const SETTINGS_COLOR_HEADER_Y := 289.0+SETTINGS_COLOR_SHIFT
 const SETTINGS_HEADING_FONT := 14
 # Languageは表示操作の行へ収める。
 const SETTINGS_LANGUAGE_LABEL := Rect2(524,214,120,26)
@@ -308,6 +313,11 @@ const OBJECTIVE_REF_CREST_SCALE := 0.65
 # 指定された補助文の削除で生まれた余白を、同じグループ内で詰める。
 const BUILD_CORE_HEADER_Y := 220.0
 const BUILD_PREVIEW_Y := 428.0
+# OPERATIONは図の注記とタイトルを同じ行に置かず、説明まで一段ずつ分ける。
+const OPERATION_PREVIEW_TOP := 136.0
+const OPERATION_PREVIEW_HEIGHT := 300.0
+const OPERATION_DESCRIPTION_RECT := Rect2(684,464,548,128)
+const OPERATION_LEGEND := Vector2(162,272)
 const CHOICE_COMPACT_TOP := 88.0
 const CLASS_SWATCH_ORIGIN := Vector2(344,19)
 const CLASS_SWATCH_SIZE := 14.0
