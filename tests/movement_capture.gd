@@ -43,20 +43,17 @@ func _run() -> void:
 		await _settle()
 		_check(not game.drawn_route_segments.is_empty(),"route planning visibly retains the line")
 		_shot("planning-"+str(dimensions.x))
-		_cell(Vector2i(4,5),true);await _settle()
+		_cell(Vector2i(4,5),true);await create_timer(game.T.ACTION_INPUT_GUARD_SECONDS).timeout;await _settle()
 		_check(game.planning.active() and game.battle.units[0]==source and not game.movement.active and not game.drawn_route_segments.is_empty(),"scaled planning keeps the original unit "+str(dimensions))
 		if not game.planning.active():
 			game._restart();game._toggle_debug(false);quit(1);return
 		var back=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="BACK")[0]
 		_click(back.get_global_rect().get_center());await _settle()
 		_check(not game.planning.active() and game.battle.units[0]==source and game.battle.path==[Vector2i(4,4),Vector2i(4,5)] and game.battle.history.is_empty(),"scaled BACK changes only the plan")
-		_cell(Vector2i(4,5),true);await _settle()
+		_cell(Vector2i(4,5),true);await create_timer(game.T.ACTION_INPUT_GUARD_SECONDS).timeout;await _settle()
 		var wait=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="WAIT")[0]
 		_click(wait.get_global_rect().get_center());await _settle()
-		_check(game.planning.phase=="READY" and game.battle.units[0]==source and game.battle.history.is_empty() and not game.drawn_route_segments.is_empty(),"WAIT selection still does not commit")
-		var confirm=game.overlay.find_children("*","Button",true,false).filter(func(b):return b.text=="CONFIRM")[0]
-		_click(confirm.get_global_rect().get_center())
-		_check(game.movement.active and not is_instance_valid(game.overlay),"scaled CONFIRM begins travel "+str(dimensions))
+		_check(game.movement.active and not is_instance_valid(game.overlay),"scaled WAIT selection begins travel after the closed frame "+str(dimensions))
 		var history=game.battle.history.duplicate()
 		_cell(game.battle.units[3].pos)
 		var key=InputEventKey.new();key.keycode=KEY_ESCAPE;key.pressed=true;root.push_input(key,false)
@@ -65,7 +62,7 @@ func _run() -> void:
 		_check(not is_instance_valid(game.overlay) and game.battle.turn==2 and game.battle.history.size()==2,"arrival directly executes chosen WAIT")
 		_check(_same_landing(game.battle.units[0],predicted),"real landing equals planned panels and aura")
 		_shot("landing-"+str(dimensions.x))
-		game._start_battle();_cell(Vector2i(4,4));_cell(Vector2i(4,4),true);game._wait_action();game._confirm_plan()
+		game._start_battle();_cell(Vector2i(4,4));_cell(Vector2i(4,4),true);game._wait_action();await _settle(3)
 		game._restart();await _settle(15)
 		_check(game.build_open and not game.movement.active and game.playback_command.is_empty(),"restart during travel discards old arrival and action")
 	root.size=Vector2i(1920,1080);await _settle()
@@ -134,7 +131,7 @@ func _terminal() -> void:
 	game.collection.stage_index=2;game._start_battle();await _settle()
 	# 移動で終局する境界だけの明示fixture。製品の通常配置と動画には使わない。
 	game.battle.actor=0;game.battle.units[0].pos=Vector2i(8,0);game.battle.units[3].pos=Vector2i.ZERO;game._follow_turn()
-	_cell(Vector2i(9,0));_cell(Vector2i(9,0),true);await _settle();game._confirm_plan()
+	_cell(Vector2i(9,0));_cell(Vector2i(9,0),true);await _settle(3)
 	_check(game.movement.active and game.battle.result=="VICTORY" and not is_instance_valid(game.overlay),"movement terminal waits for landing display")
 	await _observe("terminal-1920")
 	_check(is_instance_valid(game.overlay) and game.result_awarded and game.battle.history.size()==1 and game.battle.turn==1,"landing opens only one terminal result without extra action")

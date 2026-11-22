@@ -39,6 +39,7 @@ func _run() -> void:
 	_check(game.drawn_text.any(func(record):return record.text=="+1"),"new heal chip caps at missing HP")
 	game.battle.back()
 	game._action_dialog()
+	await create_timer(game.T.ACTION_INPUT_GUARD_SECONDS+0.01).timeout
 	await process_frame
 	var buttons=game.overlay.find_children("*","Button",true,false)
 	_check(buttons.any(func(button):return button.text==C.SKILLS[C.DAMAGE_DIAGONAL_TWO].label and not button.disabled) and buttons.any(func(button):return button.text==C.SKILLS[C.HEAL_ORTHOGONAL_TWO].label and not button.disabled),"action menu exposes the equipped new active patterns")

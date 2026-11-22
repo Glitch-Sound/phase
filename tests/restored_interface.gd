@@ -40,7 +40,7 @@ func _run() -> void:
 	game._choose_battle_skill(game.C.DAMAGE)
 	game._clear_overlay()
 	game._cell_input(Vector2i(6,4))
-	game._confirm_plan();game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
+	await process_frame;await process_frame;game._pending_plan_tick();game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
 	_check(game.battle.actor==1 and game.battle.units[2].hp==expected_hp,"real attack applies the current exact model effect once and reaches comparison state")
 	game._cell_input(Vector2i(4,6))
 	game._cell_input(Vector2i(5,6))

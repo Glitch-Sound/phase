@@ -34,14 +34,12 @@ func _manual() -> void:
 	game._choose_battle_skill(game.C.DAMAGE)
 	await _draw_frame()
 	_check(game.planning.phase=="TARGET" and game.battle.units==before and not game.drawn_route_segments.is_empty(),"target planning retains the route while real units stay put")
-	game._cell_input(game.battle.units[3].pos)
-	await _draw_frame()
-	_check(game.planning.phase=="READY" and not game.movement.active and game.battle.history.is_empty() and not game.drawn_route_segments.is_empty(),"final confirmation retains the planned route without committing")
-	game._plan_back();game._plan_back();game._reselect_path()
-	_check(not game.planning.active() and game.battle.units==before and game.battle.path==[Vector2i(4,4)] and game.battle.history.is_empty(),"BACK discards only plans and retains editable route")
+	game._plan_back();game._reselect_path()
+	_check(not game.planning.active() and game.battle.units==before and game.battle.path==[Vector2i(4,4)] and game.battle.history.is_empty(),"BACK before a target discards only plans and retains the editable route")
 	game._cell_input(Vector2i(4,4),true);game._choose_battle_skill(game.C.DAMAGE);game._cell_input(game.battle.units[3].pos)
 	var hp=game.battle.units[3].hp
-	game._confirm_plan();game._confirm_plan()
+	_check(game.plan_pending and not game.movement.active and game.battle.history.is_empty() and not is_instance_valid(game.overlay),"target selection closes the dialog before any execution")
+	game._confirm_plan();game._confirm_plan();await _present()
 	_check(game.movement.active and game.battle.history.size()==1 and game.battle.units[3].hp==hp and not is_instance_valid(game.overlay),"final confirmation commits once, starts travel and delays only the action")
 	game._cell_input(game.battle.units[3].pos)
 	var key=InputEventKey.new();key.keycode=KEY_ESCAPE;key.pressed=true;root.push_input(key,false)
@@ -71,11 +69,11 @@ func _manual() -> void:
 	_check(game.battle.history.size()==2,"no queued final confirmation can replay the action")
 	game._start_battle();_commit();game._wait_action();game._confirm_plan();game._restart();game._movement_tick(100)
 	_check(game.build_open and not game.movement.active and game.playback_command.is_empty() and not game.planning.active(),"restart discards pending action and arrival")
-	game._start_battle();_commit();game._wait_action();game._confirm_plan();game._movement_tick(game.movement.duration)
+	game._start_battle();_commit();game._wait_action();await _present();game._movement_tick(game.movement.duration)
 	_check(not game.movement.active and game.battle.turn==2,"normal WAIT gains no post-move beat")
 	game._start_battle();_commit();game._wait_action();game._confirm_plan()
 	game.battle.turn+=1;var history=game.battle.history.duplicate()
-	game._movement_tick(100)
+	await _present();game._movement_tick(100)
 	_check(game.playback_command.is_empty() and game.battle.history==history and not game.movement.active,"invalidated owner turn discards the pending action")
 ## REQ-046-S02
 func _cpu() -> void:
@@ -113,7 +111,7 @@ func _clouds() -> void:
 	game.cpu_enabled=false;game._start_battle()
 	game.battle.units[0].skills=[game.C.FIELD_SLOW]
 	game.battle.units[3].skills=[game.C.FIELD_FAST]
-	_commit();game._wait_action();game._confirm_plan()
+	_commit();game._wait_action();await _present()
 	game._movement_tick(game.T.MOVEMENT_CLOUD_OUT_SECONDS/2);await _draw_frame()
 	var own=game.displayed_clouds.filter(func(c):return c.id=="01")[0]
 	var other=game.displayed_clouds.filter(func(c):return c.id=="A")[0]
@@ -127,3 +125,6 @@ func _clouds() -> void:
 func _check(ok: bool,note: String) -> void:
 	checks+=1
 	if not ok:failures+=1;printerr("FAIL: ",note)
+
+func _present() -> void:
+	await process_frame;await process_frame;game._pending_plan_tick()

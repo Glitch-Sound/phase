@@ -232,6 +232,7 @@ func _test_focus_scope(game) -> void:
 	game._cell_input(Vector2i(4,4))
 	game._cell_input(Vector2i(4,4),true)
 	game._movement_tick(game.T.MOVEMENT_MAX_SECONDS)
+	await create_timer(game.T.ACTION_INPUT_GUARD_SECONDS+0.01).timeout
 	await process_frame
 	await _tab_cycle(game,game.overlay,"ACTION")
 	game.battle.mode="RESULT"

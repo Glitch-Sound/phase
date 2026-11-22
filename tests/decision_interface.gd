@@ -12,6 +12,7 @@ func _run() -> void:
 	await process_frame
 	game.set_process(false)
 	await _entry_points()
+	await _direct_selection()
 	await _stationary_wait()
 	_focus()
 	game._restart()
@@ -57,38 +58,64 @@ func _entry_points() -> void:
 		game._reselect_path()
 	_check(before==[game.battle.units,game.battle.history,game.battle.mode],"human cannot invoke reselection on an enemy CPU turn")
 	game.cpu_enabled=false
+## REQ-010-S05、REQ-010-S01、REQ-010-S03
+func _direct_selection() -> void:
+	game._start_battle();game.set_process(false)
+	game.hud.find_children("*","Button",true,false).filter(func(b):return b.text=="WAIT")[0].grab_focus()
+	game._cell_input(Vector2i(4,4));game._cell_input(Vector2i(5,4));game._cell_input(Vector2i(5,4),true)
+	var buttons=game.overlay.find_children("*","Button",true,false)
+	_check(buttons.all(func(b):return b.disabled) and root.gui_get_focus_owner()==null,"new ACTION disables its buttons and releases old HUD focus")
+	_check(not game.has_method("_confirm_dialog"),"battle has no final CONFIRM dialog")
+	if game.get("plan_pending")==null or not game.has_method("_advance_action_gate"):
+		_check(false,"screen owns an explicit frame-gated pending action");game._restart();return
+	Input.action_press("ui_accept");game._advance_action_gate(game.T.ACTION_INPUT_GUARD_SECONDS*2)
+	_check(buttons.all(func(b):return b.disabled),"held accept cannot arm or activate the new ACTION")
+	Input.action_release("ui_accept");game._advance_action_gate(0)
+	_check(not buttons.filter(func(b):return b.text=="WAIT")[0].disabled and buttons.filter(func(b):return b.text=="HEAL / ADJACENT")[0].disabled,"release restores legal buttons and retains invalid targets")
+	var before=game.planning._state(game.battle)
+	game._choose_battle_skill(game.C.DAMAGE);game._cell_input(Vector2i(0,0))
+	_check(game.planning.phase=="TARGET" and game.planning._state(game.battle)==before and not game.plan_pending,"invalid target cannot commit or mutate")
+	game._plan_back();game._reselect_path()
+	_check(game.planning._state(game.battle)==before and not game.planning.active(),"BACK before final target preserves the original route and combat")
+	game._cell_input(Vector2i(5,4),true);game._choose_battle_skill(game.C.DAMAGE);game._cell_input(game.battle.units[3].pos)
+	_check(game.plan_pending and not is_instance_valid(game.overlay) and not game.movement.active and game.battle.history.is_empty(),"target accepts once and hides dialog before any commit or movement")
+	game._confirm_plan();game._cell_input(game.battle.units[3].pos);game._pending_plan_tick()
+	_check(game.battle.history.is_empty(),"repeats and a tick before the closed frame cannot begin execution")
+	game._help();await process_frame;await process_frame;game._pending_plan_tick()
+	_check(game.plan_pending and game.battle.history.is_empty(),"HELP pauses an accepted command before its first movement")
+	game._close_aux();game._pending_plan_tick()
+	_check(game.battle.history.is_empty(),"closing HELP also requires a newly presented bare frame")
+	await _present()
+	_check(game.movement.active and game.battle.history.size()==1,"closed frame starts one planned movement without another dialog")
+	game._movement_tick(game.movement.duration+game.T.MOVEMENT_ATTACK_BEAT_SECONDS);var history=game.battle.history.duplicate();game._confirm_plan();game._pending_plan_tick();game._movement_tick(100)
+	_check(game.battle.history==history and game.battle.turn==2,"one target executes once and never repeats in the next turn")
+	game._start_battle();game.battle.units[0].skills=[game.C.GUARD];game._cell_input(Vector2i(4,4));game._cell_input(Vector2i(4,4),true);game._choose_battle_skill(game.C.GUARD)
+	_check(game.plan_pending and not is_instance_valid(game.overlay),"implicit self target commits from GUARD's action button")
+	await _present();game._movement_tick(game.movement.duration)
+	_check(game.battle.last_effect.kind=="GUARD" and game.battle.turn==2,"implicit target executes after movement")
+	game._start_battle();game._wait_action();game._restart();await _present()
+	_check(game.build_open and not game.plan_pending and not game.movement.active and game.battle.history.is_empty(),"restart invalidates a command before its closed frame")
+func _present() -> void:
+	await process_frame;await process_frame
+	game._pending_plan_tick()
 ## REQ-012-S04
 func _stationary_wait() -> void:
+	if game.get("plan_pending")==null:return
 	for blocked in [false,true]:
 		game._start_battle();game.set_process(false)
-		var b=game.battle
-		b.units[0].pos=Vector2i(4,4)
+		var b=game.battle;b.units[0].pos=Vector2i(4,4)
 		if blocked:
 			for i in range(4):b.units[i+1].pos=Vector2i(4,4)+b.DIRS[i]
 		else:b.path=[Vector2i(5,4)]
-		b.units[0].core_angle=57.0;b.panels[b.units[0].pos]="RESET"
-		game._hud();await process_frame
-		var original=game.planning._state(b)
+		b.units[0].core_angle=57.0;b.panels[b.units[0].pos]="RESET";game._hud();await process_frame
+		var original=game.planning._state(b);var sounds=[];var listener=func(kind):sounds.append(kind)
+		game.sfx.played.connect(listener)
 		var waits=game.hud.find_children("*","Button",true,false).filter(func(button):return button.text=="WAIT")
 		_check(waits.size()==1,"permanent WAIT is available with or without free cells")
-		if waits.size()!=1:continue
-		waits[0].pressed.emit();await process_frame
-		_check(game.planning.phase=="READY" and game.planning.route.is_empty() and game.planning._state(b)==original and game._visible_route().is_empty(),"WAIT goes straight to stationary confirmation without moving or showing the old route")
-		var labels=game.overlay.find_children("*","Label",true,false).map(func(label):return label.text)
-		_check(labels.has("WAIT / NO MOVE"),"stationary summary explicitly identifies no movement")
-		if blocked:
-			var key=InputEventKey.new();key.keycode=KEY_ESCAPE;key.pressed=true;root.push_input(key,false)
-		else:
-			for button in game.overlay.find_children("*","Button",true,false):
-				if button.text=="BACK":button.pressed.emit();break
-		await process_frame
-		_check(not game.planning.active() and game.planning._state(b)==original,"BACK/Esc restores the unchanged original route without another menu")
-		var sounds=[]
-		var listener=func(kind):sounds.append(kind)
-		game.sfx.played.connect(listener)
-		game._wait_action();game._confirm_plan();game._confirm_plan();game._movement_tick(10.0)
-		await process_frame
-		_check(b.turn==original[2]+1 and not game.movement.active and sounds.filter(func(kind):return kind.begins_with("ring_rotate")).is_empty(),"confirmed WAIT ends one turn with no movement animation or movement sound")
+		waits[0].pressed.emit();game._wait_action();game._confirm_plan()
+		_check(game.plan_pending and not is_instance_valid(game.overlay) and b.history.is_empty(),"WAIT accepts once without a final dialog or early action")
+		await _present()
+		_check(b.turn==original[2]+1 and ["pos","hp","core_angle","initial_core_angle","gear_angle","arms_angle"].all(func(k):return b.units[0][k]==original[0][0][k]) and not game.movement.active and sounds.filter(func(kind):return kind.begins_with("ring_rotate")).is_empty(),"stationary WAIT advances once without rings, panels, movement or movement sound")
 		game.sfx.played.disconnect(listener)
 ## REQ-018-S02、REQ-018-S04、REQ-018-S05
 func _focus() -> void:

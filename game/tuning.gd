@@ -313,3 +313,6 @@ const SPAWN_GROUP_SIZE := Vector2i(2,3)
 const SPAWN_X_RANGE := Vector2i(1,2)
 const SPAWN_Y_RANGE := Vector2i(2,5)
 const SPAWN_CAMP_GAP := 3
+
+# ACTIONを開いた押下を持ち越さず、次の意図した操作から受け付ける。
+const ACTION_INPUT_GUARD_SECONDS := 0.12

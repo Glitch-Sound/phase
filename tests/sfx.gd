@@ -206,7 +206,7 @@ func _connections() -> void:
 	game._cell_input(Vector2i(9,9));_check(actual==[],"invalid route does not beep")
 	game._cell_input(Vector2i(4,4));_check(actual==[],"unchanged route click does not beep")
 	await process_frame;await process_frame
-	game._cell_input(Vector2i(5,4));game._cell_input(Vector2i(5,4),true);game._choose_battle_skill(game.C.DAMAGE);game._cell_input(Vector2i(6,4));game._confirm_plan();game._movement_tick(game.T.MOVEMENT_MAX_SECONDS+game.T.MOVEMENT_ATTACK_BEAT_SECONDS)
+	game._cell_input(Vector2i(5,4));game._cell_input(Vector2i(5,4),true);game._choose_battle_skill(game.C.DAMAGE);game._cell_input(Vector2i(6,4));await process_frame;await process_frame;game._pending_plan_tick();game._movement_tick(game.T.MOVEMENT_MAX_SECONDS+game.T.MOVEMENT_ATTACK_BEAT_SECONDS)
 	_check(actual==["ring_rotate1","ring_rotate2","ring_rotate1","ring_rotate2","attack"],"real planned move reaches two steps with four alternating cues then actual damage without selection pips")
 	var after=game.battle.units.duplicate(true);game._feedback();_check(actual.size()==5 and game.battle.units==after,"repeat effect display neither sounds nor changes HP")
 	game._restart();game._start_battle();game.battle.units[1].pos=Vector2i(4,5);game.battle.units[1].hp=game.battle.units[1].max_hp-1

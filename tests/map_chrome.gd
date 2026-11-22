@@ -61,7 +61,8 @@ func _run() -> void:
 			var actor=game.battle.actor
 			if is_instance_valid(action_button):
 				action_button.pressed.emit()
-				if state=="TRAPPED":game._confirm_plan()
+				if state=="TRAPPED":
+					await process_frame;await process_frame;game._pending_plan_tick()
 			await process_frame
 			_check(game.battle.actor!=actor if state=="TRAPPED" else game._decision_battle().mode=="CHOICE" and game.battle.units==units,"required action remains functional: "+state)
 	await _test_help_and_build(game)
@@ -93,7 +94,7 @@ func _test_help_and_build(game) -> void:
 	var content=[]
 	for label in game.auxiliary.find_children("*","Label",true,false):
 		content.append(label.text)
-	_check(content.has("Double-click the destination, pick skill\nand target, then CONFIRM to move and act.\nORTHO = cardinal; DIAGONAL = diagonal;\n1 / 2 = exact cell distance."),"HELP retains destination double-click, target selection, exact range and final confirmation")
+	_check(content.has("Double-click the destination, pick skill\nand target to move and act.\nORTHO = cardinal; DIAGONAL = diagonal;\n1 / 2 = exact cell distance."),"HELP retains destination double-click, target selection, exact range and selection-based execution")
 	game._close_aux()
 	_check(game.battle.path==[Vector2i(4,4)],"HELP keeps pending route")
 	for stage in range(4):

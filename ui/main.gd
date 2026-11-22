@@ -90,6 +90,12 @@ var movement=MOVEMENT.new()
 var convergences: Array=[]
 var planning=TURN_PLAN.new()
 var playback_command: Dictionary={}
+var plan_pending=false
+var plan_presented=false
+var plan_frame=-1
+var pending_projection
+var action_gate_buttons: Array=[]
+var action_gate_elapsed=0.0
 var timeline_hover := -1
 var timeline_hover_event: Dictionary={}
 var timeline_selected_event: Dictionary={}
@@ -140,6 +146,7 @@ var cpu_memory: Array=[]
 var followed_turn: Array=[]
 
 func _ready() -> void:
+	RenderingServer.frame_post_draw.connect(_after_plan_draw)
 	sfx=SFX.new();sfx.enabled=SFX.read_enabled(settings_path+".audio.json");add_child(sfx);sfx.bind_buttons(self)
 	get_window().focus_exited.connect(_window_focus_exited)
 	get_window().focus_entered.connect(_window_focus_entered)
@@ -202,6 +209,8 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if debug_session.active() and not debug_session.available():_toggle_debug(false)
 	debug_notice.visible=collection.temporary
+	_advance_action_gate(delta)
+	_pending_plan_tick()
 	_advance_convergence(delta)
 	_movement_tick(delta)
 	_cpu_tick(delta)
@@ -619,7 +628,7 @@ func _draw_preview() -> void:
 func _input(event: InputEvent) -> void:
 	_follow_turn()
 	if event is InputEventMouseMotion:
-		if movement.active or build_open or not window_focused or is_instance_valid(auxiliary) or is_instance_valid(overlay):
+		if movement.active or plan_pending or build_open or not window_focused or is_instance_valid(auxiliary) or is_instance_valid(overlay):
 			_timeline_mouse_exited()
 		else:
 			timeline_hover_event=TL.hit(_timeline_view(),event.position)
@@ -644,7 +653,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode==KEY_ESCAPE:
 			if is_instance_valid(auxiliary):
 				_close_aux()
-			elif movement.active or _cpu_locked():
+			elif movement.active or plan_pending or _cpu_locked():
 				return
 			elif planning.active():
 				_plan_back()
@@ -656,7 +665,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif battle.mode=="MOVE" and not build_open:
 				battle.path=[]
 		return
-	if movement.active or build_open or is_instance_valid(auxiliary) or is_instance_valid(overlay):
+	if movement.active or plan_pending or build_open or is_instance_valid(auxiliary) or is_instance_valid(overlay):
 		timeline_hover=-1
 		timeline_hover_event={}
 		return
@@ -677,6 +686,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _window_focus_exited() -> void:
 	sfx.suspend()
 	window_focused=false
+	if plan_pending:plan_presented=false;plan_frame=Engine.get_process_frames()
 	timeline_hover=-1
 	timeline_hover_event={}
 	hover_cell=Vector2i(-1,-1)
@@ -692,7 +702,7 @@ func _window_focus_entered() -> void:
 
 func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 	_follow_turn()
-	if movement.active:return
+	if movement.active or plan_pending:return
 	if _cpu_locked():
 		var occupant=battle.at(cell)
 		if occupant>=0:
@@ -704,7 +714,7 @@ func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 	timeline_hover_event={}
 	var index=battle.at(cell)
 	if planning.active():
-		if planning.phase=="TARGET" and planning.select(index):_confirm_dialog()
+		if planning.phase=="TARGET" and planning.select(index):_confirm_plan()
 		elif planning.phase=="TARGET":_notify("Choose a highlighted target. BACK keeps your planned route.")
 		queue_redraw()
 		return
@@ -720,7 +730,7 @@ func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 		elif double_click and not battle.path.is_empty() and cell==battle.path.back():
 			if planning.begin(battle):
 				selected=-1
-				if planning.phase=="READY":_confirm_dialog()
+				if planning.phase=="READY":_confirm_plan()
 				else:_action_dialog()
 		elif battle.path_click(cell):
 			selected=-1
@@ -782,29 +792,44 @@ func _movement_arrived(via_cpu: bool) -> void:
 	else:_hud()
 
 func _confirm_plan() -> void:
-	if movement.active or _cpu_locked() or not planning.active():return
+	if movement.active or plan_pending or _cpu_locked() or not planning.active() or planning.phase!="READY":return
+	plan_pending=true;plan_presented=false;plan_frame=Engine.get_process_frames();pending_projection=planning.projected
+	_clear_overlay();_hud();queue_redraw()
+
+func _after_plan_draw() -> void:
+	if plan_pending and window_focused and not is_instance_valid(auxiliary) and not is_instance_valid(overlay):plan_presented=true
+
+func _pending_plan_tick() -> void:
+	if not plan_pending:return
+	if not window_focused or is_instance_valid(auxiliary):
+		plan_presented=false;plan_frame=Engine.get_process_frames();return
+	# headlessには表示がないため、次の処理フレームを同じ境界の代わりにする。
+	if DisplayServer.get_name()=="headless" and Engine.get_process_frames()>plan_frame:plan_presented=true
+	if not plan_presented or not window_focused or is_instance_valid(auxiliary):return
+	plan_pending=false;plan_presented=false
+	if not planning.active() or planning.projected!=pending_projection or battle.actor<0:
+		pending_projection=null;return
+	pending_projection=null
 	var before=battle.units[battle.actor].duplicate(true)
 	var actor=battle.actor
 	var command=planning.commit(battle)
-	if command.is_empty():return
-	command.actor=actor
-	playback_command=command
+	if command.is_empty():
+		planning.reset();_hud();return
+	command.actor=actor;playback_command=command
 	_begin_movement(before,command.path,false)
 
-func _confirm_dialog() -> void:
-	_clear_overlay();_hud()
-	var panel=_modal(Rect2(700,380,420,220),false,true)
-	_unit_action_heading(panel,"READY",battle.units[battle.actor])
-	var decision=planning.projected
-	var text="MOVE / FINISH" if not decision.result.is_empty() else (("WAIT / NO MOVE" if planning.route.is_empty() else "WAIT") if decision.selected_skill.is_empty() else C.SKILLS[decision.selected_skill].label)
-	if planning.target>=0 and planning.target!=battle.actor:_unit_badge(panel,Vector2(376,76),13,battle.units[planning.target])
-	var summary=_label(panel,_fit_text(text,325,16),Rect2(25,60,325,32),16,MUTED)
-	summary.tooltip_text=text
-	_button(panel,"CONFIRM",Rect2(25,105,370,42),_confirm_plan)
-	_button(panel,"BACK",Rect2(25,158,370,42),_plan_back)
+func _advance_action_gate(delta: float) -> void:
+	if action_gate_buttons.is_empty() or not is_instance_valid(overlay) or not window_focused or is_instance_valid(auxiliary):return
+	if not is_finite(delta) or delta<0:return
+	action_gate_elapsed+=delta
+	if action_gate_elapsed<T.ACTION_INPUT_GUARD_SECONDS or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or Input.is_action_pressed("ui_accept"):return
+	for row in action_gate_buttons:
+		if is_instance_valid(row.button):row.button.disabled=row.disabled
+	action_gate_buttons=[]
+	_focus_modal(overlay)
 
 func _plan_back() -> void:
-	if movement.active or _cpu_locked() or not planning.active():return
+	if movement.active or plan_pending or _cpu_locked() or not planning.active():return
 	planning.back()
 	_clear_overlay()
 	if planning.active() and planning.phase=="CHOICE":_action_dialog()
@@ -909,7 +934,7 @@ func _hud() -> void:
 	if cpu_enabled and not build_open and battle.result.is_empty():
 		_button(hud,"SPEED 4x" if cpu_fast else "SPEED 1x",Rect2(T.CPU_CONTROL_ORIGIN+Vector2(0,38),Vector2(190,40)),func():cpu_fast=not cpu_fast;_hud(),"fast_forward")
 		_button(hud,"RESUME" if cpu_paused else "PAUSE",Rect2(T.CPU_CONTROL_ORIGIN+Vector2(210,38),Vector2(190,40)),func():cpu_paused=not cpu_paused;_hud(),"play" if cpu_paused else "wait")
-	if movement.active or _cpu_locked():
+	if movement.active or plan_pending or _cpu_locked():
 		return
 	if planning.active():
 		if planning.phase=="TARGET":_button(hud,"BACK",T.BATTLE_CONTEXT_BUTTON,_plan_back)
@@ -918,10 +943,10 @@ func _hud() -> void:
 		_button(hud,"BACK",T.BATTLE_CONTEXT_BUTTON,func():battle.back();_action_dialog())
 	elif not build_open and battle.mode=="MOVE":
 		var wait_button=_button(hud,"WAIT",T.BATTLE_CONTEXT_BUTTON,_wait_action)
-		_set_prose(wait_button,"Stay here. CONFIRM ends this turn.","tooltip_text")
+		_set_prose(wait_button,"Stay here. End this turn without moving.","tooltip_text")
 
 func _action_dialog() -> void:
-	if movement.active:return
+	if movement.active or plan_pending:return
 	_clear_overlay()
 	_hud()
 	var active=[]
@@ -943,13 +968,17 @@ func _action_dialog() -> void:
 		button.disabled=not available
 		_set_prose(button,"No valid target in this pattern." if not available else C.SKILLS[skill].description,"tooltip_text")
 	_button(panel,"BACK",Rect2(25,126+active.size()*63,370,48),_reselect_path)
+	action_gate_elapsed=0.0
+	for button in panel.find_children("*","Button",true,false):
+		action_gate_buttons.append({"button":button,"disabled":button.disabled});button.disabled=true
+	get_viewport().gui_release_focus()
 
 func _choose_battle_skill(skill: String) -> void:
-	if movement.active or _cpu_locked():return
+	if movement.active or plan_pending or _cpu_locked():return
 	if planning.active():
 		if not planning.choose(skill):return
 		_clear_overlay()
-		if planning.phase=="READY":_confirm_dialog()
+		if planning.phase=="READY":_confirm_plan()
 		else:_hud()
 		queue_redraw()
 		return
@@ -958,17 +987,17 @@ func _choose_battle_skill(skill: String) -> void:
 		_hud()
 
 func _wait_action() -> void:
-	if movement.active or _cpu_locked():return
+	if movement.active or plan_pending or _cpu_locked():return
 	if planning.active():
-		if planning.wait():_confirm_dialog()
+		if planning.wait():_confirm_plan()
 		return
 	if battle.mode=="MOVE":
-		if planning.begin(battle,true) and planning.wait():_confirm_dialog()
+		if planning.begin(battle,true) and planning.wait():_confirm_plan()
 		return
 	if battle.wait_turn():_after_action()
 
 func _reselect_path() -> void:
-	if movement.active or _cpu_locked():return
+	if movement.active or plan_pending or _cpu_locked():return
 	if planning.active():planning.reset()
 	elif not battle.reselect_path():
 		return
@@ -981,6 +1010,7 @@ func _reselect_path() -> void:
 	queue_redraw()
 
 func _build() -> void:
+	plan_pending=false;plan_presented=false;pending_projection=null
 	sfx.reset_battle()
 	convergences=[]
 	planning.reset();playback_command={}
@@ -1312,6 +1342,7 @@ func _focus_build_choice(kind: String,slot: int) -> void:
 			return
 
 func _start_battle() -> void:
+	plan_pending=false;plan_presented=false;pending_projection=null
 	sfx.reset_battle()
 	convergences=[]
 	planning.reset();playback_command={}
@@ -1340,6 +1371,7 @@ func _start_battle() -> void:
 	_notify("Choose a route, or WAIT without moving.")
 
 func _result() -> void:
+	plan_pending=false;plan_presented=false;pending_projection=null
 	planning.reset();playback_command={}
 	movement.reset()
 	if battle.mode!="RESULT" or battle.result.is_empty():
@@ -1378,7 +1410,7 @@ func _help() -> void:
 	var steps=[
 		["move","01 / ROUTE","Click empty cells up, down, left or right.\nClick a route cell to undo later steps."],
 		["target","02 / ALIGN","Moving turns rings, changing damage,\nhealing and resistance.\nPREVIEW shows the landing state."],
-		["check","03 / ACT","Double-click the destination, pick skill\nand target, then CONFIRM to move and act.\nORTHO = cardinal; DIAGONAL = diagonal;\n1 / 2 = exact cell distance."]
+		["check","03 / ACT","Double-click the destination, pick skill\nand target to move and act.\nORTHO = cardinal; DIAGONAL = diagonal;\n1 / 2 = exact cell distance."]
 	]
 	for i in range(3):
 		var x=36+i*354
@@ -1387,7 +1419,7 @@ func _help() -> void:
 		_prose_label(panel,steps[i][2],Rect2(x,201+T.HELP_BODY_VERTICAL_OFFSET,340,96 if i==2 else 76),16 if i==2 else 18,MUTED)
 	_separator(panel,Rect2(36,300,1048,1))
 	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
-	_prose_label(panel,"WAIT stays put. Move first to use skills.\nBefore CONFIRM, BACK / Esc steps back to revise the route.",Rect2(36,377+T.HELP_BODY_VERTICAL_OFFSET,500,174),18,WHITE)
+	_prose_label(panel,"WAIT stays put. Move first to use skills.\nBefore selecting, BACK / Esc steps back to revise the route.",Rect2(36,377+T.HELP_BODY_VERTICAL_OFFSET,500,174),18,WHITE)
 	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
 	_prose_label(panel,"Each step turns GEAR left and ARMS right.\nPanels turn CORE using SPD, or reset its start angle.",Rect2(580,377+T.HELP_BODY_VERTICAL_OFFSET,510,152),18,WHITE)
 	var panel_kinds=["CLOCKWISE","RESET","COUNTERCLOCKWISE"]
@@ -1752,6 +1784,7 @@ func _quit() -> void:
 	get_tree().quit()
 
 func _close_aux() -> void:
+	if plan_pending:plan_presented=false;plan_frame=Engine.get_process_frames()
 	var previous=null
 	if is_instance_valid(auxiliary):
 		previous=auxiliary.get_meta("previous_focus") if auxiliary.has_meta("previous_focus") else null
@@ -1762,6 +1795,7 @@ func _close_aux() -> void:
 	_restore_focus.call_deferred(previous)
 
 func _clear_overlay() -> void:
+	action_gate_buttons=[];action_gate_elapsed=0.0
 	if is_instance_valid(overlay):
 		overlay.hide()
 		overlay.queue_free()
