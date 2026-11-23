@@ -302,10 +302,10 @@ const SETTINGS_APPLY_RECT := Rect2(36,588,988,48)
 const SETTINGS_CLOSE_RECT := Rect2(36,654,988,42)
 # 非同期切替を連続した実状態で確認してから保存する。
 const DISPLAY_SETTLE_SECONDS := 0.2
-# HELPの既存SVGだけ、見出しの大文字の実描画中心へ合わせる。
-const HELP_ICON_VERTICAL_OFFSET := -5.5
-# 見出しと本文だけを近づけ、次のセクションと区切りの位置は保つ。
-const HELP_BODY_VERTICAL_OFFSET := -20.0
+# HELPは同じ黒い面に3つの説明を置き、表の行と比較図を固定領域へ収める。
+const HELP_RECT := Rect2(400,135,1120,810)
+const HELP_STATUS_ROW_HEIGHT := 74
+const HELP_RING_RADIUS := 78
 
 # 日本語本文は既存の段落高に収め、文字サイズは英語と揃える。
 const JAPANESE_PROSE_SPACING := 0

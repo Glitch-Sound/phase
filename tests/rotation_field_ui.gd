@@ -55,17 +55,6 @@ func _run() -> void:
 		var corner=visual.field_cloud_shape(Vector2(50,50),100.0,0.0,0.0,Rect2(0,0,1000,1000),false)
 		var later=visual.field_cloud_shape(Vector2(450,450),100.0,2.0,0.0,Rect2(0,0,1000,1000),false)
 		_check(not layers.is_empty() and not corner.is_empty() and corner.all(func(layer):return Array(layer.points).all(func(point):return Rect2(-0.001,-0.001,1000.002,1000.002).has_point(point))) and layers!=later and layers.all(func(layer):return Array(layer.points).all(func(point):return rect.grow(0.001).has_point(point))) and layers.any(func(layer):return Array(layer.points).any(func(point):return not Rect2(400,400,100,100).has_point(point))),"cloud drifts continuously around its source inside the actual surrounding cells")
-	game._skill_help()
-	await process_frame
-	var buttons=game.auxiliary.find_children("*","Button",true,false)
-	_check(buttons.any(func(button):return button.text=="FIELDS"),"existing skill HELP opens the field rules")
-	if game.has_method("_field_help"):
-		game._field_help()
-		await process_frame
-		var labels=game.auxiliary.find_children("*","Label",true,false).map(func(label):return label.text)
-		var titles=labels.filter(func(text):return text.contains(" FIELD "))
-		_check(titles==["SLOW FIELD x0.5","FAST FIELD x1.5"] and labels.all(func(text):return not text.contains("STOP")) and labels.has("Same type applies once. SLOW + FAST cancel to normal x1.\nChecked on each landing; no lingering effect outside the field. Standing still does not rotate rings.\nSWAP and PUSH use the same entry rule after all landing positions are set."),"HELP has exactly two correctly named fields and the full overlap rule")
-	game._close_aux()
 	game._restart()
 	_check(game.build_open,"field UI returns BUILD without saving")
 	game.queue_free()

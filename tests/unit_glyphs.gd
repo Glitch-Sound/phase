@@ -88,11 +88,6 @@ func _test_screens() -> void:
 	var texts=game.overlay.find_children("*","Label",true,false).map(func(l):return l.text)
 	var stages=game.C.stages()
 	_check(stages.map(func(stage):return stage.name).slice(0,2)==["01 / INTERFERENCE","02 / SEVERANCE"],"stage numbering remains unchanged")
-	game._help()
-	await process_frame
-	texts=game.auxiliary.find_children("*","Label",true,false).map(func(l):return l.text)
-	_check(texts.has("CLASS sets CORE order; MUTATION sets equipment order.\nSAVE / LOAD stores or restores builds;\nUNLOCK ALL is debug-only and never saved."),"short HELP distinguishes CORE, equipment and safe debug builds without unit names")
-	game._close_aux()
 	game.collection.stage_index=0
 	game._start_battle()
 	game.message_time=0

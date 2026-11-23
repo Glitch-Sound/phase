@@ -1453,69 +1453,33 @@ func _starter_unlocks(unlocks: Array) -> void:
 
 func _help() -> void:
 	_close_aux()
-	var panel=_modal(Rect2(400,135,1120,810),true)
+	var panel=_modal(T.HELP_RECT,true)
 	_label(panel,"HELP",Rect2(36,25,1048,48),32,WHITE)
-	_prose_wrapped_label(panel,"ENEMY CPU controls the enemy; OFF lets you play both sides.\nCheck OPERATION in BUILD for the win condition.",Rect2(36,85+T.HELP_BODY_VERTICAL_OFFSET,1048,56),17,MUTED)
-	var steps=[
-		["move","01 / ROUTE","Click empty cells up, down, left or right.\nClick a route cell to undo later steps."],
-		["target","02 / ALIGN","Moving turns rings, changing damage,\nhealing and resistance.\nPREVIEW shows the landing state."],
-		["check","03 / ACT","Double-click the destination, pick skill\nand target to move and act.\nORTHO = cardinal; DIAGONAL = diagonal;\n1 / 2 = exact cell distance."]
-	]
-	for i in range(3):
-		var x=36+i*354
-		_icon(panel,steps[i][0],Rect2(x,153+T.HELP_ICON_VERTICAL_OFFSET,28,28),CYAN)
-		_label(panel,steps[i][1],Rect2(x+42,149,298,32),20,WHITE)
-		_prose_label(panel,steps[i][2],Rect2(x,201+T.HELP_BODY_VERTICAL_OFFSET,340,96 if i==2 else 76),16 if i==2 else 18,MUTED)
-	_separator(panel,Rect2(36,300,1048,1))
-	_label(panel,"MOVEMENT",Rect2(36,329,490,28),16,CYAN)
-	_prose_label(panel,"WAIT stays put. Move first to use skills.\nBefore selecting, BACK / Esc steps back to revise the route.",Rect2(36,377+T.HELP_BODY_VERTICAL_OFFSET,500,174),18,WHITE)
-	_label(panel,"PHASE",Rect2(580,329,500,28),16,CYAN)
-	_prose_label(panel,"Each step turns GEAR left and ARMS right.\nPanels turn CORE using SPD, or reset its start angle.",Rect2(580,377+T.HELP_BODY_VERTICAL_OFFSET,510,152),18,WHITE)
-	var panel_kinds=["CLOCKWISE","RESET","COUNTERCLOCKWISE"]
-	for i in range(panel_kinds.size()):
-		var view=PANEL_VIEWS[panel_kinds[i]]
-		_icon(panel,view.icon,Rect2(580+i*172,514+T.HELP_ICON_VERTICAL_OFFSET+T.HELP_BODY_VERTICAL_OFFSET,20,20),CYAN)
-		_label(panel,view.short,Rect2(608+i*172,512+T.HELP_BODY_VERTICAL_OFFSET,140,28),14,WHITE)
-	if not build_open:
-		_label(panel,"%s / SEED %d" % [battle.stage.name,battle.panel_seed],Rect2(200,40,884,24),13,MUTED)
-	_separator(panel,Rect2(36,560,1048,1))
-	_label(panel,"BUILD / ARCHIVE",Rect2(36,589,490,28),16,CYAN)
-	_prose_label(panel,"CLASS sets CORE order; MUTATION sets equipment order.\nSAVE / LOAD stores or restores builds;\nUNLOCK ALL is debug-only and never saved.",Rect2(36,631+T.HELP_BODY_VERTICAL_OFFSET,500,98),16,WHITE)
-	_label(panel,"READING THE SIGNAL",Rect2(580,589,500,28),16,CYAN)
-	_prose_label(panel,"Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage.",Rect2(580,631+T.HELP_BODY_VERTICAL_OFFSET,510,66),18,WHITE)
-	_prose_label(panel,"White: progress vs. longest visible wait, not a unit timer.",Rect2(580,706+T.HELP_BODY_VERTICAL_OFFSET,510,22),13,MUTED)
-	_button(panel,"CLOSE / ESC",Rect2(36,736,800,44),_close_aux)
-	_button(panel,"SKILLS",Rect2(856,736,228,44),_skill_help)
-
-func _skill_help() -> void:
-	_close_aux()
-	var panel=_modal(Rect2(400,160,1120,760),true)
-	_label(panel,"SKILLS",Rect2(36,25,1048,48),32,WHITE)
-	_label(panel,"SWAP / PUSH",Rect2(36,102,1048,32),20,CYAN)
-	_prose_label(panel,"SWAP: exchange positions with one cardinally adjacent ally.\nPUSH: move one adjacent enemy 1 cell outward into an empty cell. No damage, edges or chain pushes.",Rect2(36,147,1048,68),19,WHITE)
-	_label(panel,"GUARD",Rect2(36,245,1048,32),20,CYAN)
-	_prose_label(panel,"After moving, target yourself. Reduce the next attack by %d%%; even zero damage consumes it.\nThe octagon means guarded. No stacking. Moving / healing keeps it; a new battle clears it." % roundi((1-T.GUARD_DAMAGE_MULTIPLIER)*100),Rect2(36,290,1048,68),19,WHITE)
-	_label(panel,"PANEL IGNORE",Rect2(36,388,1048,32),20,CYAN)
-	_prose_label(panel,"Ignore special CORE panels only. GEAR and ARMS still turn normally.\nSWAP moves both units; PUSH moves its target. Each receives one normal entry and its own passives.",Rect2(36,433,1048,68),19,WHITE)
-	_prose_label(panel,"These actions replace damage or healing; moving first is still required.\nHover a valid target to preview positions and rings.\nForced movement keeps the target clock. Both landings use the normal entry rule.",Rect2(36,536,1048,88),18,MUTED)
-	_button(panel,"BACK",Rect2(36,670,552,44),_help)
-	_button(panel,"FIELDS",Rect2(608,670,228,44),_field_help)
-	_button(panel,"CLOSE / ESC",Rect2(856,670,228,44),_close_aux)
-
-func _field_help() -> void:
-	_close_aux()
-	var panel=_modal(Rect2(400,160,1120,760),true)
-	_label(panel,"FIELDS",Rect2(36,25,1048,48),32,WHITE)
-	_label(panel,"PASSIVE / SURROUNDING",Rect2(36,88,1048,28),16,MUTED)
-	var names=["SLOW","FAST"]
-	for i in range(names.size()):
-		_label(panel,"%s FIELD x%.1f" % [names[i],C.FIELD_FACTORS[names[i]]],Rect2(36+i*524,153,510,40),24,CYAN)
-		_prose_label(panel,["Half equipment rotation.","Speed up equipment rotation."][i],Rect2(36+i*524,204,510,40),18,WHITE)
-	_prose_label(panel,"Affects the 8 surrounding cells, including diagonals. Both camps, excluding the source.\nChanges only the GEAR and ARMS rotation for each step.\nCORE, stat values and turn speed stay unchanged.",Rect2(36,285,1048,88),19,WHITE)
-	_prose_label(panel,"Same type applies once. SLOW + FAST cancel to normal x1.\nChecked on each landing; no lingering effect outside the field. Standing still does not rotate rings.\nSWAP and PUSH use the same entry rule after all landing positions are set.",Rect2(36,400,1048,90),19,WHITE)
-	_prose_label(panel,"Clouds drift around the source. Faint broken clouds preview a moved source.\nHover cells to inspect the exact multiplier and source units.\nPANEL IGNORE skips CORE panels, not fields.",Rect2(36,515,1048,88),18,MUTED)
-	_button(panel,"BACK",Rect2(36,670,800,44),_skill_help)
-	_button(panel,"CLOSE / ESC",Rect2(856,670,228,44),_close_aux)
+	_label(panel,"01 / STATUS",Rect2(36,108,500,30),18,CYAN)
+	var descriptions=["All three rings set maximum HP.","Attack and healing power; boosted by phase overlap.","Damage resistance; strengthened by phase overlap.","CORE speeds turns; each ring sets step rotation.","Lowest ring LUK sets phase tolerance."]
+	for i in range(5):
+		var y=164+i*T.HELP_STATUS_ROW_HEIGHT
+		var color=ColorRect.new();color.name="StatusColor"+str(i);color.position=Vector2(36,y+9);color.size=Vector2(12,12);color.color=ring_colors[i];color.mouse_filter=Control.MOUSE_FILTER_IGNORE;panel.add_child(color)
+		_label(panel,["VIT","INF","RES","SPD","LUK"][i],Rect2(60,y,70,32),20,ring_colors[i])
+		_prose_wrapped_label(panel,descriptions[i],Rect2(144,y,390,56),18,WHITE)
+	_label(panel,"02 / PHASE",Rect2(580,108,504,30),18,CYAN)
+	_prose_wrapped_label(panel,"Movement turns GEAR and ARMS.\nPhase overlap changes damage, healing and resistance.",Rect2(580,150,504,76),18,WHITE)
+	# 同じ標準ユニットへ通常セル1歩だけを適用し、実戦闘と乱数には触れない。
+	var before=C.unit("01","PLAYER",Vector2i.ZERO,C.starter_build())
+	var after=before.duplicate(true);M.enter_panel(after,"NORMAL")
+	var comparison=Control.new();comparison.name="PhaseComparison";comparison.position=Vector2(580,246);comparison.size=Vector2(504,252);comparison.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	comparison.set_meta("states",[before,after]);panel.add_child(comparison)
+	comparison.draw.connect(func():
+		_ring(comparison,Vector2(120,122),T.HELP_RING_RADIUS,before)
+		_ring(comparison,Vector2(382,122),T.HELP_RING_RADIUS,after))
+	for i in range(2):
+		var x=580+i*262;var unit=before if i==0 else after
+		_label(panel,"BEFORE" if i==0 else "AFTER / 1 STEP",Rect2(x,244,242,28),16,MUTED).horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+		_label(panel,"INF %d%% / RES %d%%" % [roundi(M.sync(unit,1).factor*100),roundi(M.sync(unit,2).factor*100)],Rect2(x,474,242,28),16,WHITE).horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+	_label(panel,"NORMAL CELL / GEAR CCW / ARMS CW",Rect2(580,522,504,28),15,MUTED).horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+	_label(panel,"03 / ARCHIVE",Rect2(36,608,1048,30),18,CYAN)
+	_prose_wrapped_label(panel,"After a win or loss outside UNLOCK ALL, equipment, skills or mutations may unlock at random.",Rect2(36,650,1048,62),18,WHITE)
+	_button(panel,"CLOSE / ESC",Rect2(36,736,1048,44),_close_aux)
 
 func _settings() -> void:
 	_close_aux()

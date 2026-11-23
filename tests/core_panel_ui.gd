@@ -36,12 +36,6 @@ func _run() -> void:
 	game._unhandled_input(event)
 	await process_frame
 	_check(game.battle.path.is_empty() and game.battle.units[0].core_angle==45 and game.battle.preview().core_angle==45,"Escape clears uncommitted CORE operations only")
-	game._help()
-	await process_frame
-	var labels=game.auxiliary.find_children("*","Label",true,false).map(func(label):return label.text)
-	_check(labels.has("Each step turns GEAR left and ARMS right.\nPanels turn CORE using SPD, or reset its start angle."),"short HELP retains normal equipment turns and SPD-based CORE rotation or reset")
-	_check(not labels.any(func(text):return text.contains("GEAR固定") or text.contains("ARMS ×2") or text.contains("ARMS逆回転")),"old panel meanings are absent from HELP")
-	game._close_aux()
 	game._restart()
 	await process_frame
 	_check(game.build_open,"returns to BUILD without saving")

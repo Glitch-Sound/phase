@@ -31,12 +31,6 @@ func _run() -> void:
 			var lines=game.text_records.filter(func(r):return r.position.x==game.T.BATTLE_NAME_ORIGIN.x and r.position.y<game.T.BATTLE_INFO_CLASS.y)
 			layouts.append(lines.is_empty() and game.accessibility_description=="Inspected unit: "+name)
 		_check(layouts.all(func(ok):return ok),"ordinary and wide Unicode names stay nonvisual while retaining accessible metadata")
-		game._help();await process_frame
-		var guide=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text.begins_with("CLASS sets CORE order;"))[0]
-		var seed=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text.contains(" / SEED "))[0]
-		var close=game.auxiliary.find_children("*","Button",true,false).filter(func(button):return button.text=="CLOSE / ESC")[0]
-		_check(guide.global_position.y+guide.get_minimum_size().y<close.global_position.y and not guide.get_global_rect().intersects(seed.get_global_rect()),"build guidance and stage reference stay separated above HELP controls")
-		game._close_aux()
 	game._restart();game.queue_free();await process_frame
 	print("UNIT IDENTITY UI: %d checks / %d failures" % [checks,failures]);quit(0 if failures==0 else 1)
 func _draw() -> void:

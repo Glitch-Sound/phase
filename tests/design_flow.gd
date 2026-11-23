@@ -148,15 +148,27 @@ func _finish() -> void:
 	print("DESIGN FLOW: %d checks / %d failures" % [checks,failures])
 	quit(0 if failures==0 else 1)
 
-## REQ-020-S01
+## REQ-020-S01、REQ-020-S04
 func _test_help_terms(game) -> void:
 	game._help()
 	await process_frame
-	var guides=[]
-	for label in game.auxiliary.find_children("*","Label",true,false):
-		if label.text.contains("INF powers damage and healing; RES resists damage."):
-			guides.append(label.text)
-	_check(guides==["Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage."],"short HELP separates effect signs from INF and RES mechanics")
+	var labels=game.auxiliary.find_children("*","Label",true,false)
+	var sources=[]
+	for label in labels:
+		if label.has_meta("prose_fields"):sources.append(label.get_meta("prose_fields").get("text",""))
+	sources.sort()
+	var expected=["All three rings set maximum HP.","Attack and healing power; boosted by phase overlap.","Damage resistance; strengthened by phase overlap.","CORE speeds turns; each ring sets step rotation.","Lowest ring LUK sets phase tolerance.","Movement turns GEAR and ARMS.\nPhase overlap changes damage, healing and resistance.","After a win or loss outside UNLOCK ALL, equipment, skills or mutations may unlock at random."]
+	expected.sort()
+	_check(sources==expected,"HELP has exactly the five status explanations, movement comparison and reward sentence")
+	var titles=labels.map(func(label):return label.text).filter(func(text):return text.begins_with("01 /") or text.begins_with("02 /") or text.begins_with("03 /"))
+	_check(titles==["01 / STATUS","02 / PHASE","03 / ARCHIVE"] and game.auxiliary.find_children("*","Button",true,false).map(func(button):return button.text)==["CLOSE / ESC"] and not game.has_method("_skill_help") and not game.has_method("_field_help"),"HELP has three sections, close navigation and no skill routes")
+	var swatches=game.auxiliary.find_children("StatusColor*","ColorRect",true,false)
+	_check(swatches.size()==5 and swatches.map(func(swatch):return swatch.color)==game.ring_colors,"status table uses actual ring colors")
+	var comparisons=game.auxiliary.find_children("PhaseComparison","Control",true,false)
+	_check(comparisons.size()==1,"HELP reuses a ring comparison diagram")
+	if comparisons.size()==1:
+		var states=comparisons[0].get_meta("states");var before=states[0];var after=states[1]
+		_check(["core","gear","arms","id"].all(func(key):return before[key]==after[key]) and before.core_angle==after.core_angle and after.gear_angle==fposmod(before.gear_angle-before.gear[3]*1.5,360) and after.arms_angle==fposmod(before.arms_angle+before.arms[3]*1.5,360),"same unit keeps distributions and applies exactly one normal step")
 	game._close_aux()
 	game._settings()
 	await process_frame

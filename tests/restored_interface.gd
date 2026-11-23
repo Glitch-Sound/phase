@@ -14,14 +14,6 @@ func _run() -> void:
 	_check(game.P.TEXT==Color("e8ebed"),"restore original readable text")
 	_check(game.overlay.find_children("*","Button",true,false).filter(func(button):return button.has_meta("build_choice")).size()==9,"BUILD exposes all original selectors")
 	_check(game.core_controls.size()==5,"BUILD exposes all five core values")
-	game._help()
-	await process_frame
-	var guides=[]
-	for label in game.auxiliary.find_children("*","Label",true,false):
-		if label.text.contains("INF powers damage and healing; RES resists damage."):
-			guides.append(label.text)
-	_check(guides==["Minus = damage; plus = healing.\nINF powers damage and healing; RES resists damage."],"keep corrected INF and RES explanation in short HELP")
-	game._close_aux()
 	game._start_battle()
 	game._cell_input(Vector2i(4,4))
 	game._cell_input(Vector2i(5,4))

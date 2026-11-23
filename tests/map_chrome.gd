@@ -94,7 +94,7 @@ func _test_help_and_build(game) -> void:
 	var content=[]
 	for label in game.auxiliary.find_children("*","Label",true,false):
 		content.append(label.text)
-	_check(content.has("Double-click the destination, pick skill\nand target to move and act.\nORTHO = cardinal; DIAGONAL = diagonal;\n1 / 2 = exact cell distance."),"HELP retains destination double-click, target selection, exact range and selection-based execution")
+	_check(content.has("02 / PHASE") and not content.any(func(text):return text.contains("Double-click") or text.contains("WAIT")),"HELP contains phase comparison without operation instructions")
 	game._close_aux()
 	_check(game.battle.path==[Vector2i(4,4)],"HELP keeps pending route")
 	for stage in range(game.C.stages().size()):

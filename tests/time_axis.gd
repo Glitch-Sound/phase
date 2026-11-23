@@ -257,10 +257,6 @@ func _test_input() -> void:
 	_check(game.timeline_hover==-1 and game.battle.path==path,"window exit clears hover without changing route")
 	game._help()
 	await process_frame
-	var guide=game.auxiliary.find_children("*","Label",true,false).filter(func(label):return label.text=="White: progress vs. longest visible wait, not a unit timer.")
-	_check(guide.size()==1,"short HELP defines relative progress against visible maximum, not a unit timer")
-	if guide.size()==1:
-		_check(Array(guide[0].text.split("\n")).all(func(line):return game.font.get_string_size(line,HORIZONTAL_ALIGNMENT_LEFT,-1,guide[0].get_theme_font_size("font_size")).x<=guide[0].size.x),"progress explanation stays within HELP column")
 	var click=InputEventMouseButton.new()
 	click.button_index=MOUSE_BUTTON_LEFT
 	click.pressed=true

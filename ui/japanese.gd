@@ -1,6 +1,13 @@
 ## 人が読む説明だけの日本語対訳。名称と入力値は翻訳しない。
 extends RefCounted
 const TEXT = {
+	"All three rings set maximum HP.":"3リングの値が最大HPを決める",
+	"Attack and healing power; boosted by phase overlap.":"攻撃と回復の威力\n位相が合うほど強くなる",
+	"Damage resistance; strengthened by phase overlap.":"受けるダメージへの抵抗\n位相が合うほど強くなる",
+	"CORE speeds turns; each ring sets step rotation.":"COREは手番の間隔\n各リングは1歩の回転量を決める",
+	"Lowest ring LUK sets phase tolerance.":"3リング中の最小値が\n位相の許容幅を決める",
+	"Movement turns GEAR and ARMS.\nPhase overlap changes damage, healing and resistance.":"移動でGEARとARMSが回転\n位相の重なりに応じて攻撃、回復、抵抗が変わる",
+	"After a win or loss outside UNLOCK ALL, equipment, skills or mutations may unlock at random.":"UNLOCK ALL以外の戦闘は勝敗にかかわらず\n終了時に装備、スキル、変異がランダムで解放されることがある",
 	"New equipment unlocked.":"新しい装備を解放",
 	"SAVED / This page session only.":"SAVED / このページ内だけ保持",
 	"ENEMY CPU controls the enemy; OFF lets you play both sides.": "ENEMY CPUで敵を自動操作、OFFなら両陣営を操作。",

@@ -81,7 +81,7 @@ func _test_ui() -> void:
 	_check(game._change_language("ja") and game.collection.snapshot()==before and game.name_edit.text=="Damage one adjacent enemy.","switching copy does not translate names or change builds")
 	_check(not FileAccess.file_exists(game.settings_path) and game.palette_colors==palette,"language choice never writes color settings")
 	game._help();await process_frame
-	_check(game.auxiliary.find_children("*","Label",true,false).any(func(label):return label.text.contains("INFは攻撃と回復")),"open HELP uses Japanese prose")
+	_check(game.auxiliary.find_children("*","Label",true,false).any(func(label):return label.text=="攻撃と回復の威力\n位相が合うほど強くなる"),"open HELP uses Japanese prose")
 	_check(game.auxiliary.find_children("*","Label",true,false).any(func(label):return label.text=="HELP"),"HELP heading stays English")
 	var snapshot=game.collection.snapshot();game._close_aux();game._start_battle()
 	game._cell_input(Vector2i(4,4));var units=game.battle.units.duplicate(true);var path=game.battle.path.duplicate();var turn=game.battle.turn;var selected=game.selected

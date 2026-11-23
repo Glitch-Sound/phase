@@ -44,11 +44,6 @@ func _run() -> void:
 	var buttons=game.overlay.find_children("*","Button",true,false)
 	_check(buttons.any(func(button):return button.text==C.SKILLS[C.DAMAGE_DIAGONAL_TWO].label and not button.disabled) and buttons.any(func(button):return button.text==C.SKILLS[C.HEAL_ORTHOGONAL_TWO].label and not button.disabled),"action menu exposes the equipped new active patterns")
 	game._clear_overlay()
-	game._help()
-	await process_frame
-	var labels=game.auxiliary.find_children("*","Label",true,false)
-	_check(labels.any(func(label):return label.text.contains("DIAGONAL") and label.text.contains("ORTHO") and label.text.contains("2")),"HELP explains exact directions and distance")
-	game._close_aux()
 	game._restart()
 	_check(game.build_open,"new target flow returns to BUILD without saving")
 	game.queue_free()

@@ -58,15 +58,6 @@ func _run() -> void:
 	game.battle.act(0)
 	game._feedback()
 	_check(game.battle.units[0].guard_active and not game.toasts.any(func(toast):return toast.text=="GUARD"),"defense activates without a GUARD word toast")
-	game._help()
-	await process_frame
-	_check(game.auxiliary.find_children("*","Button",true,false).any(func(button):return button.text=="SKILLS"),"existing HELP links to the new skill explanations")
-	if game.has_method("_skill_help"):
-		game._skill_help()
-		await process_frame
-		var labels=game.auxiliary.find_children("*","Label",true,false).map(func(label):return label.text)
-		_check(labels.any(func(text):return text.contains("SWAP") and text.contains("PUSH")) and labels.any(func(text):return text.contains("GUARD")) and labels.any(func(text):return text.contains("CORE") and text.contains("GEAR")),"HELP explains utility scope, guard and normal rotation")
-	game._close_aux()
 	game._restart()
 	_check(game.build_open,"new utility flow returns BUILD without saving")
 	game.queue_free()

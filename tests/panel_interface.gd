@@ -49,12 +49,6 @@ func _test_icons(game) -> void:
 	var before=game.battle.path.duplicate()
 	game._help()
 	await process_frame
-	var labels=game.auxiliary.find_children("*","Label",true,false)
-	_check(["CORE ↷","CORE RESET","CORE ↶"].all(func(s):return labels.any(func(l):return l.text==s)),"HELP maps all three icon meanings")
-	_check(labels.any(func(l):return l.text=="%s / SEED 128" % game.battle.stage.name),"HELP discloses exact seed")
-	var legend_icons=game.auxiliary.find_children("*","TextureRect",true,false).map(func(icon):return icon.texture.resource_path.get_file()).filter(func(name):return name in ["diamond.svg","undo-2.svg","rotate-cw.svg","rotate-ccw.svg"])
-	legend_icons.sort()
-	_check(legend_icons==["diamond.svg","rotate-ccw.svg","rotate-cw.svg"],"HELP uses exactly the same three distinct panel glyphs")
 	_check(game.panel_probe._get_tooltip(Vector2(450,450))=="" and game.battle.path==before,"modal suppresses tooltip without changing route")
 	game._close_aux()
 	var notice=FileAccess.get_file_as_string("res://assets/lucide/NOTICE.md")

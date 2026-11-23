@@ -18,7 +18,7 @@ func _run() -> void:
 	root.add_child(game)
 	await process_frame
 	_scan(game.overlay,"BUILD")
-	for method in ["_help","_skill_help","_field_help","_settings"]:
+	for method in ["_help","_settings"]:
 		game.call(method)
 		await process_frame
 		_scan(game.auxiliary,method)
