@@ -739,7 +739,7 @@ func _cell_input(cell: Vector2i, double_click: bool=false) -> void:
 	elif battle.mode=="MOVE":
 		if index>=0 and cell!=battle.units[battle.actor].pos:
 			selected=index
-		elif double_click and index==battle.actor and index>=0 and battle.units[index].camp==view_camp and battle.units[index].hp>0 and not build_open and window_focused and not is_instance_valid(auxiliary) and not is_instance_valid(overlay):
+		elif double_click and index==battle.actor and index>=0 and battle.units[index].hp>0 and not build_open and window_focused and not is_instance_valid(auxiliary) and not is_instance_valid(overlay):
 			if planning.begin(battle,true):
 				selected=-1
 				_action_dialog()
@@ -959,9 +959,6 @@ func _hud() -> void:
 		return
 	if battle.mode=="TARGET":
 		_button(hud,"BACK",T.BATTLE_CONTEXT_BUTTON,func():battle.back();_action_dialog())
-	elif not build_open and battle.mode=="MOVE":
-		var wait_button=_button(hud,"WAIT",T.BATTLE_CONTEXT_BUTTON,_wait_action)
-		_set_prose(wait_button,"Stay here. End this turn without moving.","tooltip_text")
 
 func _action_dialog() -> void:
 	if movement.active or plan_pending:return
@@ -1009,10 +1006,7 @@ func _wait_action() -> void:
 	if planning.active():
 		if planning.wait():_confirm_plan()
 		return
-	if battle.mode=="MOVE":
-		if planning.begin(battle,true) and planning.wait():_confirm_plan()
-		return
-	if battle.wait_turn():_after_action()
+	if battle.mode=="CHOICE" and battle.wait_turn():_after_action()
 
 func _reselect_path() -> void:
 	if movement.active or plan_pending or _cpu_locked():return
@@ -1394,7 +1388,7 @@ func _start_battle() -> void:
 	_follow_turn()
 	_clear_overlay()
 	_hud()
-	_notify("Choose a route, or WAIT without moving.")
+	_notify("Choose a route, or double-click the acting unit to WAIT.")
 
 func _result() -> void:
 	plan_pending=false;plan_presented=false;pending_projection=null

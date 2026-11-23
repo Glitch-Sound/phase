@@ -62,7 +62,7 @@ func _entry_points() -> void:
 ## REQ-010-S05、REQ-010-S01、REQ-010-S03
 func _direct_selection() -> void:
 	game._start_battle();game.set_process(false)
-	game.hud.find_children("*","Button",true,false).filter(func(b):return b.text=="WAIT")[0].grab_focus()
+	game.hud.find_children("*","Button",true,false).filter(func(b):return b.text=="HELP")[0].grab_focus()
 	game._cell_input(Vector2i(4,4));game._cell_input(Vector2i(5,4));game._cell_input(Vector2i(5,4),true)
 	var buttons=game.overlay.find_children("*","Button",true,false)
 	_check(buttons.all(func(b):return b.disabled) and root.gui_get_focus_owner()==null,"new ACTION disables its buttons and releases old HUD focus")
@@ -94,7 +94,7 @@ func _direct_selection() -> void:
 	_check(game.plan_pending and not is_instance_valid(game.overlay),"implicit self target commits from GUARD's action button")
 	await _present();game._movement_tick(game.movement.duration)
 	_check(game.battle.last_effect.kind=="GUARD" and game.battle.turn==2,"implicit target executes after movement")
-	game._start_battle();game._wait_action();game._restart();await _present()
+	game._start_battle();game._cell_input(game.battle.units[game.battle.actor].pos,true);game._wait_action();game._restart();await _present()
 	_check(game.build_open and not game.plan_pending and not game.movement.active and game.battle.history.is_empty(),"restart invalidates a command before its closed frame")
 func _present() -> void:
 	await process_frame;await process_frame
@@ -112,7 +112,12 @@ func _stationary_wait() -> void:
 		var original=game.planning._state(b);var sounds=[];var listener=func(kind):sounds.append(kind)
 		game.sfx.played.connect(listener)
 		var waits=game.hud.find_children("*","Button",true,false).filter(func(button):return button.text=="WAIT")
-		_check(waits.size()==1,"permanent WAIT is available with or without free cells")
+		_check(waits.is_empty(),"battle HUD has no independent WAIT with or without free cells")
+		game._wait_action()
+		_check(not game.plan_pending and game.planning._state(b)==original,"no direct UI WAIT bypass exists before ACTION")
+		if game.plan_pending:continue
+		game._cell_input(b.units[b.actor].pos,true);game._advance_action_gate(game.T.ACTION_INPUT_GUARD_SECONDS*2)
+		waits=game.overlay.find_children("*","Button",true,false).filter(func(button):return button.text=="WAIT")
 		waits[0].pressed.emit();game._wait_action();game._confirm_plan()
 		_check(game.plan_pending and not is_instance_valid(game.overlay) and b.history.is_empty(),"WAIT accepts once without a final dialog or early action")
 		await _present()
@@ -159,7 +164,8 @@ func _actor_double_click() -> void:
 	_check(not game.planning.active() and not is_instance_valid(game.overlay),"CPU actor cannot open the human dialog")
 	game.cpu_enabled=false
 	game._cell_input(game.battle.units[3].pos,true)
-	_check(not game.planning.active() and not is_instance_valid(game.overlay),"enemy actor remains outside the ownership viewpoint")
+	_check(game.planning.active() and is_instance_valid(game.overlay) and game.planning.route.is_empty(),"the current manually controlled enemy can also WAIT without a separate HUD button")
+	game._reselect_path()
 	game.battle.actor=0;game._help()
 	var before=game.planning._state(game.battle)
 	var event=InputEventMouseButton.new();event.position=game.BOARD+(Vector2(game.battle.units[0].pos)+Vector2.ONE*0.5)*game.CELL;event.button_index=MOUSE_BUTTON_LEFT;event.pressed=true;event.double_click=true

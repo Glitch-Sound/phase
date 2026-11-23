@@ -170,7 +170,7 @@ func _test_notifications() -> void:
 	for state in ["start","invalid-move","invalid-target"]:
 		game._start_battle()
 		await process_frame
-		var expected="Choose a route, or WAIT without moving."
+		var expected="Choose a route, or double-click the acting unit to WAIT."
 		if state=="invalid-move":
 			game._cell_input(Vector2i(0,9))
 			expected="Add an empty adjacent cell. No revisits. Maximum %d steps." % T.BASE_MOVE

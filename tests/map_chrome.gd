@@ -52,11 +52,15 @@ func _run() -> void:
 		if state in ["DAMAGE","HEAL","TRAPPED"]:
 			var names=[]
 			var action_button: Button
-			for button in game.hud.find_children("*","Button",true,false):
+			if state=="TRAPPED":
+				_check(not game.hud.find_children("*","Button",true,false).any(func(button):return button.text=="WAIT"),"trapped HUD has no independent WAIT")
+				game._cell_input(game.battle.units[game.battle.actor].pos,true)
+				game._advance_action_gate(game.T.ACTION_INPUT_GUARD_SECONDS*2)
+			var controls=game.overlay if state=="TRAPPED" else game.hud
+			for button in controls.find_children("*","Button",true,false):
 				names.append(button.text)
-				if button.text==("WAIT" if state=="TRAPPED" else "BACK"):
-					action_button=button
-			_check(names.has("WAIT" if state=="TRAPPED" else "BACK"),"keep required action button: "+state)
+				if button.text==("WAIT" if state=="TRAPPED" else "BACK"):action_button=button
+			_check(names.has("WAIT" if state=="TRAPPED" else "BACK"),"required action exists at its correct entry: "+state)
 			var units=game.battle.units.duplicate(true)
 			var actor=game.battle.actor
 			if is_instance_valid(action_button):

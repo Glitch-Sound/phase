@@ -143,7 +143,7 @@ func _test_menu(game) -> void:
 		game._hud()
 		await process_frame
 		var context=game.hud.get_children().filter(func(b):return b is Button and b.text in ["BACK","WAIT"])
-		_check(context.size()==1,"context operation retained "+state)
+		_check(context.size()==(1 if state=="TARGET" else 0),"BACK remains for targets while stationary WAIT has no HUD entry "+state)
 		if context.size()==1:
 			_check(previous.all(func(rect):return not rect.intersects(context[0].get_rect())) and not context[0].get_rect().intersects(board),"context button separated from menu and map "+state)
 func _redraw(game) -> void:
