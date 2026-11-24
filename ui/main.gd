@@ -1134,7 +1134,8 @@ func _build() -> void:
 	panel=header_panel
 	for row in [["SAVE",36,108,_save],["LOAD",158,108,_load],["HELP",280,108,_help],["SETTINGS",402,150,_settings],["QUIT",566,108,_quit]]:
 		var button=_button(panel,row[0],Rect2(row[1],730,row[2],44),row[3])
-		button.disabled=collection.temporary and row[0] in ["SAVE","LOAD"]
+		button.disabled=(collection.temporary or STORE.is_demo()) and row[0] in ["SAVE","LOAD"]
+		if STORE.is_demo() and row[0] in ["SAVE","LOAD"]:_set_prose(button,"Unavailable in the demo. Progress lasts until this page is closed or reloaded.","tooltip_text")
 	var start=_button(panel,"START",Rect2(934,730,342,48),_start_battle)
 	start.alignment=HORIZONTAL_ALIGNMENT_CENTER
 	start.icon_alignment=HORIZONTAL_ALIGNMENT_LEFT

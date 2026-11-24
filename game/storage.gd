@@ -2,11 +2,16 @@
 extends RefCounted
 # nullでは実プラットフォームへ従う。検証だけで保存先を隔離して切り替える。
 static var memory_only: Variant=null
+static var demo_override: Variant=null
 static var _memory: Dictionary={}
 
-## メモリ保存かを返す。戻り値はWebか検証用指定。副作用なし。
+## デモかを返す。戻り値は書き出しのdemoタグか検証用指定。副作用なし。
+static func is_demo() -> bool:
+	return OS.has_feature("demo") if demo_override==null else bool(demo_override)
+
+## メモリ保存かを返す。戻り値はデモ、Webか検証用指定。副作用なし。
 static func in_memory() -> bool:
-	return OS.has_feature("web") if memory_only==null else bool(memory_only)
+	return is_demo() or (OS.has_feature("web") if memory_only==null else bool(memory_only))
 
 ## 保存の存在を返す。pathは保存キー。戻り値は存在のbool。Webでは実ファイルを参照しない。
 static func exists(path: String) -> bool:

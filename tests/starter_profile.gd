@@ -20,6 +20,7 @@ func _run() -> void:
 		_failures(profile)
 		await _web(profile,storage)
 		await _notice(profile,storage)
+		await _demo(profile,storage)
 		storage.memory_only=null
 	print("STARTER PROFILE: %d checks / %d failures" % [checks,failures])
 	quit(0 if failures==0 else 1)
@@ -139,3 +140,38 @@ func _notice(profile,storage) -> void:
 	root.add_child(fresh);await process_frame
 	_check(is_instance_valid(fresh.auxiliary) and fresh.auxiliary.get_meta("starter_unlocks").size()==10,"new page session announces its own ten new items again")
 	fresh._close_aux();fresh.queue_free();await process_frame
+
+## REQ-062-S01、REQ-062-S02、REQ-062-S04
+func _demo(profile,storage) -> void:
+	var methods=storage.get_script_method_list().map(func(row):return row.name)
+	_check(methods.has("is_demo"),"demo policy is available at the storage boundary")
+	if not methods.has("is_demo"):return
+	profile._profiles.clear();storage._memory.clear();storage.memory_only=null;storage.demo_override=true
+	var path=folder+"/demo.json";var base=folder+"/demo-settings"
+	var rng=RandomNumberGenerator.new();rng.seed=48
+	var opened=profile.open_profile(path,rng);var value=opened.collection
+	_check(opened.error.is_empty() and value.items.ARMS.size()==9 and value.items.GEAR.size()==9,"demo startup rolls the normal ten additions without save errors")
+	value.unit_names[0]="Demo fixture";value.accept_drop({"skill":C.MOVE})
+	var before=value.snapshot()
+	var candidate=L.new();candidate.unit_names[0]="Stored fixture"
+	var bytes=JSON.stringify(candidate.snapshot())
+	storage.write_text(path,bytes)
+	_check(value.save_to(path)=="DEMO / SAVE and LOAD are unavailable." and value.load_from(path)=="DEMO / SAVE and LOAD are unavailable." and value.snapshot()==before and storage.read_text(path).text==bytes,"demo refuses even a valid stored snapshot without reading, replacing it or changing the build")
+	storage._memory.erase(path)
+	var language=preload("res://ui/language.gd")
+	_check(language.write_to(base+".language.json","ja").is_empty(),"demo settings can change within the session")
+	var scene=load("res://main.tscn").instantiate();scene.save_path=path;scene.settings_path=base;scene.profile_startup=true
+	root.add_child(scene);await process_frame
+	if is_instance_valid(scene.auxiliary):scene._close_aux()
+	var saves=scene.overlay.find_children("*","Button",true,false).filter(func(button):return button.text in ["SAVE","LOAD"])
+	_check(saves.size()==2 and saves.all(func(button):return button.visible and button.disabled),"demo BUILD keeps SAVE and LOAD visible but disabled")
+	scene._save();scene._load()
+	_check(scene.collection==value and value.snapshot()==before and scene.copy_language.selection=="ja","UI requests preserve live composition, unlocks and session settings")
+	scene._build();await process_frame
+	_check(scene.collection==value and not is_instance_valid(scene.auxiliary),"revisit keeps edited profile without repeating initial notice")
+	scene.queue_free();await process_frame
+	profile._profiles.clear();storage._memory.clear()
+	var fresh=profile.open_profile(path,rng).collection
+	_check(fresh.unit_names[0]!="Demo fixture" and fresh.skills==[C.DAMAGE,C.HEAL] and language.read_from(base+".language.json")=="system" and profile.take_unlocks(path).size()==10,"fresh page resets identifiable build and setting, and announces its own unlocks")
+	_check(not FileAccess.file_exists(path) and not FileAccess.file_exists(base+".language.json"),"demo never writes game or settings files")
+	storage.demo_override=null;storage.memory_only=null;profile._profiles.clear();storage._memory.clear()

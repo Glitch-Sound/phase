@@ -141,6 +141,7 @@ func snapshot() -> Dictionary:
 
 ## 状態を保存する。pathは保存先。戻り値は成功時空文字、失敗時説明。既存ファイルを別名バックアップする。
 func save_to(path: String) -> String:
+	if S.is_demo():return "DEMO / SAVE and LOAD are unavailable."
 	if temporary:return "DEBUG / NOT SAVED"
 	var data=snapshot()
 	var error=_validate_snapshot(data)
@@ -152,6 +153,7 @@ func save_to(path: String) -> String:
 
 ## 状態を読み込む。pathは候補ファイル。戻り値は成功時空文字、失敗時説明。検証成功後にだけ現在データを更新する。
 func load_from(path: String) -> String:
+	if S.is_demo():return "DEMO / SAVE and LOAD are unavailable."
 	if temporary:return "DEBUG / NOT SAVED"
 	var stored=S.read_text(path,8*1024*1024)
 	if not stored.error.is_empty():return stored.error

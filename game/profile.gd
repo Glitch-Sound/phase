@@ -13,7 +13,7 @@ static func open_profile(path: String,rng: RandomNumberGenerator) -> Dictionary:
 	if S.exists(path):error=value.load_from(path)
 	else:
 		unlocks=value.unlock_starters(rng)
-		error=value.save_to(path)
+		if not S.is_demo():error=value.save_to(path)
 	var result={"collection":value,"error":error,"unlocks":unlocks}
 	_profiles[path]=result
 	return result

@@ -1,6 +1,8 @@
 ## 人が読む説明だけの日本語対訳。名称と入力値は翻訳しない。
 extends RefCounted
 const TEXT = {
+	"Unavailable in the demo. Progress lasts until this page is closed or reloaded.":"デモでは使用不可\n編成と解放はページを閉じるか再読み込みするまで保持",
+	"DEMO / SAVE and LOAD are unavailable.":"DEMO / SAVEとLOADは使用不可",
 	"All three rings set maximum HP.":"3リングの値が最大HPを決める",
 	"Attack and healing power; boosted by phase overlap.":"攻撃と回復の威力\n位相が合うほど強くなる",
 	"Damage resistance; strengthened by phase overlap.":"受けるダメージへの抵抗\n位相が合うほど強くなる",

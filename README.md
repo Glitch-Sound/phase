@@ -152,18 +152,55 @@ SAVEはビルド、開放一覧、ステージを作業先のartifacts/runtime/p
 既存の有効な保存があれば起動時に復元し、追加抽選と自動上書きを行わない。\
 初回以外の編集と報酬の保存はSAVE、復元はLOADを使う。
 
-Web版も同じ初期化、構成、収集と戦闘を使い、ゲームと設定の保存先だけがページ内メモリになる。\
-同ページの再戦とシーン切替では状態を保つが、ページの再読み込みと終了では失われる。\
-WebのSAVEもページを越えて残らず、ブラウザの永続ストレージへ保存しない。
+Web Demoは同じ初期化、構成、収集と戦闘を使い、ゲームと設定をタブ内のメモリだけで保持する。\
+SAVEとLOADは表示したまま非活性となり、内部からの保存と読込も拒否する。\
+同じページ内の再戦と画面切替では構成、解放と設定を保ち、再読み込みと終了では失われる。\
+通常版はdemoタグを付けず、これまでのファイル保存と読込を使う。\
+コードを書き換える必要はない。
 
-ローカルWeb出力はGodot 4.7系のWebテンプレート導入後、次を実行する。\
-Web SessionプリセットはPWAと永続マウントを無効にした専用シェルを使う。\
-生成物を配布先へ登録、アップロードと公開する操作は含まない。
+#### HTMLの書き出し
+
+1. `/Users/glitch/Developer/phase/project.godot`をGodotで開く。
+2. `Editor > Manage Export Templates`から、使用中のGodotと同じ版のテンプレートを導入する。現在のMacはGodot 4.7.2で、Webテンプレートが未導入である。
+3. `Project > Export`で`Web Demo`を選ぶ。`Features`のCustom Featuresは`demo`、Thread SupportとExtensions Support、PWAはOFF、Custom HTML Shellは`res://web/session.html`のままにする。
+4. `Export Project`を選び、Export With DebugをOFFにして`artifacts/runtime/web/index.html`へ書き出す。デバッグOFFではUNLOCK ALLは表示されない。
+5. 同じフォルダに出たHTML、JS、WASM、PCK等をまとめて保つ。HTMLだけを移動したり、生成後に一部だけ改名したりしない。
+
+ターミナルから同じ設定で書き出す場合は次を実行する。
 
 ~~~sh
+cd /Users/glitch/Developer/phase
 mkdir -p artifacts/runtime/web
-godot --headless --path . --export-release "Web Session" artifacts/runtime/web/index.html
+/Applications/Godot.app/Contents/MacOS/Godot --headless --path . --export-release "Web Demo" artifacts/runtime/web/index.html
 ~~~
+
+#### ローカルブラウザでの確認
+
+HTMLをダブルクリックするfile://ではなく、localhostのHTTP経由で開く。\
+以下はPython 3が使えるターミナルで実行し、そのまま起動しておく。
+
+~~~sh
+cd /Users/glitch/Developer/phase
+python3 -m http.server 8060 --bind 127.0.0.1 --directory artifacts/runtime/web
+~~~
+
+ブラウザで`http://127.0.0.1:8060/`を開く。\
+WebAssemblyとWebGL 2.0が必要で、音は最初のクリック後に確認する。\
+確認後はターミナルでCtrl+Cを押してローカルサーバーを終了する。
+
+- 初回の装備解放一覧を閉じ、SAVEとLOADが見えるが押せないことを確認する。
+- 名前と装備を1つずつ変更し、SETTINGSの言語かSEも変更する。
+- 戦闘からBUILDへ戻り、変更が残っていて初回一覧が繰り返されないことを確認する。
+- ページを再読み込みし、変更した構成と設定が初期状態に戻り、初回一覧が再表示されることを確認する。抽選結果が違うことだけを初期化の根拠にしない。
+
+#### 配布先へ渡すファイル
+
+[itch.ioの公式案内](https://itch.io/docs/creators/html5)では、index.htmlを直下に含む出力一式のZIPを使う。\
+[unityroomの公式案内](https://help.unityroom.com/Godot-Engine-381dc3ed5de980b2a573ccfe415feb52)では、Web出力のPCKを選ぶ。\
+どちらも同じWeb Demo設定とdemoタグを使うが、unityroomではホスト側のHTMLとエンジンを使うため、こちらのカスタムHTMLシェルは適用されない。\
+ゲームと設定の非永続処理、保存拒否はPCK内の共通コードでも有効となる。\
+各ホストでの実動作はアップロードせずには確認できないため、公開前の確認対象とする。\
+この手順はローカル書き出しと確認までとし、登録、アップロードと公開は行わない。
 
 ### デバッグの全解放
 

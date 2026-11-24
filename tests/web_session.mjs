@@ -21,6 +21,9 @@ assert.equal(JSON.stringify(config.persistentPaths),'[]');
 assert.equal(config.serviceWorker,'');
 const preset=fs.readFileSync('export_presets.cfg','utf8');
 assert.match(preset,/platform="Web"/);
+// REQ-062-S04: the deliverable preset, rather than an editor toggle, enables demo policy.
+assert.match(preset,/name="Web Demo"/);
+assert.match(preset,/custom_features="demo"/);
 assert.match(preset,/html\/custom_html_shell="res:\/\/web\/session.html"/);
 assert.match(preset,/progressive_web_app\/enabled=false/);
 assert.match(preset,/exclude_filter="[^"]*artifacts\/\*/);
