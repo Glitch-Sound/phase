@@ -7,3 +7,5 @@ openspec/traceability.md
 .template-source/
 artifacts/runtime/
 *.log
+# macOSのフォルダ表示情報を誤って公開しない。
+.DS_Store

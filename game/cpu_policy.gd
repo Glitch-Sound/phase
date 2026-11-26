@@ -7,62 +7,75 @@ const T=preload("res://game/tuning.gd")
 const F=preload("res://game/rotation_field.gd")
 
 ## CPUの候補を選ぶ。battleは現在の戦闘、memoryは過去の選択。戻り値はpath、skill、target、scoreの辞書、終了時は空。原本と乱数を変えない。
-func choose(battle: RefCounted, memory: Array=[]) -> Dictionary:
-	if battle.mode!="MOVE" or not battle.result.is_empty() or battle.actor<0:
+func choose(battle: RefCounted, memory: Array = []) -> Dictionary:
+	if battle.mode != "MOVE" or not battle.result.is_empty() or battle.actor < 0:
 		return {}
-	var actor: int=battle.actor
-	var source: Dictionary=battle.units[actor]
-	var routes=_routes(battle,actor)
+	var actor: int = battle.actor
+	var source: Dictionary = battle.units[actor]
+	var routes = _routes(battle, actor)
 	if routes.is_empty():
-		return {"path":[],"skill":"","target":-1,"score":0.0}
-	var field_context=F.has_fields(battle.units)
-	var threat_cache={}
-	var threats=[] if field_context else _threats(battle,actor)
-	var best={"score":-INF}
+		return {"path": [], "skill": "", "target": -1, "score": 0.0}
+	var field_context = F.has_fields(battle.units)
+	var threat_cache = {}
+	var threats = [] if field_context else _threats(battle, actor)
+	var best = {"score": -INF}
 	for route in routes:
-		var moved=_project(battle,actor,route)
-		var options=[{"skill":"","target":-1}]
+		var moved = _project(battle, actor, route)
+		# 同じ経路の候補では、この補正値は行動と対象に依存しない。
+		var route_bias = M.sync(moved, 2).factor * 0.05 - route.size() * 0.001
+		var options = [{"skill": "", "target": -1}]
 		for skill in source.skills:
-			if C.SKILLS.get(skill,{}).get("type","")!="ACTIVE":
+			if C.SKILLS.get(skill, {}).get("type", "") != "ACTIVE":
 				continue
 			for i in range(battle.units.size()):
-				var target: Dictionary=moved if i==actor else battle.units[i]
-				if C.target_matches(skill,moved,target):
-					options.append({"skill":skill,"target":i})
+				var target: Dictionary = moved if i == actor else battle.units[i]
+				if C.target_matches(skill, moved, target):
+					options.append({"skill": skill, "target": i})
 		for action in options:
-			var plan={"path":route,"skill":action.skill,"target":action.target}
-			var after=_simulate(battle,plan)
-			if after==null:
+			var plan = {"path": route, "skill": action.skill, "target": action.target}
+			var after = _simulate(battle, plan)
+			if after == null:
 				continue
-			var own_win="DEFEAT" if source.camp=="ENEMY" else "VICTORY"
-			var score=0.0
+			var own_win = "DEFEAT" if source.camp == "ENEMY" else "VICTORY"
+			var score = 0.0
 			if not after.result.is_empty():
-				score=T.CPU_TERMINAL_SCORE if after.result==own_win else -T.CPU_TERMINAL_SCORE
+				score = T.CPU_TERMINAL_SCORE if after.result == own_win else -T.CPU_TERMINAL_SCORE
 			else:
-				score=_position_score(after,actor)
-				if action.target>=0:
-					var old: Dictionary=battle.units[action.target]
-					var now: Dictionary=after.units[action.target]
-					if C.SKILLS[action.skill].effect=="DAMAGE":
-						score+=(old.hp-now.hp)*T.CPU_DAMAGE_WEIGHT
-						if now.hp<=0:
-							score+=T.CPU_KILL_BONUS
-					elif C.SKILLS[action.skill].effect=="HEAL":
-						var weight=T.CPU_HEAL_WEIGHT
+				score = _position_score(after, actor)
+				if action.target >= 0:
+					var old: Dictionary = battle.units[action.target]
+					var now: Dictionary = after.units[action.target]
+					if C.SKILLS[action.skill].effect == "DAMAGE":
+						score += (old.hp - now.hp) * T.CPU_DAMAGE_WEIGHT
+						if now.hp <= 0:
+							score += T.CPU_KILL_BONUS
+					elif C.SKILLS[action.skill].effect == "HEAL":
+						var weight = T.CPU_HEAL_WEIGHT
 						for recent in memory.slice(-2):
-							if recent.actor==actor and C.SKILLS.get(recent.skill,{}).get("effect","")=="HEAL":
-								weight*=0.5
-						score+=(now.hp-old.hp)*weight
-				var kind=C.SKILLS.get(action.skill,{}).get("effect","")
-				score+=_utility_score(battle,after,actor,kind)
-				score-=_danger(after,actor,_threats_for(after,actor,threat_cache) if field_context or kind=="PUSH" else threats)
+							if (
+								recent.actor == actor
+								and C.SKILLS.get(recent.skill, {}).get("effect", "") == "HEAL"
+							):
+								weight *= 0.5
+						score += (now.hp - old.hp) * weight
+				var kind = C.SKILLS.get(action.skill, {}).get("effect", "")
+				score += _utility_score(battle, after, actor, kind)
+				score -= _danger(
+					after,
+					actor,
+					(
+						_threats_for(after, actor, threat_cache)
+						if field_context or kind == "PUSH"
+						else threats
+					)
+				)
 				for recent in memory:
-					if recent.actor==actor and recent.pos==moved.pos:
-						score-=T.CPU_REPEAT_PENALTY
-				score+=M.sync(moved,2).factor*0.05-route.size()*0.001
-			if score>best.score:
-				plan.score=score
-				best=plan
+					if recent.actor == actor and recent.pos == moved.pos:
+						score -= T.CPU_REPEAT_PENALTY
+				score += route_bias
+			if score > best.score:
+				plan.score = score
+				best = plan
 	return best
 
 func _threats_for(b, actor: int, cache: Dictionary) -> Array:

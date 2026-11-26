@@ -17,10 +17,10 @@ Webの日本語表示用にNoto Sans JPとSIL Open Font License 1.1も同梱し�
 
 1. Godotでproject.godotをインポートする。
 2. プロジェクトを実行する(Macの既定ショートカットはCommand+B)。
-3. ターミナルからは次のコマンドでも起動できる。
+3. ターミナルではプロジェクトのフォルダへ移動してから、次のコマンドでも起動できる。
 
 ~~~sh
-godot --path /Users/glitch/Developer/phase
+godot --path .
 ~~~
 
 ## 使い方
@@ -161,7 +161,7 @@ SAVEとLOADは表示したまま非活性となり、内部からの保存と読
 
 #### HTMLの書き出し
 
-1. `/Users/glitch/Developer/phase/project.godot`をGodotで開く。
+1. プロジェクト内の`project.godot`をGodotで開く。
 2. `エディター > エクスポートテンプレートの管理...`を開き、Godot 4.7.2の`Web Single-Threaded`がInstalled Templatesにあることを確認する。\
    このMacでは導入済みである。\
    未導入のMacだけ、Official Releases mirrorから同じ版のWeb Single-Threadedを導入する。
@@ -174,10 +174,10 @@ SAVEとLOADは表示したまま非活性となり、内部からの保存と読
 5. 同じフォルダに出たHTML、JS、WASM、PCK等をまとめて保つ。HTMLだけを移動したり、生成後に一部だけ改名したりしない。
 
 このMacでは同じプリセットを使った次のコマンドからHTML一式の出力を確認した。\
-画面の`プロジェクトのエクスポート...`が押せない場合も、このコマンドを使える。
+画面の`プロジェクトのエクスポート...`が押せない場合も、このコマンドを使える。\
+以下はプロジェクトのルートで実行する。
 
 ~~~sh
-cd /Users/glitch/Developer/phase
 mkdir -p artifacts/runtime/web
 /Applications/Godot.app/Contents/MacOS/Godot --headless --path . --export-release "Web Demo" artifacts/runtime/web/index.html
 ~~~
@@ -185,10 +185,9 @@ mkdir -p artifacts/runtime/web
 #### ローカルブラウザでの確認
 
 HTMLをダブルクリックするfile://ではなく、localhostのHTTP経由で開く。\
-以下はPython 3が使えるターミナルで実行し、そのまま起動しておく。
+以下はPython 3が使えるターミナルでプロジェクトのルートから実行し、そのまま起動しておく。
 
 ~~~sh
-cd /Users/glitch/Developer/phase
 python3 -m http.server 8060 --bind 127.0.0.1 --directory artifacts/runtime/web
 ~~~
 

@@ -86,17 +86,28 @@ static func target_offsets(skill: String) -> Array:
 
 ## 単体対象の条件を返す。skillはID、sourceとtargetは位置、陣営、HPを持つユニット。戻り値は作用と位置の適否であり、装備と操作状態は呼び出し側で制限する。
 static func target_matches(skill: String, source: Dictionary, target: Dictionary) -> bool:
-	if SKILLS.get(skill,{}).get("type","")!="ACTIVE" or source.hp<=0 or target.hp<=0 or not target_offsets(skill).has(target.pos-source.pos):
+	var definition: Dictionary = SKILLS.get(skill, {})
+	# 公開するtarget_offsetsは複製を返すが、判定は固定配列を読むだけでよい。
+	if (
+		definition.get("type", "") != "ACTIVE"
+		or source.hp <= 0
+		or target.hp <= 0
+		or not TARGET_PATTERNS.get(definition.get("area", ""), []).has(target.pos - source.pos)
+	):
 		return false
-	match SKILLS[skill].effect:
-		"DAMAGE","PUSH":
-			return source.camp!=target.camp
+	match definition.effect:
+		"DAMAGE", "PUSH":
+			return source.camp != target.camp
 		"HEAL":
-			return source.camp==target.camp and target.hp<target.max_hp
+			return source.camp == target.camp and target.hp < target.max_hp
 		"SWAP":
-			return source.camp==target.camp
+			return source.camp == target.camp
 		"GUARD":
-			return source.id==target.id and source.camp==target.camp and not source.get("guard_active",false)
+			return (
+				source.id == target.id
+				and source.camp == target.camp
+				and not source.get("guard_active", false)
+			)
 	return false
 
 ## 型番を返す。kindはARMSかGEAR、statsは配分、mutationはNORMALか配置文字列。戻り値は型番。

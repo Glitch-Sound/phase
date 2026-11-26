@@ -7,6 +7,10 @@ select.ogg、ring_rotate.ogg、ring_rotate1.ogg、ring_rotate2.ogg、attack.ogg�
 Vorbisのタグだけでは出典を確定できず、KenneyやCC0などの出典と権利条件を推定しない。\
 公開と外部配布は今回行わない。
 
+利用者から、提供した音源がCC0であることは本人が確認済みとの申告を受けている。\
+この本人確認と、取得元の文書や原本を独立して照合したことは区別する。\
+CC0の本人確認は、使用中の原音を別の音源へ差し替える理由にはしない。
+
 音量と再生条件はコード側で管理し、原音への音量変更、切り出しと上書きは行わない。
 
 現在はring_rotate1.oggとring_rotate2.oggを移動用に交互再生し、attack.oggとheal.oggを従来どおり使う。\

@@ -250,8 +250,6 @@ func check_result(event: String) -> void:
 				result=entry[1]
 				mode="RESULT"
 				return
-	if not result.is_empty():
-		mode="RESULT"
 
 func _condition_met(condition: Dictionary) -> bool:
 	var kind: String=condition.type

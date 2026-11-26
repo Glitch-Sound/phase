@@ -1919,19 +1919,6 @@ func _button(parent: Control, text: String, rect: Rect2, callback: Callable, ico
 	parent.add_child(button)
 	return button
 
-func _option(parent: Control, values: Array, current: String, rect: Rect2, callback: Callable) -> OptionButton:
-	var option=OptionButton.new()
-	option.position=rect.position
-	option.size=rect.size
-	option.add_theme_font_size_override("font_size",16)
-	for value in values:
-		option.add_item(C.SKILLS[value].label if C.SKILLS.has(value) else str(value))
-		option.get_popup().set_item_tooltip(option.item_count-1,str(value))
-	option.selected=maxi(0,values.find(current))
-	option.item_selected.connect(func(index):callback.call(str(values[index])))
-	parent.add_child(option)
-	return option
-
 func _label(parent: Control, text: String, rect: Rect2, size_px: int=20, color: Color=WHITE, wrap: bool=false) -> Label:
 	var label=Label.new()
 	if wrap:
@@ -1954,10 +1941,6 @@ func _notify(text: String) -> void:
 	if is_instance_valid(notice):
 		notice.text=_explain(text)
 	print("PHASE / ",text)
-
-func _panel(rect: Rect2) -> void:
-	draw_rect(rect,PANEL)
-	draw_line(rect.position,Vector2(rect.end.x,rect.position.y),EDGE,1)
 
 func _text(text: String, position_px: Vector2, font_size: int, color: Color=WHITE, typeface: Font=null) -> void:
 	var face=font if typeface==null else typeface
@@ -2002,14 +1985,6 @@ func _icon(parent: Control,key: String,rect: Rect2,tint: Color) -> void:
 	icon.modulate=tint
 	icon.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	parent.add_child(icon)
-
-func _separator(parent: Control,rect: Rect2) -> void:
-	var line=ColorRect.new()
-	line.position=rect.position
-	line.size=rect.size
-	line.color=EDGE
-	line.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	parent.add_child(line)
 
 func _focus_modal(layer) -> void:
 	if not is_instance_valid(layer) or layer.is_queued_for_deletion():
