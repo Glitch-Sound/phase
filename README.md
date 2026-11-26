@@ -161,12 +161,19 @@ SAVEとLOADは表示したまま非活性となり、内部からの保存と読
 #### HTMLの書き出し
 
 1. `/Users/glitch/Developer/phase/project.godot`をGodotで開く。
-2. `Editor > Manage Export Templates`から、使用中のGodotと同じ版のテンプレートを導入する。現在のMacはGodot 4.7.2で、Webテンプレートが未導入である。
-3. `Project > Export`で`Web Demo`を選ぶ。`Features`のCustom Featuresは`demo`、Thread SupportとExtensions Support、PWAはOFF、Custom HTML Shellは`res://web/session.html`のままにする。
-4. `Export Project`を選び、Export With DebugをOFFにして`artifacts/runtime/web/index.html`へ書き出す。デバッグOFFではUNLOCK ALLは表示されない。
+2. `エディター > エクスポートテンプレートの管理...`を開き、Godot 4.7.2の`Web Single-Threaded`がInstalled Templatesにあることを確認する。\
+   このMacでは導入済みである。\
+   未導入のMacだけ、Official Releases mirrorから同じ版のWeb Single-Threadedを導入する。
+3. `プロジェクト > エクスポート...`で左の`Web Demo`を選ぶ。\
+   一覧が空なら、いったん閉じて`プロジェクト > 現在のプロジェクトを再読み込み`を選んでから開き直す。\
+   `機能`タブのカスタムは`demo`、`オプション`のThread SupportとExtensions Support、PWAはOFF、Custom HTML Shellは`res://web/session.html`のままにする。
+4. `プロジェクトのエクスポート...`を選び、Export With DebugをOFFにして`artifacts/runtime/web/index.html`へ書き出す。\
+   デバッグOFFではUNLOCK ALLは表示されない。\
+   `PCK/Zipのエクスポート...`はHTML一式を作るボタンではない。
 5. 同じフォルダに出たHTML、JS、WASM、PCK等をまとめて保つ。HTMLだけを移動したり、生成後に一部だけ改名したりしない。
 
-ターミナルから同じ設定で書き出す場合は次を実行する。
+このMacでは同じプリセットを使った次のコマンドからHTML一式の出力を確認した。\
+画面の`プロジェクトのエクスポート...`が押せない場合も、このコマンドを使える。
 
 ~~~sh
 cd /Users/glitch/Developer/phase
@@ -184,9 +191,12 @@ cd /Users/glitch/Developer/phase
 python3 -m http.server 8060 --bind 127.0.0.1 --directory artifacts/runtime/web
 ~~~
 
-ブラウザで`http://127.0.0.1:8060/`を開く。\
+サーバーのターミナルは開いたまま、ブラウザのアドレス欄へ`http://127.0.0.1:8060/`を入力する。\
 WebAssemblyとWebGL 2.0が必要で、音は最初のクリック後に確認する。\
-確認後はターミナルでCtrl+Cを押してローカルサーバーを終了する。
+確認後はターミナルでCtrl+Cを押してローカルサーバーを終了する。\
+2026-11-26のこのMacのBraveでは起動と戦闘の手番進行を確認したが、日本語の字形が欠落した。\
+当面の動作確認はSETTINGSのLanguageをEnglishにして行う。\
+日本語のWeb表示には、再配布可能な日本語フォントの同梱が別途必要となる。
 
 - 初回の装備解放一覧を閉じ、SAVEとLOADが見えるが押せないことを確認する。
 - 名前と装備を1つずつ変更し、SETTINGSの言語かSEも変更する。
