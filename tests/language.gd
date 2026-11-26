@@ -16,6 +16,7 @@ func _run() -> void:
 		_test_storage()
 		_test_copy()
 	await _test_ui()
+	await _test_font()
 	print("LANGUAGE: %d checks / %d failures" % [checks,failures])
 	quit(0 if failures==0 else 1)
 ## REQ-053-S01
@@ -100,3 +101,26 @@ func _test_ui() -> void:
 func _check(ok: bool,note: String) -> void:
 	checks+=1
 	if not ok:failures+=1;printerr("FAIL: ",note)
+
+## REQ-053-S04
+func _test_font() -> void:
+	var game=load("res://main.tscn").instantiate()
+	game.settings_path=folder+"/font-settings";game.save_path=folder+"/font-save.json";game.profile_startup=false
+	root.add_child(game);await process_frame
+	var fallbacks=game.font.fallbacks
+	_check(fallbacks.size()==2 and fallbacks[0]==ThemeDB.fallback_font and fallbacks[1] is Font,"prose has the original engine fallback followed by one bundled Japanese font")
+	if fallbacks.size()==2 and fallbacks[0]==ThemeDB.fallback_font and fallbacks[1] is Font:
+		_check(game.mono.fallbacks.is_empty(),"mechanical monospace font retains its original metrics and fallback chain")
+		var ts=TextServerManager.get_primary_interface()
+		var requested=fallbacks[1].variation_opentype.values()[0]
+		_check(ts.font_get_variation_coordinates(fallbacks[1].get_rids()[0]).get(ts.name_to_tag("wght"))==requested,"font backend receives the configured regular weight rather than silently using the thin default")
+		var resource=fallbacks[1].base_font if fallbacks[1] is FontVariation else fallbacks[1]
+		var bundled=resource.duplicate();bundled.fallbacks=[];bundled.allow_system_fallback=false
+		var missing=[];var copy=model.new();copy.selection="ja"
+		for source in copy.COPY:
+			var text=copy.text(source)
+			for i in range(text.length()):
+				var code=text.unicode_at(i)
+				if ((code>=0x3000 and code<=0x9fff) or (code>=0xff00 and code<=0xffef)) and not bundled.has_char(code) and not missing.has(code):missing.append(code)
+		_check(missing.is_empty(),"bundled font itself contains every registered Japanese prose glyph without OS fallback: "+str(missing))
+	game.queue_free();await process_frame

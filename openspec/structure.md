@@ -8,6 +8,7 @@
 | DEVELOPMENT.md | OpenSpecを使う開発者向けの手順と道具の設定 |
 | game/ | 位相計算、戦闘、収集、カタログ、調整値 |
 | ui/ | 描画、画面、入力、説明言語 |
+| assets/fonts/ | 日本語のフォールバックとフォント原本、OFL、出典 |
 | assets/sfx/ | 本人提供の原音と出典の確認状況 |
 | docs/assembly-v1.md | アセンブリの別図案、色キーと表示規約 |
 | docs/identicon-v1.md | 端末間で共有する名前と紋章の固定規約 |
