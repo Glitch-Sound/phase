@@ -63,7 +63,7 @@ CLASS、リング、MOVEとスキル、盤面、時間軸と予測、システ�
 
 ## 画像と保存保護
 
-- 新規画像: /Users/glitch/Developer/phase/artifacts/ui-review/equipment-icons-progress.png
+- 新規画像: artifacts/ui-review/equipment-icons-progress.png
 - Library ID: libfile_fde3_f-65df2c7c0c1c8191b9d5b1d9cbe466d0_7bf0ff0e6b488191936c99c00c29c4c9
 - 撮影元: artifacts/runtime/PHASE-equipment-icons-1794885641-4237-battle.png
 - 比較元: artifacts/ui-review/factor-gap-progress.png

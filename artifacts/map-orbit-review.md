@@ -7,7 +7,7 @@ Library ID libfile_d1cfe11d0ae081919575c1a6638ff41dを、Libraryの正式な参�
 黒地で細い複数の円形曲線が近い半径で重なり、色が連続する点を参考にした。\
 画像自体は製品素材として使用せず、管理対象外の検証用ディレクトリに保持する。
 
-確認用のローカルパスは/Users/glitch/Developer/phase/artifacts/runtime/map-orbit-reference-20261116/IMG_0606(1).jpegである。
+確認用のローカルパスはartifacts/runtime/map-orbit-reference-20261116/IMG_0606(1).jpegである。
 
 ## 変更内容と判断
 
@@ -100,7 +100,7 @@ SAVE、LOADとAPPLY COLORSは操作していない。\
 
 ## 新規画像
 
-比較用の画像は/Users/glitch/Developer/phase/artifacts/ui-review/map-orbit-battle.pngである。\
+比較用の画像はartifacts/ui-review/map-orbit-battle.pngである。\
 1920x1080、198,353 bytesのGodotの実行内容だけを含み、個人情報とデスクトップを含まないことを実画素で確認した。\
 前回と同じTURN2、手番2、経路(4,6)から(5,6)、敵AのHP89、INF130.6%、RES94.5%を使った。\
 最大HP桁数への対処後も、この通常HPの画像は全内容が一致する。\

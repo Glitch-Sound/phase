@@ -49,7 +49,7 @@ OpenSpecのchangeは作成せず、正式仕様は変更していない。
 
 ## 画像と保存保護
 
-- 新規画像: /Users/glitch/Developer/phase/artifacts/ui-review/timeline-links-progress.png
+- 新規画像: artifacts/ui-review/timeline-links-progress.png
 - Library ID: libfile_fde3_f-d77f4e6e65208191a8f910c9901abbcc_7bf0ff0e6b488191936c99c00c29c4c9
 - 撮影元: artifacts/runtime/PHASE-timeline-links-1794879942-04195-battle.png
 - 比較元: artifacts/ui-review/unit-information-progress.png

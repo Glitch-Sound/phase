@@ -148,9 +148,9 @@ Libraryに保存する画像はTURN18、2の手番、HPは1=23、2=78、A=56、B
 - 誤実装5種: すべて検出して原本へ復元した。
 - 実セーブのSHA256は25167e282e85b12fd9f059ae72d9cb16e4d6fb55310b1d3f57295dd02a6573e2、mtime_nsは1794705159636683302で作業前と一致した。
 - artifacts/runtime/ui-settings.jsonは作業前後とも存在しない。
-- 確認画像: /Users/glitch/Developer/phase/artifacts/runtime/PHASE-decisions-1794952664-62323-progress-battle.png。
+- 確認画像: artifacts/runtime/PHASE-decisions-1794952664-62323-progress-battle.png。
 - Library ID: libfile_fde3_f-d597652c8ec08191921dab5d105aee84_7bf0ff0e6b488191936c99c00c29c4c9。
-- ACTIONのBACK確認画像: /Users/glitch/Developer/phase/artifacts/runtime/PHASE-decisions-1794952664-62323-progress-action.png。
+- ACTIONのBACK確認画像: artifacts/runtime/PHASE-decisions-1794952664-62323-progress-action.png。
 
 記録した画像は原寸ピクセルを確認した。
 Libraryには進行した戦闘の1枚だけを新規保存した。

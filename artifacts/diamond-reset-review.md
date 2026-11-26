@@ -26,7 +26,7 @@ currentColorの白への置換以外は変更せず、NOTICEへdiamondを加え�
 
 ## 画像と保存保護
 
-- 新規キャプチャ: /Users/glitch/Developer/phase/artifacts/ui-review/diamond-reset-battle.png
+- 新規キャプチャ: artifacts/ui-review/diamond-reset-battle.png
 - Library ID: libfile_fde3_f-91b0e3c8dd888191b1241122c526bb58_7bf0ff0e6b488191936c99c00c29c4c9
 - 元画像: artifacts/runtime/PHASE-core-panels-1794876684-55377-battle.png
 - 比較元: artifacts/ui-review/core-panel-effects-battle.png

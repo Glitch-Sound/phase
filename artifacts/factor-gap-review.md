@@ -69,7 +69,7 @@ Lucideの公式shield、sword、shirtと同梱swordsを、ゲームと別の検�
 
 ## 画像と保存保護
 
-- 新規画像: /Users/glitch/Developer/phase/artifacts/ui-review/factor-gap-progress.png
+- 新規画像: artifacts/ui-review/factor-gap-progress.png
 - Library ID: libfile_fde3_f-b828c24739d4819185f967e7f7338416_7bf0ff0e6b488191936c99c00c29c4c9
 - 撮影元: artifacts/runtime/PHASE-factor-gap-1794884386-24774-battle.png
 - 比較元: artifacts/ui-review/compact-readouts-progress.png

@@ -18,7 +18,7 @@ for(let i=0;i<count;i++){
   assert.ok(!files.has(name),'unique archive path');
   files.set(name,pack.subarray(base+offset,base+offset+size));
 }
-const documents=['assets/godot/LICENSE.txt','assets/godot/COPYRIGHT.txt','assets/godot/NOTICE.md','assets/lucide/LICENSE','assets/lucide/NOTICE.md','assets/fonts/OFL.txt','assets/fonts/NOTICE.md'];
+const documents=['assets/godot/LICENSE.txt','assets/godot/COPYRIGHT.txt','assets/godot/NOTICE.md','assets/lucide/LICENSE','assets/lucide/NOTICE.md','assets/fonts/OFL.txt','assets/fonts/NOTICE.md','assets/licenses/NOTICE.md','assets/licenses/MIT.txt'];
 for(const file of documents){
   assert.ok(files.has(file),'packed original: '+file);
   assert.deepEqual(files.get(file),fs.readFileSync(file),'unchanged complete original: '+file);
@@ -38,3 +38,20 @@ assert.deepEqual(fs.readFileSync(path.join(folder,'index.png')),fs.readFileSync(
 assert.deepEqual(fs.readFileSync(path.join(folder,'index.icon.png')),fs.readFileSync('assets/phase.png'),'favicon is the original PHASE diagram');
 assert.ok(html.includes('href="index.icon.png"')&&html.includes('href="index.apple-touch-icon.png"'));
 console.log('WEB LICENSES: PASS / '+documents.length+' complete originals / '+sounds.length+' sounds / PHASE images');
+
+// REQ-065-S01: ソースの許諾範囲をPCK検査と分けて確認する。
+const scope=fs.readFileSync('assets/licenses/NOTICE.md','utf8');
+const expectedUtilities=['ui/panel_probe.gd','scripts/lint.mjs'];
+const declaredUtilities=[...scope.matchAll(/^- `([^`]+)`$/gm)].map(x=>x[1]);
+assert.deepEqual(declaredUtilities,expectedUtilities,'MIT permission covers only the two listed original utilities');
+assert.ok(scope.includes('他のPHASE自作ファイルの権利は留保する'));
+assert.ok(!fs.existsSync('LICENSE'),'no project-wide MIT license');
+const readme=fs.readFileSync('README.md','utf8');
+for(const file of expectedUtilities){
+  const source=fs.readFileSync(file,'utf8');
+  assert.ok(source.includes('SPDX-License-Identifier: MIT')&&source.includes('Copyright (c) 2026 PHASE contributors'));
+  assert.ok(readme.includes('`'+file+'`'),'README identifies the exact licensed source path');
+}
+const terms=fs.readFileSync('assets/godot/LICENSE.txt','utf8').split('Permission is hereby granted')[1];
+assert.equal(fs.readFileSync('assets/licenses/MIT.txt','utf8'),'MIT License\n\nCopyright (c) 2026 PHASE contributors\n\nPermission is hereby granted'+terms,'standard MIT terms are complete');
+console.log('LICENSE SCOPE: PASS / exactly two original utilities');

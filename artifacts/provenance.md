@@ -2,8 +2,8 @@
 
 ## 入力
 
-- 作業先: /Users/glitch/Developer/phase。
-- 要求事項: /Users/glitch/Developer/phase-input/requirements.md、881行を全文確認した。
+- 作業先: プロジェクトのルート。
+- 要求事項: ../phase-input/requirements.md、881行を全文確認した。
 - SHA256: ebd39aaf10e80b0c5e188be3acd9f4e397cf6f111103e3ff5b422064b7501bf6。
 - 作業先は開始時に空で、Gitリポジトリではなかった。
 - 作業先、入力先と両者の祖先ディレクトリには適用するAGENTS.mdがなかった。

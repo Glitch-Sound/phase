@@ -70,7 +70,7 @@ PLAYERのSLOW FIELDとENEMYのFAST FIELDを持つ隔離戦闘で、PLAYERの1マ
 
 ローカルパスは次のとおりである。
 
-`/Users/glitch/Developer/phase/artifacts/runtime/remove-stop/fields-choice-1920x1080.png`
+`artifacts/runtime/remove-stop/fields-choice-1920x1080.png`
 
 1920x1080、101,319バイトのPNGで、BUILDのスキル選択にSLOW FIELDとFAST FIELDを表示している。\
 FAST FIELDが選択され、効果と周囲8マスの図が分かる。\

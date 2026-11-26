@@ -3,7 +3,7 @@
 ## 目的
 
 移動経路を設計し、位相の干渉を予測して戦うゲームを実現する。
-入力は /Users/glitch/Developer/phase-input/requirements.md、SHA256はebd39aaf10e80b0c5e188be3acd9f4e397cf6f111103e3ff5b422064b7501bf6である。
+入力は ../phase-input/requirements.md、SHA256はebd39aaf10e80b0c5e188be3acd9f4e397cf6f111103e3ff5b422064b7501bf6である。
 
 ## 対象範囲
 

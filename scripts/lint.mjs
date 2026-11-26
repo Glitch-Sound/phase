@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 PHASE contributors
+// Scope: assets/licenses/NOTICE.md; license: assets/licenses/MIT.txt
 import fs from 'node:fs';
 import path from 'node:path';
 let errors=[];

@@ -6,7 +6,7 @@
 実ファイルの読取、PNG署名、24085バイト、685x180を確認し、実ピクセルでCLASSとSTANDARDよりVIRSLが下へずれていることを確認した。\
 再試行は不要だった。
 
-参照の実パスは/Users/glitch/Developer/phase/artifacts/runtime/class-baseline-reference-20261119/0CC7DC0B-D6E4-4504-A09B-6785AFEAF410.pngである。\
+参照の実パスはartifacts/runtime/class-baseline-reference-20261119/0CC7DC0B-D6E4-4504-A09B-6785AFEAF410.pngである。\
 ゲーム素材として参照していない。
 
 REQ-045-S04に関係する表示位置の直接調整として扱い、仕様のシナリオと文言、選択、解放、保存は変更していない。\

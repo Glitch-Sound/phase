@@ -46,7 +46,7 @@ CLASSとリング、盤面、時間軸、予測とシステムメニューは同
 
 ## 画像と保存保護
 
-- 新規画像: /Users/glitch/Developer/phase/artifacts/ui-review/equipment-frame-progress.png
+- 新規画像: artifacts/ui-review/equipment-frame-progress.png
 - Library ID: libfile_fde3_f-7772767b4c3c8191948bd2b968acb5cd_7bf0ff0e6b488191936c99c00c29c4c9
 - 撮影元: artifacts/runtime/PHASE-equipment-frame-1794881027-78701-battle.png
 - 比較元: artifacts/ui-review/timeline-links-progress.png

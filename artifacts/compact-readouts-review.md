@@ -65,7 +65,7 @@ I、Rの文字上から味方2と敵Aを選択でき、未確定経路が残る�
 
 ## 画像と保存保護
 
-- 新規画像: /Users/glitch/Developer/phase/artifacts/ui-review/compact-readouts-progress.png
+- 新規画像: artifacts/ui-review/compact-readouts-progress.png
 - Library ID: libfile_fde3_f-0483d2a68d40819198279d12694d8b5d_7bf0ff0e6b488191936c99c00c29c4c9
 - 撮影元: artifacts/runtime/PHASE-compact-readouts-1794882768-16231-battle.png
 - 比較元: artifacts/ui-review/equipment-frame-progress.png

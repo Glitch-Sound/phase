@@ -55,7 +55,7 @@ canvas_itemsのkeepにより縦長ウィンドウの描画テクスチャは1200
 
 ## 画像と限界
 
-- 添付用画像: /Users/glitch/Developer/phase/artifacts/ui-review/unit-information-progress.png
+- 添付用画像: artifacts/ui-review/unit-information-progress.png
 - Library ID: libfile_fde3_f-c99b1b9a8e0c81919b2f4bc64f6471aa_7bf0ff0e6b488191936c99c00c29c4c9
 - 撮影元: artifacts/runtime/PHASE-unit-information-1794878290-38256-progress-1920-1080.png
 - 対象外比較の元: artifacts/ui-review/diamond-reset-battle.png

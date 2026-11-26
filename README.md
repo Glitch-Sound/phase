@@ -320,3 +320,19 @@ PLAYERの表示名は1、2、3、内部IDは01、02、03、ENEMYはA、B、Cで�
 ゲーム内のHELPとユーザー向けの説明は英語である。\
 左下のPREVIEWは経路後の状態を示す。\
 パネルのホバー説明は左下の盤外へ2段で表示し、盤内のアイコンとフォーカスを隠さない。
+
+## ソースのライセンス範囲
+
+MIT Licenseの対象は、次の自作の汎用コード2ファイルだけである。
+
+- `ui/panel_probe.gd`: GodotのGUI入力イベントを親の入力処理へ転送する。
+- `scripts/lint.mjs`: GDScriptの公開関数にあるコメントを検査する。
+
+許諾の原文は[MIT.txt](assets/licenses/MIT.txt)、正確な範囲は[NOTICE.md](assets/licenses/NOTICE.md)にある。\
+これらのファイルは著作権表示とMIT原文を保持して再利用、変更、商用利用できる。\
+ゲームロジック、戦闘式、シナリオ、ロゴと起動図案、紋章の生成規則など、その他のPHASE自作ファイルの権利は留保する。\
+リポジトリ全体やゲーム全体をMITとするものではない。
+
+第三者の素材と生成された開発用スキルには、それぞれの元の許諾が適用される。\
+Godot、Lucide、Noto Sans JP、音源の出典と条件は各assets配下、OpenSpecの原文はdocs/licenses配下を参照する。\
+ゲームに同梱する範囲とMIT原文は、通常版とWeb版のSETTINGSのLICENSESでも読める。

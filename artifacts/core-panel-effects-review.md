@@ -106,7 +106,7 @@ BACKからスキルを選び直しても確定した移動と位相は保たれ�
 
 ## 画像と保存保護
 
-- 新規キャプチャ: /Users/glitch/Developer/phase/artifacts/ui-review/core-panel-effects-battle.png
+- 新規キャプチャ: artifacts/ui-review/core-panel-effects-battle.png
 - Library ID: libfile_fde3_f-256582ff31fc8191942149b18d518201_7bf0ff0e6b488191936c99c00c29c4c9
 - 元画像: artifacts/runtime/PHASE-core-panels-1794875033-57118-battle.png
 - 比較画像: 同じ接頭辞のseed、hover、occupied、help、breach、target画像

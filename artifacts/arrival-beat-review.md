@@ -51,7 +51,7 @@ tests/movement_capture.gdを30fpsで動かし、1152x648と1920x1080で397項目
 
 ローカルパスは次のとおりである。
 
-`/Users/glitch/Developer/phase/artifacts/runtime/arrival-cloud-film/PHASE-arrival-cloud-fade-final-1080p.mp4`
+`artifacts/runtime/arrival-cloud-film/PHASE-arrival-cloud-fade-final-1080p.mp4`
 
 Libraryへ新しい動画として保存した。\
 確認済みIDは`libfile_fde3_f-19ca6f98cd788191807aab0fa00b509c_7bf0ff0e6b488191936c99c00c29c4c9`である。

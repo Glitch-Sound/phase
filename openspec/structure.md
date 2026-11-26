@@ -8,6 +8,7 @@
 | DEVELOPMENT.md | OpenSpecを使う開発者向けの手順と道具の設定 |
 | game/ | 位相計算、戦闘、収集、カタログ、調整値 |
 | ui/ | 描画、画面、入力、説明言語 |
+| assets/licenses/ | 自作汎用コード2ファイルへの限定許諾の範囲とMIT原文 |
 | assets/fonts/ | 日本語のフォールバックとフォント原本、OFL、出典 |
 | assets/godot/ | 使用版のMIT原文、全ソースの第三者権利一覧、公式出典とハッシュ |
 | assets/phase.svg、assets/phase.png | 外部素材を使わないPHASEの起動図案とアイコン |
@@ -37,6 +38,7 @@ game/assembly_identity.gdが独立した所属紋章と安定色キーと共通R
 リングと波形、両方の紋章はui/visuals.gdで手続き的に描く。\
 目標文の固定参照はui/unit_reference_text.gdで紋章へ置換し、名前を非表示のアクセシビリティ用名称に保持する。
 配色と判読性はui/palette.gd、操作アイコンと権利表示はassets/lucide/に集約する。\
+自作の限定許諾と範囲はassets/licensesへ置き、READMEと対象2ファイルの表示から同じ原文を参照する。\
 同梱原文の固定候補と全文閲覧はui/license_dialog.gdへ置き、SETTINGSから同じPCK内の原文を読む。\
 表示モードの保存と安定確認はui/display_settings.gd、説明言語の解決と独立設定はui/language.gd、説明の日本語対訳はui/japanese.gdへ置き、モデルの名称と説明の原文を変更しない。\
 表示は説明の原文を保持して更新し、ui/unit_reference_text.gdの段落組版は固定参照を紋章で描く。

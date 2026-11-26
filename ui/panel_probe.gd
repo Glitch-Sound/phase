@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 PHASE contributors
+# Scope: assets/licenses/NOTICE.md; license: assets/licenses/MIT.txt
 ## 盤面のホバー説明だけを提供し、既存の盤面入力へ接続し、フォーカスを取得しない。
 extends Control
 var host: Control

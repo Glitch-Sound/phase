@@ -101,7 +101,7 @@ TURN12の時点で1はHP58、防御なし、2は戦闘不能、敵2体は生存�
 画像の実ピクセルを確認し、デスクトップや個人情報を含まない。
 編集や外部サイトへのアップロードはしていない。
 
-- ローカル: /Users/glitch/Developer/phase/artifacts/runtime/PHASE-utility-1794964007-209165277.png
+- ローカル: artifacts/runtime/PHASE-utility-1794964007-209165277.png
 - Library: libfile_fde3_f-ec27d47657e081919043294f0bfcca0e_7bf0ff0e6b488191936c99c00c29c4c9
 - 内容: TURN05、4行動完了後に1が移動し、GUARDの自分対象をホバーした確定前の予測。
 - 状態: 1はHP100、2はHP48、敵は各HP100。右側と左下の盾はGUARD予測であり、その時点の盤面へ防御を確定済みという意味ではない。

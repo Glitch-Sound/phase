@@ -13,7 +13,9 @@ var documents: Array = [
 	{"title": "Lucide / ISC & MIT", "path": "res://assets/lucide/LICENSE"},
 	{"title": "Lucide / Source", "path": "res://assets/lucide/NOTICE.md"},
 	{"title": "Noto Sans JP / SIL OFL 1.1", "path": "res://assets/fonts/OFL.txt"},
-	{"title": "Noto Sans JP / Source", "path": "res://assets/fonts/NOTICE.md"}
+	{"title": "Noto Sans JP / Source", "path": "res://assets/fonts/NOTICE.md"},
+	{"title": "PHASE / License scope", "path": "res://assets/licenses/NOTICE.md"},
+	{"title": "PHASE / Listed utilities only / MIT", "path": "res://assets/licenses/MIT.txt"}
 ]
 var selector: OptionButton
 var body: TextEdit

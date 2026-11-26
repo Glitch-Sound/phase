@@ -24,7 +24,7 @@ CORE、GEAR、ARMSの輪郭は実SPDの平方根に応じた速度で揺れる�
 連続再生のプレイヤーではなく、時刻の異なる実フレームによる観測である。
 円に近い形と移る膨らみを参考にし、塗りと発光は使わず、素材はゲームへ組み込んでいない。
 
-ローカル動画は/Users/glitch/Developer/phase/artifacts/runtime/motion-reference-20261117/reference-preview.mp4である。
+ローカル動画はartifacts/runtime/motion-reference-20261117/reference-preview.mp4である。
 確認画像は同じディレクトリのframe-0.0.pngからframe-5.0.pngである。
 許可済みのNodeとPythonを使い、PythonからOS標準の復号機能を呼び出した。
 追加アプリは導入していない。
@@ -59,7 +59,7 @@ CPU側の描画処理時間であり、全環境のGPU性能の保証ではな�
 
 ## 確認用の動く画像
 
-ローカルパスは/Users/glitch/Developer/phase/artifacts/ui-review/phase-motion-progress.pngである。
+ローカルパスはartifacts/ui-review/phase-motion-progress.pngである。
 1920x1080、20fps、120フレームの6秒APNGで、再生は1回である。
 異なる周期の合成なので6秒で同じ形へ戻るとは限らず、ループの継ぎ目による誤解を避けた。
 表示側がAPNGに対応しない場合は先頭の静止画だけが表示される。

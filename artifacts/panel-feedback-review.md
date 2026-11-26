@@ -77,7 +77,7 @@ INFは3領域とも開始72度、幅72度で、生一致100%、最終補正200%�
 確認した原寸画像と最小画像に個人情報、デスクトップとOSメニューを含めていない。\
 Libraryには既存画像を置換しない新規項目として保存した。
 
-- 新規画像: /Users/glitch/Developer/phase/artifacts/ui-review/panel-feedback-inf-progress.png
+- 新規画像: artifacts/ui-review/panel-feedback-inf-progress.png
 - Library ID: libfile_fde3_f-6caa3aa7cc088191b070762989fbdb57_7bf0ff0e6b488191936c99c00c29c4c9
 - 撮影元: artifacts/runtime/PHASE-panel-feedback-1794926622-93622-battle.png
 - 比較元: artifacts/ui-review/balanced-information-inf-progress.png

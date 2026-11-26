@@ -58,7 +58,7 @@ Godot 4.7.2、Compatibility、Apple M4の独立した実GPUウィンドウで115
 画像はGodotのViewportから新しいPNGへ直接保存し、画像編集をしていない。
 全画面の実ピクセルと不透明度も確認し、左右の情報と盤面が含まれ、デスクトップと個人情報を含まない。
 
-- 比較画像: /Users/glitch/Developer/phase/artifacts/runtime/guard-overlay-gpu-1794968609.12691-reference-turn05.png
+- 比較画像: artifacts/runtime/guard-overlay-gpu-1794968609.12691-reference-turn05.png
 - Library ID: libfile_fde3_f-d5bc88ffa2bc8191b4150a83a9a0c113_7bf0ff0e6b488191936c99c00c29c4c9
 - 状態: TURN05、1のHP100、2のHP48、敵は各HP100。GUARDは確定前の予測で、右側にPREVIEWと表示する。
 - 再生状態: artifacts/runtime/guard-overlay-reference-state.json

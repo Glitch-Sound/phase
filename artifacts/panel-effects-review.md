@@ -104,7 +104,7 @@ WINDOWEDへ戻し、色適用と保存を行わず、RESTART後のBUILDを観測
 
 ## 確認画像と保存保護
 
-- 新規画像: /Users/glitch/Developer/phase/artifacts/ui-review/panel-effects-battle.png
+- 新規画像: artifacts/ui-review/panel-effects-battle.png
 - 添付可能なLibrary ID: libfile_fde3_f-5cccae813cf081918b4210ba9e74eaac_7bf0ff0e6b488191936c99c00c29c4c9
 - 元のGPU画像: artifacts/runtime/PHASE-panels-1794825760-00402-battle.png
 - 他の比較画像: 同じ接頭辞のseed、hover、occupied、help、breach、target画像

@@ -1,7 +1,7 @@
 extends SceneTree
 var checks=0
 var failures=0
-const PATHS=["res://assets/godot/LICENSE.txt","res://assets/godot/COPYRIGHT.txt","res://assets/godot/NOTICE.md","res://assets/lucide/LICENSE","res://assets/lucide/NOTICE.md","res://assets/fonts/OFL.txt","res://assets/fonts/NOTICE.md"]
+const PATHS=["res://assets/godot/LICENSE.txt","res://assets/godot/COPYRIGHT.txt","res://assets/godot/NOTICE.md","res://assets/lucide/LICENSE","res://assets/lucide/NOTICE.md","res://assets/fonts/OFL.txt","res://assets/fonts/NOTICE.md","res://assets/licenses/NOTICE.md","res://assets/licenses/MIT.txt"]
 func _initialize() -> void:_run.call_deferred()
 func _run() -> void:
 	var path="res://ui/license_dialog.gd"
@@ -14,7 +14,7 @@ func _run() -> void:
 func _viewer(script: Script) -> void:
 	var dialog=script.new();root.add_child(dialog)
 	dialog.configure("en");await process_frame
-	_check(dialog.documents.map(func(row):return row.path)==PATHS,"exactly seven declared originals are available")
+	_check(dialog.documents.map(func(row):return row.path)==PATHS,"exactly nine declared documents are available")
 	for i in range(PATHS.size()):
 		dialog.select_document(i)
 		_check(FileAccess.file_exists(PATHS[i]) and dialog.body.text==FileAccess.get_file_as_string(PATHS[i]) and not dialog.body.text.is_empty(),"document is complete and exact: "+PATHS[i])

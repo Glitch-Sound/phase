@@ -69,7 +69,7 @@ ACTION、攻撃で敵AのHP100から90への変化、TURN 01から02への更新
 
 ## 画像と保存保護
 
-- 新規画像: /Users/glitch/Developer/phase/artifacts/ui-review/balanced-information-inf-progress.png
+- 新規画像: artifacts/ui-review/balanced-information-inf-progress.png
 - Library ID: libfile_fde3_f-6e84fb4debcc8191a11f1296ccbfc6d5_7bf0ff0e6b488191936c99c00c29c4c9
 - 撮影元: artifacts/runtime/PHASE-unit-information-1794887332-73046-inf-aligned-turn18.png
 - 比較用TURN11: artifacts/runtime/PHASE-balanced-information-1794887582-94956-battle.png
