@@ -22,6 +22,7 @@ const LANGUAGE=preload("res://ui/language.gd")
 const SFX=preload("res://ui/sfx.gd")
 const LICENSE_DIALOG=preload("res://ui/license_dialog.gd")
 const PHASE_LOGO=preload("res://assets/branding/phase-lockup.svg")
+const PHASE_MARK=preload("res://assets/branding/phase-mark.svg")
 const CPU = preload("res://game/cpu_policy.gd")
 const CPU_TURN = preload("res://ui/cpu_turn.gd")
 const MOVEMENT = preload("res://ui/movement.gd")
@@ -297,6 +298,10 @@ func _assembly_rows() -> Array:
 
 func _draw_left() -> void:
 	_text("PHASE",Vector2(T.BATTLE_LEFT_ORIGIN.x,T.BATTLE_TITLE_BASELINE),47,WHITE)
+	var title_width=font.get_string_size("PHASE",HORIZONTAL_ALIGNMENT_LEFT,-1,47).x
+	var title_center=T.BATTLE_TITLE_BASELINE-(font.get_ascent(47)-font.get_descent(47))/2
+	var mark_origin=Vector2(T.BATTLE_LEFT_ORIGIN.x+title_width+T.BATTLE_MARK_GAP,title_center-T.BATTLE_MARK_SIZE/2)
+	draw_texture_rect(PHASE_MARK,Rect2(mark_origin,Vector2.ONE*T.BATTLE_MARK_SIZE),false)
 	for row in _assembly_rows():
 		var profile=_assembly_profile(row.camp)
 		_assembly_emblem(self,row.emblem.get_center(),T.ASSEMBLY_EMBLEM_RADIUS,profile,row.camp)
