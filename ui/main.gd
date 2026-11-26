@@ -21,6 +21,7 @@ const JAPANESE_FONT=preload("res://assets/fonts/JapaneseFallback.tres")
 const LANGUAGE=preload("res://ui/language.gd")
 const SFX=preload("res://ui/sfx.gd")
 const LICENSE_DIALOG=preload("res://ui/license_dialog.gd")
+const PHASE_LOGO=preload("res://assets/branding/phase-lockup.svg")
 const CPU = preload("res://game/cpu_policy.gd")
 const CPU_TURN = preload("res://ui/cpu_turn.gd")
 const MOVEMENT = preload("res://ui/movement.gd")
@@ -1046,7 +1047,11 @@ func _build() -> void:
 	var left=T.BUILD_COLUMNS[0]
 	var middle=T.BUILD_COLUMNS[1]
 	var right=T.BUILD_COLUMNS[2]
-	_label(panel,"BUILD",Rect2(left,20,200,45),32,WHITE)
+	var logo=TextureRect.new()
+	logo.name="PhaseLogo"
+	logo.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;logo.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	logo.texture=PHASE_LOGO;logo.position=T.BUILD_LOGO_RECT.position;logo.size=T.BUILD_LOGO_RECT.size
+	logo.mouse_filter=Control.MOUSE_FILTER_IGNORE;panel.add_child(logo)
 	for i in range(collection.builds.size()):
 		var slot_button=_button(panel,"UNIT %d" % (i+1),Rect2(210+i*110,22,100,43),func():edit_unit=i;_build(),"",i==edit_unit)
 		if i==edit_unit:overlay.set_meta("initial_focus",weakref(slot_button))

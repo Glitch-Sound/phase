@@ -336,3 +336,16 @@ MIT Licenseの対象は、次の自作の汎用コード2ファイルだけで�
 第三者の素材と生成された開発用スキルには、それぞれの元の許諾が適用される。\
 Godot、Lucide、Noto Sans JP、音源の出典と条件は各assets配下、OpenSpecの原文はdocs/licenses配下を参照する。\
 ゲームに同梱する範囲とMIT原文は、通常版とWeb版のSETTINGSのLICENSESでも読める。
+
+## ロゴ素材
+
+承認済みの横長ロゴはassets/branding/phase-lockup.svg、リング単体はassets/branding/phase-mark.svgである。
+3本の開いた円弧の形、位置と白系、淡い青緑、青緑の配色は承認原稿を保持する。\
+文字はSVGの輪郭であり、追加フォントを必要としない。\
+起動スプラッシュとWebの読み込み画面、BUILDヘッダーに横長版、Webの小さいアイコンにリング単体を使う。\
+独立したタイトルメニューは追加せず、起動後は従来のBUILDを表示する。
+
+配信ページには横長SVGまたは同じ場所のPNGを素材として使える。\
+確認用の高解像度PNGはartifacts/runtime/branding/phase-store-lockup-2028x552.pngへ置く。\
+投稿や外部へのアップロードは行っていない。\
+ロゴは汎用コード2ファイルのMIT許諾には含まれない。

@@ -169,6 +169,8 @@ const BATTLE_HP_RIGHT := 360.0
 # BUILDは左から構成と結果、装備の比較、スキルと出撃の3列。
 const BUILD_CONTENT_GAP := 12.0
 const BUILD_RECT := Rect2(300,115,1320,810)
+# 承認済みロゴの比率を保ち、UNIT選択と既存ヘッダーの範囲へ収める。
+const BUILD_LOGO_RECT := Rect2(36,18,160,160.0*184.0/676.0)
 # トグル同士を近づけて右へ揃え、ユニット選択との余白を広くする。
 const BUILD_CPU_TOGGLE_RECT := Rect2(988,22,288,43)
 const BUILD_TOGGLE_GAP := 16.0

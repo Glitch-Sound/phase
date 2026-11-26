@@ -34,9 +34,10 @@ for(const name of ['index.png','index.icon.png','index.apple-touch-icon.png']){
   const image=fs.readFileSync(path.join(folder,name));
   assert.ok(!originals.includes(crypto.createHash('sha256').update(image).digest('hex')),'no default Godot image: '+name);
 }
-assert.deepEqual(fs.readFileSync(path.join(folder,'index.png')),fs.readFileSync('assets/phase.png'),'splash is the original PHASE diagram');
-assert.deepEqual(fs.readFileSync(path.join(folder,'index.icon.png')),fs.readFileSync('assets/phase.png'),'favicon is the original PHASE diagram');
+assert.deepEqual(fs.readFileSync(path.join(folder,'index.png')),fs.readFileSync('assets/branding/phase-lockup.png'),'splash is the approved PHASE lockup');
+assert.deepEqual(fs.readFileSync(path.join(folder,'index.icon.png')),fs.readFileSync('assets/branding/phase-mark.png'),'favicon is the approved rings-only mark');
 assert.ok(html.includes('href="index.icon.png"')&&html.includes('href="index.apple-touch-icon.png"'));
+assert.ok(html.includes('<img src="index.png" alt="PHASE" width="676" height="184">'),'loading screen uses the configured lockup with preserved aspect');
 console.log('WEB LICENSES: PASS / '+documents.length+' complete originals / '+sounds.length+' sounds / PHASE images');
 
 // REQ-065-S01: ソースの許諾範囲をPCK検査と分けて確認する。

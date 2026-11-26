@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 676 184" role="img" aria-labelledby="logoTitle">
+<title id="logoTitle">PHASE — three offset rings</title>
+<g transform="translate(92 92)" fill="none" stroke-width="8">
+ <path d="M53.9888 -46.1108 A71 71 0 1 1 17.7770 -68.7385" stroke="#EAF6F7"/>
+ <path d="M48.9534 -2.1373 A49 49 0 1 1 34.3446 -34.9493" stroke="#A9DAD8"/>
+ <path d="M20.2218 17.8907 A27 27 0 1 1 26.2540 -6.3030" stroke="#59E5D0"/>
+</g>
+<g fill="#EAF6F7" fill-rule="evenodd" transform="translate(207 56)">
+ <path d="M0 72V0H51L66 15V41L51 56H13V72ZM13 13V43H46L53 36V20L46 13Z"/>
+ <path transform="translate(85)" d="M0 72V0H13V28H53V0H66V72H53V41H13V72Z"/>
+ <path transform="translate(170)" d="M0 72V21L21 0H50L71 21V72H58V54H13V72ZM13 41H58V26L45 13H26L13 26Z"/>
+ <path transform="translate(260)" d="M65 0V13H19L13 19V24L19 30H52L65 43V59L52 72H0V59H46L52 53V49L46 43H13L0 30V13L13 0Z"/>
+ <path transform="translate(344)" d="M0 72V0H66V13H13V29H55V42H13V59H66V72Z"/>
+</g>
+</svg>

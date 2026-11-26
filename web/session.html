@@ -9,6 +9,7 @@
     canvas { display: block; width: 100%; height: 100%; outline: none; }
     #status { position: fixed; inset: 0; display: grid; place-items: center; font: 16px sans-serif; pointer-events: none; }
     #status[hidden] { display: none; }
+    #status img { width: min(676px, 80vw); height: auto; }
   </style>
   <script type="text/plain" id="phase-font-license">
 Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'
@@ -109,7 +110,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 </head>
 <body>
   <canvas id="canvas" tabindex="0">WebGL 2.0 is required.</canvas>
-  <div id="status">PHASE</div>
+  <div id="status"><img src="$GODOT_SPLASH" alt="PHASE" width="676" height="184"></div>
   <script src="$GODOT_URL"></script>
   <script id="phase-start">
     const config = $GODOT_CONFIG;

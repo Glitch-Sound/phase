@@ -11,7 +11,8 @@
 | assets/licenses/ | 自作汎用コード2ファイルへの限定許諾の範囲とMIT原文 |
 | assets/fonts/ | 日本語のフォールバックとフォント原本、OFL、出典 |
 | assets/godot/ | 使用版のMIT原文、全ソースの第三者権利一覧、公式出典とハッシュ |
-| assets/phase.svg、assets/phase.png | 外部素材を使わないPHASEの起動図案とアイコン |
+| assets/branding/ | 承認済みの横長ロゴとリング単体、同じ原稿から出力したPNG |
+| assets/phase.svg、assets/phase.png | 以前の同心円図案の原本(現行の起動とアイコンでは使わない) |
 | assets/sfx/ | 本人提供の原音と出典の確認状況 |
 | docs/assembly-v1.md | アセンブリの別図案、色キーと表示規約 |
 | docs/identicon-v1.md | 端末間で共有する名前と紋章の固定規約 |
