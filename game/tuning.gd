@@ -131,11 +131,9 @@ const UNIT_RING_SATURATION_POWER := 2.0
 # 高さを盤面に使い、右下のメニューと盤面の下端を揃える。
 const BATTLE_BOARD_ORIGIN := Vector2(384,16)
 const BATTLE_CELL := 100.0
-const BATTLE_LEFT_ORIGIN := Vector2(40,0)
-const BATTLE_TITLE_BASELINE := 76.0
-# 既存の文字位置を保ち、右の空き領域に入力を持たない小さな図案を添える。
-const BATTLE_MARK_SIZE := 32.0
-const BATTLE_MARK_GAP := 12.0
+# 戦闘のタイトル領域だけへ小さく暗い横長ロゴを置き、共通素材と他画面は変えない。
+const BATTLE_LOGO_RECT := Rect2(33,28,210,210.0*184.0/676.0)
+const BATTLE_LOGO_MODULATE := Color(0.55,0.55,0.55,1.0)
 # 縦間隔は行動順だけを表し、待ち量は各点の円弧へ分離する。
 # HPからTURNと、状態下端から予測の見える余白を揃える。
 const TIMELINE_AXIS_X := 200.0

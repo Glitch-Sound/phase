@@ -63,13 +63,15 @@ func _check_scene(game, title: String) -> void:
 		_check(hits.is_empty(),"only requested labels absent: "+title+" / "+label+" / "+str(hits))
 	var displayed=game.battle.units[game.selected if game.selected>=0 else game.battle.actor]
 	var code={"STANDARD":"VIRSL","REVERSE":"VLSRI"}.get(displayed.class_name,displayed.class_name)
-	var expected_count=18+2*displayed.skills.size()+int(game.M.singularity(game.battle.preview()))
+	var expected_count=17+2*displayed.skills.size()+int(game.M.singularity(game.battle.preview()))
 	expected_count+=int(code=="VIRSL")
 	expected_count+=1 if game.message_time>0 else 0
 	_check(game.drawn_text.size()==expected_count,"complete text set excludes any extra caption fragment: "+title+" / "+str(game.drawn_text.size())+" / "+str(expected_count))
-	var required=["TURN 01","PREVIEW","PHASE","CLASS: "+code,"MOVE %d" % game.battle.movement(displayed),"DAMAGE / ADJACENT","HEAL / ADJACENT"]
+	var required=["TURN 01","PREVIEW","CLASS: "+code,"MOVE %d" % game.battle.movement(displayed),"DAMAGE / ADJACENT","HEAL / ADJACENT"]
 	if code=="VIRSL":required.append("STANDARD")
 	_check(required.all(func(text):return texts.has(text)),"keep headers and complete details: "+title)
+	var logos=game.hud.find_children("BattleLogo","TextureRect",false,false)
+	_check(logos.size()==1 and logos[0].texture==game.PHASE_LOGO and is_equal_approx(logos[0].size.x/logos[0].size.y,float(logos[0].texture.get_width())/logos[0].texture.get_height()) and Rect2(logos[0].position,logos[0].size).is_equal_approx(game.T.BATTLE_LOGO_RECT) and logos[0].modulate.is_equal_approx(game.T.BATTLE_LOGO_MODULATE) and logos[0].mouse_filter==Control.MOUSE_FILTER_IGNORE,"battle-only lockup preserves aspect, tone and input transparency: "+title)
 	_check(texts.filter(func(text):return text.begins_with("I:")).size()==4 and texts.filter(func(text):return text.begins_with("R:")).size()==4,"keep four current states and their factors: "+title)
 	var prediction=game.preview_text.map(func(item):return item.text)
 	_check(prediction.filter(func(text):return text.begins_with("INF ") or text.begins_with("RES ")).is_empty() and game.preview_rings.size()==1 and game.preview_contours.size()==4,"keep predicted rings and four contours without numeric factors: "+title)
