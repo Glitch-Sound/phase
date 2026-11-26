@@ -11,7 +11,7 @@
 
 - 両陣営手動、またはPLAYERを人、ENEMYをCPUが操作する戦術戦闘。
 - 決定的な計算、経路予測、ビルド、収集、保存。
-- minimal dark intelligenceに基づく黒いUIと設定可能な配色。画像は同梱したLucideアイコンだけを使う。
+- minimal dark intelligenceに基づく黒いUIと設定可能な配色。画像は同梱したLucideアイコンとPHASE固有の起動図案を使う。
 - 実プレイと自動検証に基づく報告。
 
 ### 対象外

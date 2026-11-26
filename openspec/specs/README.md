@@ -13,6 +13,7 @@
 | [battle-movement](battle-movement/spec.md) | 確定経路の移動表示、着地、中断 |
 | [enemy-cpu](enemy-cpu/spec.md) | 敵CPUの判断、モード、操作過程と中断 |
 | [sound-feedback](sound-feedback/spec.md) | 確定移動の交互2音と実HP変化、選択の無音 |
+| [licenses](licenses/spec.md) | 同梱ライセンス原文の閲覧、出典とWeb配布物 |
 
 ## 関係
 

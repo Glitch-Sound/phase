@@ -20,6 +20,7 @@ const P = preload("res://ui/palette.gd")
 const JAPANESE_FONT=preload("res://assets/fonts/JapaneseFallback.tres")
 const LANGUAGE=preload("res://ui/language.gd")
 const SFX=preload("res://ui/sfx.gd")
+const LICENSE_DIALOG=preload("res://ui/license_dialog.gd")
 const CPU = preload("res://game/cpu_policy.gd")
 const CPU_TURN = preload("res://ui/cpu_turn.gd")
 const MOVEMENT = preload("res://ui/movement.gd")
@@ -143,6 +144,9 @@ var preview_generation := 0
 var result_awarded := false
 var equipment_views: Dictionary={}
 var window_focused := true
+var license_dialog: Control
+var license_settings_panel: Control
+var license_entry: Button
 var cpu_enabled := false
 var cpu_fast := false
 var cpu_paused := false
@@ -665,7 +669,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.keycode==KEY_F1:
 			_help()
 		elif event.keycode==KEY_ESCAPE:
-			if is_instance_valid(auxiliary):
+			if is_instance_valid(license_dialog):
+				_close_licenses()
+			elif is_instance_valid(auxiliary):
 				_close_aux()
 			elif movement.active or plan_pending or _cpu_locked():
 				return
@@ -1482,6 +1488,7 @@ func _settings() -> void:
 	_close_aux()
 	var panel=_modal(T.SETTINGS_RECT,true)
 	_label(panel,"SETTINGS",Rect2(36,25,960,48),32,WHITE)
+	license_entry=_button(panel,"LICENSES",Rect2(820,28,204,40),func():_licenses(panel))
 	_label(panel,"DISPLAY",Rect2(36,98,400,28),T.SETTINGS_HEADING_FONT,MUTED)
 	display_buttons.clear();display_mode=-1
 	for mode in [DisplayServer.WINDOW_MODE_WINDOWED,DisplayServer.WINDOW_MODE_FULLSCREEN]:
@@ -1539,6 +1546,21 @@ func _settings() -> void:
 			style.content_margin_left=padding;style.content_margin_right=padding
 			button.add_theme_stylebox_override(state,style)
 	_sync_display_mode()
+
+func _licenses(settings_panel: Control) -> void:
+	if is_instance_valid(license_dialog):return
+	license_settings_panel=settings_panel;settings_panel.hide()
+	license_dialog=LICENSE_DIALOG.new();license_dialog.position=T.SETTINGS_RECT.position;license_dialog.size=T.SETTINGS_RECT.size
+	auxiliary.add_child(license_dialog);license_dialog.configure(copy_language.locale());license_dialog.closed.connect(_close_licenses)
+	_focus_modal.call_deferred(auxiliary)
+
+func _close_licenses() -> void:
+	if is_instance_valid(license_dialog):license_dialog.hide();license_dialog.queue_free()
+	license_dialog=null
+	if is_instance_valid(license_settings_panel):license_settings_panel.show()
+	license_settings_panel=null
+	_focus_modal(auxiliary)
+	if is_instance_valid(license_entry):license_entry.grab_focus()
 
 func _display_embedded() -> bool:
 	return Engine.is_embedded_in_editor()
@@ -1815,6 +1837,7 @@ func _close_aux() -> void:
 		previous=auxiliary.get_meta("previous_focus") if auxiliary.has_meta("previous_focus") else null
 		auxiliary.queue_free()
 	auxiliary=null
+	license_dialog=null;license_settings_panel=null;license_entry=null
 	build_dialog=null
 	assembly_dialog=null
 	_restore_focus.call_deferred(previous)

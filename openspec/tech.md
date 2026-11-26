@@ -4,7 +4,8 @@
 
 Godot 4.7系、GDScript、Compatibilityレンダラーを使う。
 開発専用にNode.js 22.12以上、npm、OpenSpec 1.16.0、Gitを使う。
-画像は同梱したLucideのSVGアイコンだけを使い、追加の実行時ライブラリは使わない。
+操作画像は同梱したLucideのSVGアイコンを使い、起動とWebのアイコンには外部素材を使わないPHASEの幾何図案を使う。\
+追加の実行時ライブラリは使わない。
 
 ## アーキテクチャ
 

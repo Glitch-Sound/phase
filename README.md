@@ -283,6 +283,18 @@ UI設定はartifacts/runtime/ui-settings.jsonへ保存し、既存設定はbacku
 TabとShift+Tabは最前面の操作部品を移動し、Enterで実行する。
 Lucideの出典とISCおよびFeather由来MITの権利表示は[NOTICE](assets/lucide/NOTICE.md)と[LICENSE](assets/lucide/LICENSE)にある。
 
+SETTINGSのLICENSESから、Lucide、Godotと第三者ライブラリ、Noto Sans JPの原文と出典を閲覧できる。\
+原文は翻訳せず、WebのHTMLに依存しない同じ文書をPCKにも同梱する。\
+Godotは4.7.2公式版に対応する[MIT原文](assets/godot/LICENSE.txt)と[第三者権利一覧](assets/godot/COPYRIGHT.txt)を含み、取得元とハッシュは[出典](assets/godot/NOTICE.md)に記録している。\
+第三者一覧はGodotの全ソースを対象とし、今回のWeb出力で使わない構成要素も含む。\
+起動画像とアイコンにはPHASE固有の幾何図案を使い、Godotロゴは使わない。
+
+Web配布物を作成した後は、次のコマンドで実PCK内の権利表示、使用音の集合と出力画像を検査できる。
+
+~~~sh
+node tests/web_licenses.mjs artifacts/runtime/web
+~~~
+
 UIだけを再現する検証ラボは次で起動する。
 戦闘難易度を検証するモードではなく、本体の起動シーンにも組み込まれない。
 

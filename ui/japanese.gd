@@ -1,6 +1,7 @@
 ## 人が読む説明だけの日本語対訳。名称と入力値は翻訳しない。
 extends RefCounted
 const TEXT = {
+	"Bundled notices. Original license texts are shown without translation.":"同梱素材とエンジンの権利表示\nライセンス原文は翻訳せず掲載",
 	"Unavailable in the demo. Progress lasts until this page is closed or reloaded.":"デモでは使用不可\n編成と解放はページを閉じるか再読み込みするまで保持",
 	"DEMO / SAVE and LOAD are unavailable.":"DEMO / SAVEとLOADは使用不可",
 	"All three rings set maximum HP.":"3リングの値が最大HPを決める",
