@@ -6,6 +6,7 @@ func _initialize() -> void:
 ## REQ-019-S03、REQ-019-S09、NREQ-001-S04
 func _run() -> void:
 	var game=load("res://tests/side_info_audit.gd").new()
+	game.cpu_enabled=false # CPU状態行を含めない手動情報欄の固定条件。
 	game.settings_path="res://artifacts/runtime/side-info-lab-"+str(Time.get_ticks_usec())+".json"
 	root.add_child(game)
 	await process_frame

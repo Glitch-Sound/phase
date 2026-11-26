@@ -6,6 +6,7 @@ func _initialize() -> void:
 	_run.call_deferred()
 func _run() -> void:
 	game=load("res://tests/fixture_main.gd").new()
+	game.cpu_enabled=false # 両陣営手動の表示と操作を検証する。
 	var stamp=str(Time.get_ticks_usec())
 	game.settings_path="res://artifacts/runtime/hierarchy-settings-"+stamp+".json"
 	root.add_child(game)

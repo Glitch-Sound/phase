@@ -20,7 +20,11 @@ func _run() -> void:
 func _connection() -> void:
 	var saved=game.collection.snapshot()
 	var choices=game.overlay.find_children("*","CheckButton",true,false).filter(func(c):return c.text=="ENEMY CPU")
-	_check(choices.size()==1 and not game.cpu_enabled,"BUILD defaults to the original manual mode and exposes CPU choice")
+	_check(choices.size()==1 and game.cpu_enabled and choices[0].button_pressed,"BUILD defaults to enemy CPU with the toggle visibly ON")
+	choices[0].button_pressed=false
+	game._build()
+	choices=game.overlay.find_children("*","CheckButton",true,false).filter(func(c):return c.text=="ENEMY CPU")
+	_check(not game.cpu_enabled and not choices[0].button_pressed and game.collection.snapshot()==saved,"explicit OFF survives BUILD refresh without changing saved data")
 	choices[0].button_pressed=true
 	_check(game.cpu_enabled and game.collection.snapshot()==saved,"CPU toggle keeps the exact save snapshot")
 	var labels=game.overlay.find_children("*","Label",true,false).map(func(label):return label.text)
@@ -54,7 +58,7 @@ func _connection() -> void:
 	game._window_focus_entered()
 	game._restart()
 	game._cpu_tick(100.0)
-	_check(game.build_open and not game.cpu_turn.active and game.collection.snapshot()==saved,"restart returns BUILD and discards CPU work without save changes")
+	_check(game.build_open and game.cpu_enabled and not game.cpu_turn.active and game.collection.snapshot()==saved,"restart returns BUILD, preserves explicit ON and discards CPU work without save changes")
 	game.cpu_enabled=false
 	game._start_battle()
 	game.battle.actor=3

@@ -8,6 +8,7 @@ func _initialize() -> void:
 ## REQ-019-S03
 func _run() -> void:
 	var game=load("res://tests/phase_preview_audit.gd").new()
+	game.cpu_enabled=false # 手動HUDの完全な文字集合を検証する固定条件。
 	game.settings_path="res://artifacts/runtime/labels-no-settings-"+str(Time.get_ticks_usec())+".json"
 	root.add_child(game)
 	await process_frame

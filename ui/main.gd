@@ -148,7 +148,7 @@ var window_focused := true
 var license_dialog: Control
 var license_settings_panel: Control
 var license_entry: Button
-var cpu_enabled := false
+var cpu_enabled := true
 var cpu_fast := false
 var cpu_paused := false
 var cpu_policy=CPU.new()
